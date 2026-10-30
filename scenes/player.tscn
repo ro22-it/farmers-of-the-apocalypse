@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/player/inventory.gd" id="2_inventory"]
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="3_hud"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
 resource_local_to_scene = true
@@ -18,10 +19,10 @@ radius = 0.35
 height = 1.8
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_player"]
-properties/0/path = NodePath(".:position")
+properties/0/path = NodePath("NetSmooth:target_position")
 properties/0/spawn = true
 properties/0/replication_mode = 1
-properties/1/path = NodePath(".:rotation")
+properties/1/path = NodePath("NetSmooth:target_rotation")
 properties/1/spawn = true
 properties/1/replication_mode = 1
 properties/2/path = NodePath("Head:rotation")
@@ -112,3 +113,6 @@ replication_config = SubResource("SceneReplicationConfig_player")
 [node name="ServerSync" type="MultiplayerSynchronizer" parent="."]
 replication_interval = 0.2
 replication_config = SubResource("SceneReplicationConfig_server")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")

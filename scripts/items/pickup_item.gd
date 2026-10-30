@@ -43,10 +43,11 @@ func make_held_view() -> void:
 	position = hand_position
 	rotation_degrees = hand_rotation_degrees
 	# Синхронизировать модель в руке не нужно, её создаёт каждый у себя
-	var sync := get_node_or_null("MultiplayerSynchronizer")
-	if sync:
-		remove_child(sync)
-		sync.free()
+	for part in ["MultiplayerSynchronizer", "NetSmooth"]:
+		var node := get_node_or_null(part)
+		if node:
+			remove_child(node)
+			node.free()
 
 
 func use(user: Player) -> void:

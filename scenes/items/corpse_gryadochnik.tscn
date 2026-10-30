@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/creatures/corpse.gd" id="1_corpse"]
 [ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_grabbable.tres" id="2_sync"]
 [ext_resource type="PackedScene" path="res://scenes/creatures/models/gryadochnik_model.tscn" id="3_model"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
 
 [sub_resource type="BoxShape3D" id="shape"]
 size = Vector3(0.9, 0.4, 1.1)
@@ -24,3 +25,6 @@ frozen_pose = "Death"
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_interval = 0.033
 replication_config = ExtResource("2_sync")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")

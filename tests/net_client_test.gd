@@ -125,6 +125,21 @@ func _run() -> void:
 		var start := creature.global_position
 		await frames(60)
 		check(creature.global_position.distance_to(start) > 0.5, "Грядочник у клиента движется")
+		# Плавность: со сглаживанием существо сдвигается почти каждый кадр, без рывков
+		var still := 0
+		var moving := 0
+		var biggest := 0.0
+		var last := creature.global_position
+		for i in 90:
+			await process_frame
+			var step := creature.global_position.distance_to(last)
+			last = creature.global_position
+			if step < 0.0005:
+				still += 1
+			else:
+				moving += 1
+			biggest = maxf(biggest, step)
+		check(moving > 70 and biggest < 0.25, "существо у клиента движется плавно (кадров с движением %d из 90, наибольший шаг %.2f м)" % [moving, biggest])
 		player._try_ability()
 		check(await wait_for(func(): return creature.tracked), "«Выследить» охотника-клиента подсветил существо")
 

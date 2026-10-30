@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/items/grabbable.gd" id="1_grab"]
 [ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_grabbable.tres" id="9_sync"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bottom"]
 size = Vector3(0.9, 0.06, 1.1)
@@ -131,3 +132,6 @@ mesh = SubResource("BoxMesh_legs")
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_interval = 0.033
 replication_config = ExtResource("9_sync")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")

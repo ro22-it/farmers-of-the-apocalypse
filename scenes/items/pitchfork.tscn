@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/items/pickup_item.gd" id="1_item"]
 [ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_fork"]
 size = Vector3(0.25, 1.5, 0.08)
@@ -72,3 +73,6 @@ mesh = SubResource("CylinderMesh_tine")
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_interval = 0.033
 replication_config = ExtResource("9_sync")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")
