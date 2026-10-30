@@ -153,6 +153,8 @@ var _tumble_left := 0.0
 
 ## Вид от третьего лица в пикапе — по желанию (V), основной вид из кабины
 var third_person := false
+## Кто тащит игрока в лес (Кукурузник). Решает хост, следует сам владелец.
+var _dragged_by: Node3D = null
 
 ## Шаги: сколько осталось до следующего
 var _step_left := 0.0
@@ -305,6 +307,10 @@ func _physics_process(delta: float) -> void:
 		return
 	if _truck:
 		_ride(controls)
+		_update_hud()
+		return
+	if is_instance_valid(_dragged_by):
+		_follow_dragger()
 		_update_hud()
 		return
 	if not is_on_floor():
@@ -1252,6 +1258,27 @@ func _request_shoot(weapon: String, origin: Vector3, direction: Vector3, spread:
 				add_xp(PlayerClasses.XP_KILL)
 			_interact_result.rpc_id(get_multiplayer_authority(), {"message": "%s повержен!" % creature.display_name})
 	_shot_effect.rpc(weapon, hits)
+
+
+## Хост: Кукурузник схватил (path) или отпустил (пустой путь)
+@rpc("any_peer", "call_local", "reliable")
+func _set_dragged(path: NodePath) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	_dragged_by = get_node_or_null(path) as Node3D if not path.is_empty() else null
+	if _dragged_by:
+		release_grab()
+		hud.show_message("Вас тащат в лес! Товарищи — бейте его!")
+
+
+## Вися в лапах, игрок едет за Кукурузником и может только оглядываться
+func _follow_dragger() -> void:
+	velocity = Vector3.ZERO
+	global_position = _dragged_by.global_position + _dragged_by.global_basis.z * 0.9 + Vector3.UP * 0.3
+
+
+func is_dragged() -> bool:
+	return is_instance_valid(_dragged_by)
 
 
 ## Взмах лопатой или пинок: видят все

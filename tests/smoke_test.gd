@@ -890,6 +890,46 @@ func _run() -> void:
 	var hit := await wait_for(func(): return player.health < stalker_health, 300)
 	check(hit, "Пугальщик подкрался со спины и ударил (состояние %d, смотрят %s, до игрока %.1f м)" % [stalker.state, stalker.watched, stalker.global_position.distance_to(player.global_position)])
 	stalker.queue_free()
+	await frames(3)
+
+	# --- Кукурузник: хватает, тащит, удар освобождает ---
+	# После удара Пугальщика игрок мог ещё лететь кувырком
+	if player._tumble:
+		player._end_tumble()
+	player.revive(Player.MAX_HEALTH)
+	player.health = Player.MAX_HEALTH
+	player.global_position = Vector3(-6.0, 0.05, 20.0)
+	await frames(5)
+	var dragger: Kukuruznik = director.spawn(NightDirector.KUKURUZNIK, Vector3(-6.0, 0.3, 15.0))
+	check(await wait_for(func(): return dragger.dragging and player.is_dragged(), 300), "Кукурузник схватил игрока")
+	var grabbed_at := player.global_position
+	await frames(60)
+	check(is_instance_valid(dragger) and player.global_position.distance_to(grabbed_at) > 0.5 and player.global_position.distance_to(dragger.global_position) < 1.5, "игрока тащат за Кукурузником")
+	if not is_instance_valid(dragger):
+		dragger = director.spawn(NightDirector.KUKURUZNIK, player.global_position)
+	dragger.take_hit(1, player.global_position)
+	await frames(5)
+	check(not dragger.dragging and not player.is_dragged(), "удар освободил пленника")
+	dragger.queue_free()
+	await frames(3)
+
+	# --- Хозяин леса: топчет, зовёт Рой, награда ---
+	player.revive(Player.MAX_HEALTH)
+	player.health = Player.MAX_HEALTH
+	player.global_position = Vector3(-6.0, 0.05, 20.0)
+	await frames(5)
+	var lord: ForestLord = director.spawn(NightDirector.FOREST_LORD, Vector3(-6.0, 0.3, 16.0))
+	var lord_health: float = player.health
+	check(await wait_for(func(): return player.health < lord_health, 400), "Хозяин леса растоптал игрока")
+	var creatures_before := main.get_node("Creatures").get_child_count()
+	lord._summon_time = 0.0
+	await frames(5)
+	check(main.get_node("Creatures").get_child_count() >= creatures_before + ForestLord.SUMMON_COUNT, "Хозяин леса позвал волчат")
+	var lord_money: int = economy.money
+	lord.take_hit(40, player.global_position)
+	await frames(3)
+	check(not is_instance_valid(lord) or lord.is_queued_for_deletion(), "Хозяин леса повержен")
+	check(economy.money == lord_money + ForestLord.REWARD, "за Хозяина леса ферме %d монет" % ForestLord.REWARD)
 
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

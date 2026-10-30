@@ -1,0 +1,52 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/creatures/kukuruznik.gd" id="1_creature"]
+[ext_resource type="PackedScene" path="res://scenes/creatures/models/kukuruznik_model.tscn" id="2_model"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.35
+height = 2.0
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_creature"]
+properties/0/path = NodePath("NetSmooth:target_position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath("NetSmooth:target_rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath(".:state")
+properties/2/spawn = true
+properties/2/replication_mode = 2
+properties/3/path = NodePath(".:dragging")
+properties/3/spawn = true
+properties/3/replication_mode = 2
+properties/4/path = NodePath(".:tracked")
+properties/4/spawn = true
+properties/4/replication_mode = 2
+
+[node name="Kukuruznik" type="CharacterBody3D"]
+collision_layer = 16
+collision_mask = 35
+script = ExtResource("1_creature")
+display_name = "Кукурузник"
+weakness = "любой удар заставляет отпустить пленника; 5 ударов"
+growl_sound = "goblin_laugh"
+max_hp = 5
+speed = 3.9
+flee_speed = 5.5
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Look" parent="Model" instance=ExtResource("2_model")]
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.05
+replication_config = SubResource("SceneReplicationConfig_creature")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")

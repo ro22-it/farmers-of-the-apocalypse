@@ -36,13 +36,23 @@ func _ready() -> void:
 		play("Idle")
 
 
-func play(animation: String, speed := 1.0) -> void:
+## once — проиграть один раз (удар), иначе по кругу
+func play(animation: String, speed := 1.0, once := false) -> void:
 	if _player == null or not _player.has_animation(animation):
 		return
 	_player.speed_scale = speed
-	if animation != _current:
+	if animation != _current or once:
 		_current = animation
+		# У животных из набора анимации не зациклены — зацикливаем сами
+		_player.get_animation(animation).loop_mode = Animation.LOOP_NONE if once else Animation.LOOP_LINEAR
 		_player.play(animation, 0.2)
+		if once:
+			_player.seek(0.0, true)
+
+
+## Ещё доигрывается разовая анимация
+func is_playing_once() -> bool:
+	return _player != null and _player.is_playing() and _player.get_animation(_current).loop_mode == Animation.LOOP_NONE
 
 
 func _darken(mesh: MeshInstance3D) -> void:

@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/animals/stag.gltf" id="1_stag"]
+[ext_resource type="Script" path="res://scripts/creatures/creepy_model.gd" id="2_creepy"]
+
+[node name="ForestLordModel" type="Node3D"]
+script = ExtResource("2_creepy")
+tint = Color(0.18, 0.2, 0.17, 1)
+eye_color = Color(0.4, 1, 0.8, 1)
+eye_offset = Vector3(0.18, 0.3, 0.45)
+eye_size = 0.14
+
+[node name="Stag" parent="." instance=ExtResource("1_stag")]
+transform = Transform3D(-0.65, 0, 0, 0, 0.65, 0, 0, 0, -0.65, 0, 0, 0)

@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/monsters/BlueDemon.gltf" id="1_demon"]
+[ext_resource type="Script" path="res://scripts/creatures/creepy_model.gd" id="2_creepy"]
+
+[node name="KukuruznikModel" type="Node3D"]
+script = ExtResource("2_creepy")
+tint = Color(0.35, 0.55, 0.25, 1)
+eye_color = Color(0.9, 1, 0.3, 1)
+hide_meshes = PackedStringArray("Trident")
+
+[node name="Demon" parent="." instance=ExtResource("1_demon")]
+transform = Transform3D(-0.48, 0, 0, 0, 0.62, 0, 0, 0, -0.48, 0, 0, 0)

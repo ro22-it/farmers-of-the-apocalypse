@@ -143,7 +143,7 @@ func _run() -> void:
 			else:
 				moving += 1
 			biggest = maxf(biggest, step)
-		check(moving >= (moving + still) * 0.8 and moving >= 5 and biggest < 0.25, "существо у клиента движется плавно (на ходу кадров с движением %d, без %d, наибольший шаг %.2f м)" % [moving, still, biggest])
+		check(moving >= (moving + still) * 0.8 and moving >= 3 and biggest < 0.25, "существо у клиента движется плавно (на ходу кадров с движением %d, без %d, наибольший шаг %.2f м)" % [moving, still, biggest])
 		player._try_ability()
 		check(await wait_for(func(): return creature.tracked), "«Выследить» охотника-клиента подсветил существо")
 

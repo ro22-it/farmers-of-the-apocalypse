@@ -8,6 +8,13 @@ const GRYADOCHNIK := preload("res://scenes/creatures/gryadochnik.tscn")
 const TARAN := preload("res://scenes/creatures/taran.tscn")
 const ROJ := preload("res://scenes/creatures/roj.tscn")
 const PUGALSHIK := preload("res://scenes/creatures/pugalshik.tscn")
+const KUKURUZNIK := preload("res://scenes/creatures/kukuruznik.tscn")
+const FOREST_LORD := preload("res://scenes/creatures/forest_lord.tscn")
+## Кукурузник — с 5-й ночи, по одному
+const KUKURUZNIK_FIRST_NIGHT := 5
+## Хозяин леса — на 7-ю ночь и потом каждую третью (10, 13…)
+const FOREST_LORD_FIRST_NIGHT := 7
+const FOREST_LORD_EVERY := 3
 ## Рой — со 2-й ночи, одна стая: 3 + по одному за две ночи, не больше 8
 const ROJ_FIRST_NIGHT := 2
 const ROJ_MAX := 8
@@ -37,6 +44,7 @@ var _queue: Array = []
 
 
 func _ready() -> void:
+	add_to_group("night_director")
 	_day_night.phase_changed.connect(_on_phase_changed)
 
 
@@ -88,6 +96,10 @@ func _on_phase_changed(is_night: bool, day: int) -> void:
 		if day >= PUGALSHIK_FIRST_NIGHT:
 			for i in (2 if day >= PUGALSHIK_SECOND_NIGHT else 1):
 				_queue.append([randf_range(60.0, SPAWN_WINDOW + 60.0), PUGALSHIK, 1])
+		if day >= KUKURUZNIK_FIRST_NIGHT:
+			_queue.append([randf_range(20.0, SPAWN_WINDOW), KUKURUZNIK, 1])
+		if day >= FOREST_LORD_FIRST_NIGHT and (day - FOREST_LORD_FIRST_NIGHT) % FOREST_LORD_EVERY == 0:
+			_queue.append([90.0, FOREST_LORD, 1])
 		_queue.sort_custom(func(a, b): return a[0] < b[0])
 	else:
 		for creature: Creature in _creatures.get_children():
