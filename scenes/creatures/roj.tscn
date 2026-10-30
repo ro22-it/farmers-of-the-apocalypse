@@ -1,0 +1,102 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/creatures/roj.gd" id="1_creature"]
+[ext_resource type="PackedScene" path="res://scenes/creatures/models/roj_model.tscn" id="2_model"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_body"]
+radius = 0.2
+height = 0.45
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_skin"]
+albedo_color = Color(0.55, 0.4, 0.25, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eye"]
+albedo_color = Color(1, 0.9, 0.3, 1)
+emission_enabled = true
+emission = Color(1, 0.85, 0.2, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_leg"]
+albedo_color = Color(0.3, 0.22, 0.14, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_loot"]
+albedo_color = Color(0.95, 0.5, 0.15, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_body"]
+material = SubResource("StandardMaterial3D_skin")
+radius = 0.33
+height = 0.55
+radial_segments = 10
+rings = 5
+
+[sub_resource type="SphereMesh" id="SphereMesh_eye"]
+material = SubResource("StandardMaterial3D_eye")
+radius = 0.05
+height = 0.1
+radial_segments = 6
+rings = 3
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_leg"]
+material = SubResource("StandardMaterial3D_leg")
+top_radius = 0.04
+bottom_radius = 0.03
+height = 0.2
+radial_segments = 5
+rings = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_loot"]
+material = SubResource("StandardMaterial3D_loot")
+radius = 0.13
+height = 0.22
+radial_segments = 8
+rings = 4
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_creature"]
+properties/0/path = NodePath("NetSmooth:target_position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath("NetSmooth:target_rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath(".:state")
+properties/2/spawn = true
+properties/2/replication_mode = 2
+properties/3/path = NodePath(".:carrying")
+properties/3/spawn = true
+properties/3/replication_mode = 2
+properties/4/path = NodePath(".:tracked")
+properties/4/spawn = true
+properties/4/replication_mode = 2
+
+[node name="Roj" type="CharacterBody3D"]
+collision_layer = 16
+collision_mask = 35
+script = ExtResource("1_creature")
+display_name = "Рой"
+weakness = "падают с одного удара и боятся света, но их много"
+growl_sound = "bark"
+max_hp = 1
+speed = 4.6
+flee_speed = 6.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+shape = SubResource("CapsuleShape3D_body")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Look" parent="Model" instance=ExtResource("2_model")]
+
+[node name="Loot" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0.15)
+visible = false
+mesh = SubResource("SphereMesh_loot")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.05
+replication_config = SubResource("SceneReplicationConfig_creature")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")

@@ -34,6 +34,8 @@ func _ready() -> void:
 		_item_spawner.add_spawnable_scene(path)
 	_creature_spawner.add_spawnable_scene(NightDirector.GRYADOCHNIK.resource_path)
 	_creature_spawner.add_spawnable_scene(NightDirector.TARAN.resource_path)
+	_creature_spawner.add_spawnable_scene(NightDirector.ROJ.resource_path)
+	_creature_spawner.add_spawnable_scene(NightDirector.PUGALSHIK.resource_path)
 
 	_menu.host_pressed.connect(_start_host)
 	_menu.continue_pressed.connect(_start_host.bind(true))

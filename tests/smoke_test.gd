@@ -867,5 +867,29 @@ func _run() -> void:
 	Input.action_release("move_forward")
 	check(player.global_position.z < -9.5, "игрок зашёл в дом (z=%.1f)" % player.global_position.z)
 
+	# --- Рой: падает с одного удара ---
+	var wolfling: Creature = director.spawn(NightDirector.ROJ, Vector3(-4.0, 0.3, 24.0))
+	await frames(3)
+	check(wolfling.take_hit(1, wolfling.global_position + Vector3.FORWARD), "волчонок Роя падает с одного удара")
+
+	# --- Пугальщик: стоит под взглядом, подкрадывается, когда отвернулись ---
+	player.revive(Player.MAX_HEALTH)
+	player.health = Player.MAX_HEALTH
+	player.global_position = Vector3(-6.0, 0.05, 22.5)
+	player.velocity = Vector3.ZERO
+	await frames(5)
+	var stalker: Pugalshik = director.spawn(NightDirector.PUGALSHIK, Vector3(-6.0, 0.3, 15.0))
+	await frames(3)
+	aim_at(stalker.global_position + Vector3(0, 1.3, 0))
+	await frames(40)
+	var frozen_at := stalker.global_position
+	await frames(60)
+	check(stalker.watched and stalker.global_position.distance_to(frozen_at) < 0.15, "Пугальщик замер, пока на него смотрят")
+	player.rotation.y += PI
+	var stalker_health: float = player.health
+	var hit := await wait_for(func(): return player.health < stalker_health, 300)
+	check(hit, "Пугальщик подкрался со спины и ударил (состояние %d, смотрят %s, до игрока %.1f м)" % [stalker.state, stalker.watched, stalker.global_position.distance_to(player.global_position)])
+	stalker.queue_free()
+
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

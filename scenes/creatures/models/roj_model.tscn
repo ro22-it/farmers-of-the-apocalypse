@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/animals/wolf.gltf" id="1_wolf"]
+[ext_resource type="Script" path="res://scripts/creatures/creepy_model.gd" id="2_creepy"]
+
+[node name="RojModel" type="Node3D"]
+script = ExtResource("2_creepy")
+tint = Color(0.22, 0.2, 0.22, 1)
+eye_color = Color(1, 0.25, 0.15, 1)
+eye_offset = Vector3(0.12, 0.25, 0.35)
+eye_size = 0.09
+
+[node name="Wolf" parent="." instance=ExtResource("1_wolf")]
+transform = Transform3D(-0.17, 0, 0, 0, 0.17, 0, 0, 0, -0.17, 0, 0, 0)
