@@ -8,7 +8,9 @@ extends RigidBody3D
 
 const PULL_STRENGTH := 12.0
 const MAX_PULL_SPEED := 9.0
-const HELD_ANGULAR_DAMP := 0.85
+## Как быстро предмет в руках доворачивается к нужному положению
+const ROTATE_STRENGTH := 8.0
+const MAX_ROTATE_SPEED := 10.0
 ## Масса, при которой одному игроку тащить уже тяжело
 const HEAVY_MASS := 40.0
 ## Насколько тяжёлый груз провисает ниже взгляда
@@ -25,6 +27,8 @@ const MAX_SAG := 0.8
 var holder_count := 0
 ## Только на хосте
 var holders: Array[Node3D] = []
+## Только на хосте: в каком положении держать предмет (его можно вертеть)
+var _target_basis := Basis()
 
 
 func _ready() -> void:
@@ -34,10 +38,28 @@ func _ready() -> void:
 
 
 func start_grab(holder: Node3D) -> void:
+	if holders.is_empty():
+		_target_basis = global_basis.orthonormalized()
 	if holder not in holders:
 		holders.append(holder)
 	holder_count = holders.size()
 	sleeping = false
+
+
+## Повернуть предмет в руках вокруг вертикали (колесо мыши)
+func rotate_target(degrees: float) -> void:
+	_target_basis = Basis(Vector3.UP, deg_to_rad(degrees)) * _target_basis
+
+
+## Поставить ровно (R): сохранить только поворот вокруг вертикали.
+## Так поднимают упавшее пугало.
+func make_upright() -> void:
+	var forward := _target_basis.z
+	forward.y = 0.0
+	if forward.length() < 0.1:
+		forward = _target_basis.y
+		forward.y = 0.0
+	_target_basis = Basis.looking_at(-forward.normalized() if forward.length() > 0.01 else Vector3.FORWARD, Vector3.UP)
 
 
 func stop_grab(holder: Node3D) -> void:
@@ -73,4 +95,10 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 			holder.server_force_release.call_deferred()
 		return
 	state.linear_velocity = (offset * PULL_STRENGTH * get_carry_factor()).limit_length(MAX_PULL_SPEED)
-	state.angular_velocity *= HELD_ANGULAR_DAMP
+	# Доворачиваем к нужному положению, а не просто гасим вращение
+	var difference := _target_basis.get_rotation_quaternion() * state.transform.basis.orthonormalized().get_rotation_quaternion().inverse()
+	if difference.w < 0.0:
+		difference = -difference
+	var angle := 2.0 * acos(clampf(difference.w, -1.0, 1.0))
+	var axis := Vector3(difference.x, difference.y, difference.z)
+	state.angular_velocity = Vector3.ZERO if axis.length() < 0.0001 else (axis.normalized() * angle * ROTATE_STRENGTH).limit_length(MAX_ROTATE_SPEED)

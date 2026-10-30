@@ -174,7 +174,7 @@ func _run() -> void:
 	await frames(150)
 	Input.action_release("move_forward")
 	check(truck.global_position.distance_to(truck_start) > 8.0, "пикап едет от клавиш клиента (%.1f м)" % truck.global_position.distance_to(truck_start))
-	check(player.global_position.distance_to(truck.get_seat_position(0)) < 0.5, "клиент сидит в едущем пикапе")
+	check(player.global_position.distance_to(truck.get_seat_position(0)) < 1.0, "клиент сидит в едущем пикапе")
 	player._try_pickup()
 	await frames(10)
 

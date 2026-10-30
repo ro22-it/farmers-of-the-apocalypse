@@ -109,7 +109,7 @@ func _charge(delta: float) -> void:
 			continue
 		if player.global_position.distance_to(global_position) < HIT_RADIUS:
 			_hit_players.append(player)
-			player.take_damage(HIT_DAMAGE, global_position)
+			player.take_damage(HIT_DAMAGE, global_position, true)
 	_state_time -= delta
 	# Врезался во что-то или выдохся — устаёт
 	var stuck := global_position.distance_to(before) < CHARGE_SPEED * delta * 0.2

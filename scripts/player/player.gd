@@ -57,6 +57,17 @@ const HERBALIST_DAMAGE_TAKEN := 1.25
 const HURT_PUSH := 7.0
 const DOWNED_EYE_HEIGHT := 0.35
 const BASE_FOV := 80.0
+const TUMBLE_TIME := 2.0
+const TUMBLE_PUSH := 1.4
+const TUMBLE_LIFT := 5.0
+## Камера от третьего лица в пикапе
+const THIRD_PERSON_DISTANCE := 7.5
+const THIRD_PERSON_HEIGHT := 3.0
+const THIRD_PERSON_FOLLOW := 6.0
+## Шаг поворота предмета в руках колесом
+const GRAB_ROTATE_STEP := 20.0
+## Удар товарища оружием — шутка: немного урона и кувырок
+const PRANK_DAMAGE := 5.0
 ## Высота глаз сидя (в машине)
 const SEATED_EYE_HEIGHT := 1.0
 ## Дальше этого от прилавка купить нельзя
@@ -131,6 +142,13 @@ var _hand_kick := 0.0
 var _shake := 0.0
 ## Только на хосте: не чаще, чем позволяет оружие
 var _server_next_shot_msec := 0
+
+## Кувырок: физическая капсула, за которой следует персонаж (только у владельца)
+var _tumble: RigidBody3D = null
+var _tumble_left := 0.0
+
+## Вид от третьего лица в пикапе — по желанию (V), основной вид из кабины
+var third_person := false
 
 ## Только для автотестов: без окна мышь не захватить, а без захвата клавиши не слушаются
 var test_controls := false
@@ -230,7 +248,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_released("throw"):
 		_aiming = false
 	elif event.is_action_pressed("reload"):
-		_try_reload()
+		if _grabbed:
+			_request_upright.rpc_id(1)
+		else:
+			_try_reload()
 	elif event.is_action_pressed("pickup"):
 		_try_pickup()
 	elif event.is_action_pressed("drop"):
@@ -239,12 +260,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		_try_ability()
 	elif event.is_action_pressed("skills"):
 		_open_skills()
+	elif event.is_action_pressed("camera_toggle") and _truck:
+		third_person = not third_person
 	elif event.is_action_pressed("debug_skip_phase"):
 		_request_skip_phase.rpc_id(1)
 	elif event.is_action_pressed("slot_next"):
-		inventory.select_offset(1)
+		if _grabbed:
+			_request_rotate_grab.rpc_id(1, -GRAB_ROTATE_STEP)
+		else:
+			inventory.select_offset(1)
 	elif event.is_action_pressed("slot_prev"):
-		inventory.select_offset(-1)
+		if _grabbed:
+			_request_rotate_grab.rpc_id(1, GRAB_ROTATE_STEP)
+		else:
+			inventory.select_offset(-1)
 	else:
 		for i in Inventory.SIZE:
 			if event.is_action_pressed("slot_%d" % (i + 1)):
@@ -256,6 +285,10 @@ func _physics_process(delta: float) -> void:
 		return
 	# Пока открыта пауза или меню, персонаж стоит
 	var controls := (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or test_controls) and not downed
+	if _tumble:
+		_update_tumble(delta)
+		_update_hud()
+		return
 	if _truck:
 		_ride(controls)
 		_update_hud()
@@ -294,10 +327,14 @@ func _process(delta: float) -> void:
 		health = minf(health + REGEN_RATE * delta, MAX_HEALTH)
 	if is_multiplayer_authority():
 		_update_weapon_feel(delta)
+		# В едущем пикапе место обновляем и при отрисовке, иначе пассажир дрожит
+		if is_instance_valid(_truck):
+			global_position = _truck.get_seat_position(_seat_index)
+			_update_truck_camera()
 
 
 ## Только на хосте. Урон игроку от существ.
-func take_damage(amount: float, from_position: Vector3) -> void:
+func take_damage(amount: float, from_position: Vector3, tumble := false) -> void:
 	if downed or not multiplayer.is_server():
 		return
 	if player_class == "herbalist":
@@ -306,7 +343,7 @@ func take_damage(amount: float, from_position: Vector3) -> void:
 	_last_hit_msec = Time.get_ticks_msec()
 	var away := global_position - from_position
 	away.y = 0.0
-	_hurt.rpc_id(get_multiplayer_authority(), away.normalized() * HURT_PUSH)
+	_hurt.rpc_id(get_multiplayer_authority(), away.normalized() * HURT_PUSH, tumble)
 	if health > 0.0:
 		return
 	downed = true
@@ -475,6 +512,10 @@ func _on_primary() -> void:
 		_start_grab(target)
 		return
 	var item := _get_held_item()
+	if target is Player and item and item.damage > 0 and not target.downed:
+		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE + 0.5:
+			_request_prank.rpc_id(1, target.get_path())
+		return
 	if target is Creature and item and item.damage > 0:
 		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE:
 			_request_hit.rpc_id(1, target.get_path(), item.damage)
@@ -576,9 +617,9 @@ func _update_hud() -> void:
 		hud.set_ability(text)
 	var hint := ""
 	if _truck:
-		hint = "WASD — ехать   Пробел — тормоз   E — выйти" if _seat_index == Truck.DRIVER_SEAT else "E — выйти"
+		hint = "W — газ   S — тормоз и назад   A/D — руль   Пробел — ручник   V — камера   E — выйти" if _seat_index == Truck.DRIVER_SEAT else "E — выйти"
 	elif _grabbed:
-		hint = "ПКМ — бросить"
+		hint = "ПКМ — бросить   Колесо — повернуть   R — поставить ровно"
 	else:
 		var target := _get_target()
 		if target is Grabbable:
@@ -867,6 +908,28 @@ func _perform_ability() -> String:
 						ally._restore_stamina.rpc_id(ally.get_multiplayer_authority())
 			return "Дым: разбежалось существ %d" % count
 	return ""
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_rotate_grab(degrees: float) -> void:
+	if _from_owner() and is_instance_valid(_server_grabbed):
+		_server_grabbed.rotate_target(clampf(degrees, -45.0, 45.0))
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_upright() -> void:
+	if _from_owner() and is_instance_valid(_server_grabbed):
+		_server_grabbed.make_upright()
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_prank(path: NodePath) -> void:
+	if not _from_owner() or downed:
+		return
+	var other := get_node_or_null(path) as Player
+	if other == null or other == self or other.global_position.distance_to(global_position) > MELEE_RANGE + 1.5:
+		return
+	other.take_damage(PRANK_DAMAGE, global_position, true)
 
 
 ## Только на хосте: опыт за дела своего класса
@@ -1177,11 +1240,66 @@ func _ammo_given(amount: int) -> void:
 
 ## Удар по владельцу: отбросить и показать красную вспышку
 @rpc("any_peer", "call_local", "reliable")
-func _hurt(push: Vector3) -> void:
+func _hurt(push: Vector3, tumble: bool) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
-	velocity += push + Vector3.UP * 3.0
 	hud.flash_damage()
+	if tumble:
+		start_tumble(push * TUMBLE_PUSH + Vector3.UP * TUMBLE_LIFT)
+	else:
+		velocity += push + Vector3.UP * 3.0
+
+
+# --- Кувырок (рэгдолл): сбили пикапом, боднул Таран, огрели лопатой ---
+
+## Только у владельца: тело превращается в физическую капсулу, летит и кувыркается,
+## а персонаж и камера следуют за ней. Остальные видят это через синхронизацию.
+func start_tumble(impulse: Vector3) -> void:
+	if _tumble or seated:
+		return
+	release_grab()
+	var body := RigidBody3D.new()
+	body.mass = 70.0
+	body.collision_layer = 0
+	body.collision_mask = 1 | 4
+	var shape := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.35
+	capsule.height = STAND_HEIGHT
+	shape.shape = capsule
+	body.add_child(shape)
+	get_tree().current_scene.add_child(body)
+	body.global_position = global_position + Vector3.UP * STAND_HEIGHT / 2.0
+	body.global_rotation = Vector3(0.0, rotation.y, 0.0)
+	body.linear_velocity = velocity + impulse
+	body.angular_velocity = Vector3(randf_range(-6.0, 6.0), randf_range(-3.0, 3.0), randf_range(-6.0, 6.0))
+	_tumble = body
+	_tumble_left = TUMBLE_TIME
+	_collision.disabled = true
+
+
+func _update_tumble(delta: float) -> void:
+	velocity = Vector3.ZERO
+	global_position = _tumble.global_position - Vector3.UP * STAND_HEIGHT / 2.0
+	_body.global_transform = _tumble.global_transform
+	_tumble_left -= delta
+	var settled := _tumble_left <= 0.0 and _tumble.linear_velocity.length() < 1.5
+	if settled or _tumble_left < -TUMBLE_TIME:
+		_end_tumble()
+
+
+func _end_tumble() -> void:
+	var landing := _tumble.global_position
+	_tumble.queue_free()
+	_tumble = null
+	# Встаём точно на поверхность под местом падения
+	var query := PhysicsRayQueryParameters3D.create(landing + Vector3.UP, landing + Vector3.DOWN * 4.0, 1)
+	var ground := get_world_3d().direct_space_state.intersect_ray(query)
+	var floor_y: float = ground.position.y if not ground.is_empty() else landing.y - 0.35
+	global_position = Vector3(landing.x, floor_y + 0.02, landing.z)
+	_collision.disabled = seated
+	_body.rotation = Vector3.ZERO
+	_body.position.y = _height / 2.0
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -1369,6 +1487,7 @@ func _ride(controls: bool) -> void:
 		return
 	velocity = Vector3.ZERO
 	global_position = _truck.get_seat_position(_seat_index)
+	_update_truck_camera()
 	if _seat_index != Truck.DRIVER_SEAT:
 		return
 	var throttle := 0.0
@@ -1381,7 +1500,20 @@ func _ride(controls: bool) -> void:
 	_drive.rpc_id(1, throttle, steer, brake_amount)
 
 
+## Вид от третьего лица в пикапе (V): камера сзади и сверху, плавно догоняет машину
+func _update_truck_camera() -> void:
+	if not third_person:
+		_camera.transform = Transform3D.IDENTITY
+		return
+	var focus := _truck.global_position + Vector3.UP * 1.3
+	var behind := focus - _truck.global_basis.z * THIRD_PERSON_DISTANCE + Vector3.UP * THIRD_PERSON_HEIGHT
+	var weight := minf(THIRD_PERSON_FOLLOW * get_physics_process_delta_time(), 1.0)
+	_camera.global_position = _camera.global_position.lerp(behind, weight)
+	_camera.look_at(focus, Vector3.UP)
+
+
 func _leave_truck() -> void:
+	_camera.transform = Transform3D.IDENTITY
 	global_position = _truck.get_exit_position(_seat_index)
 	velocity = Vector3.ZERO
 	_truck = null

@@ -57,6 +57,20 @@ bottom_radius = 0.4
 height = 0.3
 radial_segments = 10
 
+[sub_resource type="StandardMaterial3D" id="mat_far_grass"]
+albedo_color = Color(0.28, 0.42, 0.22, 1)
+roughness = 1.0
+
+[sub_resource type="PlaneMesh" id="mesh_far_ground"]
+material = SubResource("mat_far_grass")
+size = Vector2(3000, 3000)
+
+[sub_resource type="BoxShape3D" id="edge_x"]
+size = Vector3(2, 30, 220)
+
+[sub_resource type="BoxShape3D" id="edge_z"]
+size = Vector3(380, 30, 2)
+
 [node name="Farm" type="Node3D"]
 
 [node name="Ground" type="CSGBox3D" parent="."]
@@ -66,8 +80,8 @@ size = Vector3(360, 1, 200)
 material = SubResource("mat_grass")
 
 [node name="Road" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 84.5, 0.01, 0)
-size = Vector3(121, 0.02, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96.5, 0.01, 0)
+size = Vector3(145, 0.02, 4)
 material = SubResource("mat_dirt")
 
 [node name="Yard" type="CSGBox3D" parent="."]
@@ -708,3 +722,25 @@ transform = Transform3D(0.0178, 0, 0.9642, 0, 0.9643, 0, -0.9642, 0, 0.0178, 42.
 
 [node name="Tree170" parent="Forest" instance=ExtResource("1_tree")]
 transform = Transform3D(1.0057, 0, 0.1385, 0, 1.0152, 0, -0.1385, 0, 1.0057, 67.234, 0, -16.9865)
+
+[node name="FarGround" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, -0.03, 0)
+mesh = SubResource("mesh_far_ground")
+
+[node name="WorldEdge" type="StaticBody3D" parent="."]
+
+[node name="West" type="CollisionShape3D" parent="WorldEdge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -99, 14, 0)
+shape = SubResource("edge_x")
+
+[node name="East" type="CollisionShape3D" parent="WorldEdge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 259, 14, 0)
+shape = SubResource("edge_x")
+
+[node name="North" type="CollisionShape3D" parent="WorldEdge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 14, -99)
+shape = SubResource("edge_z")
+
+[node name="South" type="CollisionShape3D" parent="WorldEdge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 14, 99)
+shape = SubResource("edge_z")

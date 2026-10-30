@@ -23,6 +23,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/upgrade_board.tscn" id="26_board"]
 [ext_resource type="Script" path="res://scripts/world/tower_light.gd" id="27_tower_light"]
 [ext_resource type="PackedScene" path="res://scenes/items/slingshot.tscn" id="28_slingshot"]
+[ext_resource type="Script" path="res://scripts/world/forest_fill.gd" id="29_forest"]
 [ext_resource type="PackedScene" path="res://scenes/items/wheelbarrow.tscn" id="14_wheelbarrow"]
 [ext_resource type="PackedScene" path="res://scenes/farm/fence_segment.tscn" id="15_fence"]
 [ext_resource type="PackedScene" path="res://scenes/items/hammer.tscn" id="16_hammer"]
@@ -324,6 +325,9 @@ material = SubResource("gate_wood")
 
 [node name="Farm" parent="." instance=ExtResource("2_farm")]
 
+[node name="ForestFill" type="Node3D" parent="."]
+script = ExtResource("29_forest")
+
 [node name="Plots" type="Node3D" parent="."]
 
 [node name="Plot1" parent="Plots" instance=ExtResource("11_plot")]
@@ -384,6 +388,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 10.3)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 0, -2.5)
 
 [node name="Village" parent="." instance=ExtResource("19_village")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0, 0)
 
 [node name="Economy" type="Node" parent="."]
 script = ExtResource("20_economy")

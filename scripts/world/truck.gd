@@ -5,13 +5,18 @@ extends VehicleBody3D
 ## Физику считает хост: водитель шлёт ему нажатые клавиши, а всем остальным
 ## положение пикапа приходит через синхронизатор. Перед машины — по +Z.
 
-const MAX_ENGINE_FORCE := 1800.0
+const MAX_ENGINE_FORCE := 2600.0
 const MAX_BRAKE := 30.0
-const MAX_STEER := 0.5
+const MAX_STEER := 0.65
 ## На полной скорости руль поворачивается меньше, иначе пикап опрокидывается
-const HIGH_SPEED_STEER := 0.12
-const STEER_SPEED := 2.5
-const MAX_SPEED := 14.0
+const HIGH_SPEED_STEER := 0.2
+const STEER_SPEED := 3.0
+const MAX_SPEED := 16.0
+## Ручник: задние колёса почти теряют сцепление — пикап уходит в занос
+const HANDBRAKE_BRAKE := 4.0
+const REAR_GRIP := 2.5
+const DRIFT_GRIP := 1.2
+const GRIP_RECOVERY := 2.0
 const MAX_REVERSE_SPEED := 5.0
 ## Если водитель молчит дольше этого (вышел, отвалилась сеть) — пикап тормозит
 const INPUT_TIMEOUT := 0.3
@@ -24,6 +29,9 @@ const HEADLIGHT_RANGE := 20.0
 const HEADLIGHT_HALF_ANGLE := 25.0
 const RAM_SPEED := 6.0
 const RAM_REACH := 2.8
+## Сбить игрока: скорость, с которой он кувыркается, и урон
+const RUN_OVER_SPEED := 5.0
+const RUN_OVER_REACH := 2.0
 
 ## Мотор куплен (общее улучшение). Только на хосте.
 var motor_upgraded := false
@@ -38,8 +46,11 @@ var _input_age := INF
 var _start_transform: Transform3D
 var _driven := 0.0
 var _last_position := Vector3.ZERO
+## Кого и когда сбили: чтобы не бить одного игрока каждый кадр
+var _run_over := {}
 
 @onready var _seat_markers: Array[Marker3D] = [$Seats/Driver, $Seats/Passenger, $Seats/BedLeft, $Seats/BedRight]
+@onready var _rear_wheels: Array[VehicleWheel3D] = [$WheelRearLeft, $WheelRearRight]
 
 
 func _ready() -> void:
@@ -69,8 +80,22 @@ func _physics_process(delta: float) -> void:
 	if (_throttle > 0.0 and speed > MAX_SPEED * boost) or (_throttle < 0.0 and speed < -MAX_REVERSE_SPEED):
 		force = 0.0
 	engine_force = force
-	brake = _brake_input * MAX_BRAKE
+	# Пробел за рулём — ручник: немного тормозит и срывает задние колёса в занос.
+	# Без водителя тот же ввод держит пикап на месте полным тормозом.
+	if seats[DRIVER_SEAT] == 0 or _input_age > INPUT_TIMEOUT:
+		brake = MAX_BRAKE
+	elif (_throttle < 0.0 and speed > 1.0) or (_throttle > 0.0 and speed < -1.0):
+		# Газ против хода — это тормоз, а задний ход включится, когда пикап встанет
+		engine_force = 0.0
+		brake = MAX_BRAKE * 1.6 * absf(_throttle)
+	else:
+		brake = _brake_input * HANDBRAKE_BRAKE
+	for wheel in _rear_wheels:
+		var grip := DRIFT_GRIP if _brake_input > 0.5 and seats[DRIVER_SEAT] != 0 else REAR_GRIP
+		wheel.wheel_friction_slip = move_toward(wheel.wheel_friction_slip, grip, GRIP_RECOVERY * delta) if grip > wheel.wheel_friction_slip else grip
 	_award_driving(driver)
+	if absf(speed) > RUN_OVER_SPEED:
+		_run_over_players(speed)
 	if PlayerClasses.has(driver, "mechanic_b3") and speed > RAM_SPEED:
 		_ram(driver)
 
@@ -85,9 +110,10 @@ func scares(point: Vector3) -> bool:
 
 
 func _driver() -> Node:
-	if seats[DRIVER_SEAT] == 0:
+	var scene := get_tree().current_scene
+	if seats[DRIVER_SEAT] == 0 or scene == null:
 		return null
-	return get_tree().current_scene.get_node_or_null("Players/%d" % seats[DRIVER_SEAT])
+	return scene.get_node_or_null("Players/%d" % seats[DRIVER_SEAT])
 
 
 ## Механику за рулём — опыт за каждые 25 м
@@ -100,6 +126,19 @@ func _award_driving(driver: Node) -> void:
 	if _driven >= PlayerClasses.XP_DRIVE_METERS:
 		_driven -= PlayerClasses.XP_DRIVE_METERS
 		driver.add_xp(1)
+
+
+## Сбил игрока — урон и кувырок
+func _run_over_players(speed: float) -> void:
+	var bumper := global_position + global_basis.z * signf(speed) * 2.3
+	var now := Time.get_ticks_msec()
+	for player: Player in get_tree().get_nodes_in_group("players"):
+		if player.seated or player.downed or now - _run_over.get(player, -10000) < 1500:
+			continue
+		var feet := player.global_position + Vector3.UP
+		if Vector2(feet.x - bumper.x, feet.z - bumper.z).length() < RUN_OVER_REACH:
+			_run_over[player] = now
+			player.take_damage(8.0 + absf(speed), global_position, true)
 
 
 ## Таран: существа перед бампером на скорости

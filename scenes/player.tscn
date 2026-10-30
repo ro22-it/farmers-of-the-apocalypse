@@ -35,7 +35,7 @@ properties/4/spawn = true
 properties/4/replication_mode = 2
 properties/5/path = NodePath("Body:position")
 properties/5/spawn = true
-properties/5/replication_mode = 2
+properties/5/replication_mode = 1
 properties/6/path = NodePath(".:held_scene")
 properties/6/spawn = true
 properties/6/replication_mode = 2
@@ -45,6 +45,9 @@ properties/7/replication_mode = 2
 properties/8/path = NodePath(".:seated")
 properties/8/spawn = true
 properties/8/replication_mode = 2
+properties/9/path = NodePath("Body:rotation")
+properties/9/spawn = true
+properties/9/replication_mode = 1
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_server"]
 properties/0/path = NodePath(".:xp")
