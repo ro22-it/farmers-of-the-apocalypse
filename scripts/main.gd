@@ -23,6 +23,7 @@ var _placed_items: Array[Dictionary] = []
 @onready var _economy: Economy = $Economy
 @onready var _truck: Truck = $Truck
 @onready var _farm_upgrades: FarmUpgrades = $FarmUpgrades
+@onready var _save: SaveSystem = $SaveSystem
 
 
 func _ready() -> void:
@@ -35,6 +36,8 @@ func _ready() -> void:
 	_creature_spawner.add_spawnable_scene(NightDirector.TARAN.resource_path)
 
 	_menu.host_pressed.connect(_start_host)
+	_menu.continue_pressed.connect(_start_host.bind(true))
+	_day_night.phase_changed.connect(_on_phase_changed)
 	_menu.join_pressed.connect(_start_join)
 	_menu.leave_pressed.connect(_leave)
 	Network.session_started.connect(_on_session_started)
@@ -44,13 +47,20 @@ func _ready() -> void:
 	_handle_debug_args()
 
 
-func _start_host() -> void:
+## continue_game — продолжить сохранённый забег, иначе новый
+func _start_host(continue_game := false) -> void:
+	# Прогресс игроков нужен до подключения хоста: он сам первый «входит» в игру
+	var loaded := continue_game and _save.read()
+	if not loaded:
+		_save.clear_profiles()
 	var err := Network.host()
 	if err != OK:
 		_menu.show_main("Не удалось создать игру (ошибка %d). Возможно, порт %d занят." % [err, Network.DEFAULT_PORT])
 		return
 	# Пересоздаём уже в сети, чтобы спавнер отслеживал предметы и слал их новым игрокам
-	_reset_world(true)
+	_reset_world(not loaded)
+	if loaded:
+		_save.apply_world()
 
 
 func _start_join(address: String) -> void:
@@ -64,6 +74,8 @@ func _start_join(address: String) -> void:
 
 
 func _leave() -> void:
+	if multiplayer.is_server():
+		_save.save()
 	Network.leave()
 	_on_session_ended("")
 
@@ -85,13 +97,34 @@ func _on_session_ended(reason: String) -> void:
 
 func _on_player_joined(id: int, player_name: String, player_class: String) -> void:
 	var spot := SPAWN_POINT + Vector3(SPAWN_STEP * _players.get_child_count(), 0.0, 0.0)
-	_player_spawner.spawn({"id": id, "name": player_name, "class": player_class, "position": spot})
+	# Вернувшийся игрок получает свой класс, место и прогресс
+	var profile := _save.profile_for(player_name)
+	var player: Player = _player_spawner.spawn({
+		"id": id,
+		"name": player_name,
+		"class": profile.get("class", player_class),
+		"position": profile.get("position", spot),
+	})
+	if not profile.is_empty():
+		_save.apply_profile(player, profile)
 
 
 func _on_player_left(id: int) -> void:
 	var player := _players.get_node_or_null(str(id))
 	if player:
+		_save.remember(player)
 		player.queue_free()
+
+
+func _on_phase_changed(is_night: bool, _day: int) -> void:
+	# Автосохранение на рассвете
+	if not is_night and multiplayer.is_server() and _day_night.running:
+		_save.save()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and multiplayer.is_server() and _day_night.running:
+		_save.save()
 
 
 ## Вызывается спавнером на всех компьютерах с одинаковыми данными.
@@ -148,6 +181,8 @@ func _handle_debug_args() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--host":
 			_start_host()
+		elif arg == "--continue":
+			_start_host(true)
 		elif arg.begins_with("--join="):
 			_start_join(arg.trim_prefix("--join="))
 		elif arg.begins_with("--screenshot="):

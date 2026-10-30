@@ -5,6 +5,7 @@ extends CanvasLayer
 ## Как и HUD, собирается из кода.
 
 signal host_pressed
+signal continue_pressed
 signal join_pressed(address: String)
 signal leave_pressed
 
@@ -23,6 +24,7 @@ var _status: Label
 var _buttons: Array[Button] = []
 var _in_session := false
 var _settings_panel: SettingsPanel
+var _continue_button: Button
 
 
 func _ready() -> void:
@@ -48,6 +50,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func show_main(status: String) -> void:
 	_in_session = false
+	# «Продолжить» — только если есть сохранение
+	var saved := SaveSystem.info()
+	_continue_button.visible = saved != ""
+	_continue_button.text = "Продолжить (%s)" % saved
 	_pause_panel.hide()
 	_main_panel.show()
 	_set_busy(false)
@@ -92,6 +98,12 @@ func _set_busy(busy: bool) -> void:
 func _on_class_selected(index: int) -> void:
 	Network.player_class = PlayerClasses.ORDER[index]
 	_class_description.text = PlayerClasses.get_info(Network.player_class).description
+
+
+func _on_continue() -> void:
+	Network.player_name = Network.clean_name(_name_edit.text)
+	Network.save_settings()
+	continue_pressed.emit()
 
 
 func _on_host() -> void:
@@ -147,7 +159,9 @@ func _build_main() -> Control:
 	_tutorial_check.toggled.connect(func(on: bool): Network.tutorial_enabled = on)
 	box.add_child(_tutorial_check)
 
-	var host_button := _make_button("Создать игру", _on_host)
+	_continue_button = _make_button("Продолжить", _on_continue)
+	box.add_child(_continue_button)
+	var host_button := _make_button("Новая игра", _on_host)
 	box.add_child(host_button)
 
 	box.add_child(_make_label("IP хоста", 16, HORIZONTAL_ALIGNMENT_LEFT))

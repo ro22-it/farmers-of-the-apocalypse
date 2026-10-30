@@ -183,6 +183,27 @@ func _run() -> void:
 	check(await wait_for(func(): return player.downed), "клиент без сознания")
 	check(await wait_for(func(): return not player.downed and player.health >= 29.0), "хост поднял клиента")
 
+	# Вылет и возвращение: прогресс должен вернуться
+	var skills_before := player.skills
+	var xp_before := player.xp
+	var items_before := []
+	for slot: Dictionary in player.inventory.slots:
+		if not slot.is_empty():
+			items_before.append(slot.path)
+	await frames(30)
+	main._leave()
+	await frames(60)
+	main._start_join("127.0.0.1")
+	check(await wait_for(func(): return players.get_node_or_null(my_name.call()) != null), "клиент снова подключился")
+	player = players.get_node(my_name.call())
+	check(await wait_for(func(): return player.xp == xp_before and "hunter_a1" in player.skills), "после переподключения вернулись опыт и навыки")
+	check(await wait_for(func():
+		var now := []
+		for slot: Dictionary in player.inventory.slots:
+			if not slot.is_empty():
+				now.append(slot.path)
+		return now.size() == items_before.size() and items_before.size() > 0), "после переподключения вернулся инвентарь (%d вещей)" % items_before.size())
+
 	await frames(30)
 	root.get_node("Network").leave()
 	print("КЛИЕНТ ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))

@@ -799,5 +799,56 @@ func _run() -> void:
 	settings.effects_volume = 1.0
 	settings.apply()
 
+	# --- Сохранение и загрузка ---
+	var saver: SaveSystem = main.get_node("SaveSystem")
+	check(saver.save_path == SaveSystem.TEST_SAVE, "тест пишет в отдельный файл, а не в сохранение игрока")
+	var save_plot: Plot = main.get_node("Plots/Plot5")
+	save_plot.reset()
+	save_plot.state = Plot.State.PLANTED
+	save_plot.crop = "corn"
+	save_plot.growth = 0.7
+	economy.money = 321
+	day_night.day = 4
+	player.xp = 150
+	player.skills = PackedStringArray(["herder_a1"])
+	player.inventory.select(1)
+	player.inventory.take_selected()
+	player.inventory.add("res://scenes/items/hammer.tscn", "Молоток")
+	await frames(5)
+	# Тела монстров не сохраняются — они всё равно исчезают через полторы минуты
+	var count_items := func():
+		var n := 0
+		for node in items_node.get_children():
+			if not node is Corpse and not node.is_queued_for_deletion():
+				n += 1
+		return n
+	var saved_items: int = count_items.call()
+	check(saver.save(), "игра сохранена")
+	# Портим мир и прогресс
+	main._reset_world(true)
+	player.xp = 0
+	player.skills = PackedStringArray()
+	for i in Inventory.SIZE:
+		player.inventory.slots[i] = {}
+	player.inventory.changed.emit()
+	await frames(5)
+	check(economy.money == Economy.START_MONEY and save_plot.state == Plot.State.UNTILLED, "мир сброшен")
+	check(saver.read(), "сохранение прочитано")
+	main._reset_world(false)
+	saver.apply_world()
+	await frames(5)
+	check(economy.money == 321 and day_night.day == 4, "вернулись деньги и день")
+	check(save_plot.state == Plot.State.PLANTED and save_plot.crop == "corn" and is_equal_approx(save_plot.growth, 0.7), "вернулась кукуруза на грядке")
+	check(count_items.call() == saved_items, "вернулись предметы (%d из %d)" % [count_items.call(), saved_items])
+	saver.apply_profile(player, saver.profile_for(player.player_name))
+	await frames(60)
+	check(player.xp == 150 and "herder_a1" in player.skills, "вернулись опыт и навыки игрока")
+	var has_hammer := false
+	for slot: Dictionary in player.inventory.slots:
+		has_hammer = has_hammer or str(slot.get("path", "")).ends_with("hammer.tscn")
+	check(has_hammer, "вернулся инвентарь игрока")
+	saver.delete_save()
+	check(not FileAccess.file_exists(SaveSystem.TEST_SAVE), "тестовое сохранение удалено")
+
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

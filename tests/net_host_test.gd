@@ -89,6 +89,13 @@ func _run() -> void:
 	host_player._request_revive.rpc_id(1, remote.get_path())
 	await frames(5)
 	check(not remote.downed and is_equal_approx(remote.health, Player.REVIVE_HEALTH), "хост поднял клиента")
+	check(await wait_for(func(): return players.get_child_count() == 1), "клиент вышел")
+	check(await wait_for(func(): return players.get_child_count() == 2), "клиент вернулся")
+	var returned: Player
+	for p in players.get_children():
+		if p.name != "1":
+			returned = p
+	check(returned != null and "hunter_a1" in returned.skills and returned.player_class == "hunter", "хост вернул вернувшемуся класс и навыки")
 	check(await wait_for(func(): return players.get_child_count() == 1), "после выхода клиента его персонаж убран")
 	print("ХОСТ ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

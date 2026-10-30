@@ -144,6 +144,9 @@ var _shake := 0.0
 ## Только на хосте: не чаще, чем позволяет оружие
 var _server_next_shot_msec := 0
 
+## Только на хосте: инвентарь, о котором сообщил владелец (для сохранения)
+var reported_inventory: Array = []
+
 ## Кувырок: физическая капсула, за которой следует персонаж (только у владельца)
 var _tumble: RigidBody3D = null
 var _tumble_left := 0.0
@@ -617,6 +620,8 @@ func _on_inventory_changed() -> void:
 	held_scene = slot.get("path", "")
 	held_active = false
 	hud.update_inventory(inventory)
+	# Хост сохраняет инвентарь, но знает его только со слов владельца
+	_report_inventory.rpc_id(1, inventory.slots)
 
 
 func _update_hud() -> void:
@@ -962,6 +967,22 @@ func _request_prank(path: NodePath) -> void:
 	if other == null or other == self or other.global_position.distance_to(global_position) > MELEE_RANGE + 1.5:
 		return
 	other.take_damage(PRANK_DAMAGE, global_position, true)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _report_inventory(slots: Array) -> void:
+	if _from_owner():
+		reported_inventory = slots.duplicate(true)
+
+
+## Вернувшийся игрок получает свой инвентарь
+@rpc("any_peer", "call_local", "reliable")
+func _restore_inventory(slots: Array) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	for i in mini(slots.size(), Inventory.SIZE):
+		inventory.slots[i] = slots[i]
+	inventory.changed.emit()
 
 
 ## Только на хосте: опыт за дела своего класса
