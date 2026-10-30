@@ -30,6 +30,10 @@ func add(path: String, item_name: String) -> bool:
 	return true
 
 
+func has_free_slot() -> bool:
+	return _first_free_slot() != -1
+
+
 func get_selected() -> Dictionary:
 	return slots[selected]
 

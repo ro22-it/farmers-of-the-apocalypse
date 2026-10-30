@@ -1,0 +1,103 @@
+extends SceneTree
+
+## Сетевой тест, сторона клиента (см. net_host_test.gd).
+## Подключается к 127.0.0.1 и делает всё через запросы к хосту.
+
+const TIMEOUT_FRAMES := 600
+
+var main: Node
+var player: Player
+var failures := 0
+
+
+func _initialize() -> void:
+	main = load("res://scenes/main.tscn").instantiate()
+	root.add_child(main)
+	current_scene = main
+	_run()
+
+
+func check(cond: bool, msg: String) -> void:
+	print(("КЛИЕНТ OK   " if cond else "КЛИЕНТ FAIL ") + msg)
+	if not cond:
+		failures += 1
+
+
+func wait_for(cond: Callable) -> bool:
+	for i in TIMEOUT_FRAMES:
+		if cond.call():
+			return true
+		await physics_frame
+	return false
+
+
+func frames(n: int) -> void:
+	for i in n:
+		await physics_frame
+
+
+func aim_at(target: Vector3) -> void:
+	var cam: Camera3D = player.get_node("Head/Camera3D")
+	var dir := target - cam.global_position
+	player.rotation.y = atan2(-dir.x, -dir.z)
+	player.get_node("Head").rotation.x = atan2(dir.y, Vector2(dir.x, dir.z).length())
+
+
+func _run() -> void:
+	await physics_frame
+	root.get_node("Network").player_name = "Клиент"
+	main._start_join("127.0.0.1")
+	var players: Node = main.get_node("Players")
+	var items: Node = main.get_node("Items")
+
+	var my_name := func(): return str(root.multiplayer.get_unique_id())
+	check(await wait_for(func(): return players.get_node_or_null(my_name.call()) != null), "свой персонаж создан хостом")
+	player = players.get_node(my_name.call())
+	check(await wait_for(func(): return players.get_child_count() == 2), "виден хост")
+	check(players.get_node("1").player_name == "Хост", "имя хоста дошло")
+	check(await wait_for(func(): return items.get_child_count() == 11), "пришли все 11 предметов от хоста")
+	var crate: Grabbable = items.get_node("Crate1")
+	check(crate.freeze, "у клиента предметы не считают физику сами")
+	await frames(30)
+
+	# Хватка и бросок через хоста
+	player.global_position = crate.global_position + Vector3(0, -0.4, 2.2)
+	await frames(10)
+	aim_at(crate.global_position)
+	await frames(5)
+	player._on_primary()
+	await frames(60)
+	var hold := player.get_hold_position()
+	check(crate.global_position.distance_to(hold) < 1.0, "ящик висит перед клиентом (%.2f м)" % crate.global_position.distance_to(hold))
+	check(crate.holder_count == 1, "хост сообщил, что ящик несут")
+	var before := crate.global_position
+	player.get_node("Head").rotation.x = 0.0
+	await frames(20)
+	player.release_grab(true)
+	await frames(90)
+	check(crate.global_position.distance_to(before) > 2.0, "ящик улетел после броска (%.1f м)" % crate.global_position.distance_to(before))
+
+	# Фонарь: взять, включить, выбросить
+	var flashlight: Node3D = items.get_node("Flashlight")
+	var flashlight_ref: WeakRef = weakref(flashlight)
+	player.global_position = Vector3(-8.1, 0.05, -0.8)
+	await frames(10)
+	aim_at(flashlight.global_position)
+	await frames(5)
+	player._try_pickup()
+	flashlight = null
+	check(await wait_for(func(): return player.inventory.get_selected().get("name") == "Фонарь"), "фонарь в инвентаре")
+	check(await wait_for(func(): return flashlight_ref.get_ref() == null), "фонарь исчез со стола и у клиента")
+	await frames(5)
+	player._on_primary()
+	check(player.held_active, "фонарь включён")
+	await frames(120)
+	var count := items.get_child_count()
+	player._drop_selected()
+	check(await wait_for(func(): return items.get_child_count() == count + 1), "выброшенный фонарь появился в мире")
+
+	await frames(30)
+	root.get_node("Network").leave()
+	print("КЛИЕНТ ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
+	await frames(10)
+	quit(failures)

@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/items/grabbable.gd" id="1_grab"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_grabbable.tres" id="9_sync"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hay"]
 size = Vector3(1.2, 0.6, 0.7)
@@ -24,3 +25,7 @@ shape = SubResource("BoxShape3D_hay")
 
 [node name="Mesh" type="MeshInstance3D" parent="."]
 mesh = SubResource("BoxMesh_hay")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")

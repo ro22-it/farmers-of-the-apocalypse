@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/world/farm.tscn" id="2_farm"]
-[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="3_player"]
+[ext_resource type="Script" path="res://scripts/ui/menu.gd" id="3_menu"]
 [ext_resource type="PackedScene" path="res://scenes/items/crate.tscn" id="4_crate"]
 [ext_resource type="PackedScene" path="res://scenes/items/pumpkin.tscn" id="5_pumpkin"]
 [ext_resource type="PackedScene" path="res://scenes/items/hay_bale.tscn" id="6_hay"]
@@ -83,5 +83,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.8, 1.08, -2.5)
 [node name="Flashlight" parent="Items" instance=ExtResource("10_flashlight")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.1, 0.95, -2.5)
 
-[node name="Player" parent="." instance=ExtResource("3_player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 18)
+[node name="Players" type="Node3D" parent="."]
+
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Players")
+
+[node name="ItemSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Items")
+
+[node name="MenuCamera" type="Camera3D" parent="."]
+transform = Transform3D(0.9659, 0.0885, -0.2432, 0, 0.9397, 0.342, 0.2588, -0.3304, 0.9077, -8, 9, 32)
+current = true
+fov = 65.0
+
+[node name="Menu" type="CanvasLayer" parent="."]
+script = ExtResource("3_menu")

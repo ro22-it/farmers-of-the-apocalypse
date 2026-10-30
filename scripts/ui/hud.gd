@@ -9,7 +9,7 @@ const SLOT_BORDER := Color(1.0, 0.85, 0.4)
 const STAMINA_COLOR := Color(0.95, 0.85, 0.35)
 const EXHAUSTED_COLOR := Color(0.9, 0.3, 0.25)
 const MESSAGE_TIME := 2.5
-const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — присесть   Пробел — прыжок\nЛКМ — тащить / использовать   ПКМ — бросить   E — взять   G — выбросить\n1–4, колесо — слоты   Esc — освободить мышь   F1 — скрыть подсказку"
+const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — присесть   Пробел — прыжок\nЛКМ — тащить / использовать   ПКМ — бросить   E — взять   G — выбросить\n1–4, колесо — слоты   Esc — пауза   F1 — скрыть подсказку"
 
 var _hint: Label
 var _message: Label
@@ -25,7 +25,7 @@ var _slot_selected_style: StyleBoxFlat
 
 func _ready() -> void:
 	var root := Control.new()
-	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 

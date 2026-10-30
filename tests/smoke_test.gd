@@ -2,6 +2,8 @@ extends SceneTree
 
 var main: Node
 var player: Player
+
+## Одиночная игра: хост без друзей. Проверяет хватку, бросок, инвентарь и фонарь.
 var failures := 0
 
 
@@ -9,7 +11,6 @@ func _initialize() -> void:
 	main = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main)
 	current_scene = main
-	player = main.get_node("Player")
 	_run()
 
 
@@ -32,7 +33,10 @@ func aim_at(target: Vector3) -> void:
 
 
 func _run() -> void:
+	await frames(5)
+	main._start_host()
 	await frames(120)
+	player = main.get_node("Players/1")
 	check(player.is_on_floor(), "игрок стоит на земле, y=%.2f" % player.global_position.y)
 
 	for item in main.get_node("Items").get_children():
@@ -97,11 +101,9 @@ func _run() -> void:
 	var hay: Grabbable = main.get_node("Items/HayBale")
 	hay.start_grab(player)
 	check(hay.get_carry_factor() < 0.6, "тюк сена тяжёлый для одного (%.2f)" % hay.get_carry_factor())
-	var helper := Node3D.new()
-	hay.holders.append(helper)
+	hay.holder_count = 2
 	check(hay.get_carry_factor() > 0.6, "вдвоём легче (%.2f)" % hay.get_carry_factor())
-	hay.holders.clear()
-	helper.free()
+	hay.stop_grab(player)
 
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

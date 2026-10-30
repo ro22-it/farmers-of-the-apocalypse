@@ -9,13 +9,23 @@ extends PickupItem
 
 
 func _ready() -> void:
+	super()
 	_light.visible = is_on
 
 
 func use(_user: Player) -> void:
-	is_on = not is_on
-	_light.visible = is_on
+	set_active(not is_on)
 
 
 func get_use_hint() -> String:
 	return "ЛКМ — выключить фонарь" if is_on else "ЛКМ — включить фонарь"
+
+
+func is_active() -> bool:
+	return is_on
+
+
+func set_active(value: bool) -> void:
+	is_on = value
+	if _light:
+		_light.visible = is_on

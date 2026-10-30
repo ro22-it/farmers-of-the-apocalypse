@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/items/pickup_item.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_can"]
 size = Vector3(0.32, 0.36, 0.5)
@@ -52,3 +53,7 @@ mesh = SubResource("CylinderMesh_spout")
 [node name="Handle" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0.02)
 mesh = SubResource("BoxMesh_handle")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")

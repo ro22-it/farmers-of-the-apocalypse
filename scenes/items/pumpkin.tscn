@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/items/grabbable.gd" id="1_grab"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_grabbable.tres" id="9_sync"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_pumpkin"]
 radius = 0.36
@@ -41,3 +42,7 @@ mesh = SubResource("SphereMesh_pumpkin")
 [node name="Stem" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
 mesh = SubResource("CylinderMesh_stem")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")
