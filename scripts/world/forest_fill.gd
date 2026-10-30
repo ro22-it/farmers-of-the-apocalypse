@@ -2,10 +2,17 @@ extends Node3D
 
 ## Густой лес до самых краёв карты, чтобы не было видно, где она кончается.
 ## Сосны и мёртвые деревья (Quaternius, CC0), между ними кусты и камни.
-## Всё рисуется пачками (MultiMesh) — тысячи деревьев почти не нагружают видеокарту.
+## Всё рисуется пачками (MultiMesh) по участкам CHUNK×CHUNK метров: видеокарта рисует
+## только участки в поле зрения и ближе дальности леса из настройки качества.
 ## Расстановка одинаковая у всех игроков (фиксированное зерно), синхронизировать не нужно.
 
 const PREFABS := "res://assets/nature/prefabs/%s.tscn"
+const CHUNK := 32.0
+## Дальность леса и тени деревьев по качеству графики: низкое, среднее, высокое
+const VIEW_DISTANCE := [70.0, 110.0, 170.0]
+const TREE_SHADOWS := [false, true, true]
+## Кусты и камни мелкие — их видно ближе
+const DECOR_DISTANCE_FACTOR := 0.5
 ## Деревья: сцена, вес (как часто встречается), масштаб от и до
 const TREES := [
 	["pine_tree_1", 1.0, 1.3, 2.0], ["pine_tree_2", 1.0, 1.3, 2.0], ["pine_tree_3", 1.0, 1.6, 2.4],
@@ -33,7 +40,12 @@ const ROAD_HALF_WIDTH := 7.0
 const ROAD_FROM_X := 20.0
 
 
+var _trees: Array[MultiMeshInstance3D] = []
+var _decor: Array[MultiMeshInstance3D] = []
+
+
 func _ready() -> void:
+	add_to_group("graphics_quality")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = SEED
 	var trees := {}
@@ -57,14 +69,39 @@ func _ready() -> void:
 			z += SPACING
 		x += SPACING
 	for name in trees:
-		_add_batch(name, trees[name])
+		for chunk in _split(trees[name]):
+			_trees.append_array(_add_batch(name, chunk))
 	for name in decor:
-		_add_batch(name, decor[name])
+		for chunk in _split(decor[name]):
+			_decor.append_array(_add_batch(name, chunk))
 	_add_trunk_collisions(trunks)
+	var settings := get_node_or_null("/root/Settings")
+	apply_quality(settings.quality if settings else 1)
 
 
-## Одна пачка на вид дерева: берём меши из сцены вместе с материалами
-func _add_batch(name: String, transforms: Array) -> void:
+## Дальность и тени по качеству графики (вызывает Settings)
+func apply_quality(level: int) -> void:
+	level = clampi(level, 0, VIEW_DISTANCE.size() - 1)
+	for instance in _trees:
+		instance.visibility_range_end = VIEW_DISTANCE[level]
+		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if TREE_SHADOWS[level] else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for instance in _decor:
+		instance.visibility_range_end = VIEW_DISTANCE[level] * DECOR_DISTANCE_FACTOR
+		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## Делит положения на участки по сетке
+static func _split(transforms: Array) -> Array:
+	var chunks := {}
+	for t: Transform3D in transforms:
+		var key := Vector2i(floori(t.origin.x / CHUNK), floori(t.origin.z / CHUNK))
+		chunks.get_or_add(key, []).append(t)
+	return chunks.values()
+
+
+## Пачка одного вида на участке: берём меши из сцены вместе с материалами
+func _add_batch(name: String, transforms: Array) -> Array[MultiMeshInstance3D]:
+	var made: Array[MultiMeshInstance3D] = []
 	var template: Node3D = load(PREFABS % name).instantiate()
 	for part: MeshInstance3D in template.find_children("*", "MeshInstance3D", true, false):
 		var mesh: Mesh = part.mesh.duplicate()
@@ -81,8 +118,13 @@ func _add_batch(name: String, transforms: Array) -> void:
 			multimesh.set_instance_transform(i, transforms[i] * local)
 		var instance := MultiMeshInstance3D.new()
 		instance.multimesh = multimesh
+		# Дальние участки плавно растворяются в тумане, а не исчезают
+		instance.visibility_range_end_margin = 10.0
+		instance.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
 		add_child(instance)
+		made.append(instance)
 	template.free()
+	return made
 
 
 ## Стволы твёрдые: одно статическое тело на весь лес

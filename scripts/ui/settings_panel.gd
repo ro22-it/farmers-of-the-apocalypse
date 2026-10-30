@@ -31,6 +31,7 @@ func _ready() -> void:
 	box.add_child(_title("Настройки", 28))
 	box.add_child(_title("Экран и графика", 18))
 	box.add_child(_check("Полный экран (F11)", "fullscreen"))
+	box.add_child(_option("Качество графики", ["Низкое", "Среднее", "Высокое"], _settings.quality, func(i: int): _change("quality", i)))
 	box.add_child(_check("Вертикальная синхронизация", "vsync"))
 	box.add_child(_option("Ограничение кадров", FPS_NAMES, _settings.FPS_CHOICES.find(_settings.max_fps), func(i: int): _change("max_fps", _settings.FPS_CHOICES[i])))
 	box.add_child(_option("Тени", SHADOW_NAMES, _settings.shadows, func(i: int): _change("shadows", i)))

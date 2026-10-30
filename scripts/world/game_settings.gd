@@ -17,6 +17,9 @@ var max_fps := 0
 var render_scale := 1.0
 ## 0 — без теней, 1 — простые, 2 — чёткие
 var shadows := 2
+## Качество графики: 0 — низкое, 1 — среднее, 2 — высокое.
+## Дальность леса, тени деревьев, затенение (SSAO), свечение, сглаживание.
+var quality := 1
 var fov := 80.0
 var master_volume := 1.0
 var ambience_volume := 0.8
@@ -43,6 +46,10 @@ func apply() -> void:
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = max_fps
 	get_tree().root.scaling_3d_scale = render_scale
+	# Уменьшенное разрешение растягиваем FSR — заметно чётче простого растяжения
+	get_tree().root.scaling_3d_mode = Viewport.SCALING_3D_MODE_FSR if render_scale < 1.0 else Viewport.SCALING_3D_MODE_BILINEAR
+	get_tree().root.msaa_3d = Viewport.MSAA_DISABLED if quality == 0 else Viewport.MSAA_2X
+	get_tree().call_group("graphics_quality", "apply_quality", quality)
 	if shadows > 0:
 		RenderingServer.directional_shadow_atlas_set_size(SHADOW_SIZES[shadows], true)
 	get_tree().call_group("shadow_lights", "set", "shadow_enabled", shadows > 0)
@@ -63,6 +70,7 @@ func save() -> void:
 	config.set_value("video", "max_fps", max_fps)
 	config.set_value("video", "render_scale", render_scale)
 	config.set_value("video", "shadows", shadows)
+	config.set_value("video", "quality", quality)
 	config.set_value("video", "fov", fov)
 	config.set_value("audio", "master", master_volume)
 	config.set_value("audio", "ambience", ambience_volume)
@@ -81,6 +89,7 @@ func _load() -> void:
 	max_fps = config.get_value("video", "max_fps", max_fps)
 	render_scale = config.get_value("video", "render_scale", render_scale)
 	shadows = config.get_value("video", "shadows", shadows)
+	quality = config.get_value("video", "quality", quality)
 	fov = config.get_value("video", "fov", fov)
 	master_volume = config.get_value("audio", "master", master_volume)
 	ambience_volume = config.get_value("audio", "ambience", ambience_volume)

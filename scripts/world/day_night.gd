@@ -46,6 +46,7 @@ var _was_night := false
 
 func _ready() -> void:
 	add_to_group("day_night")
+	add_to_group("graphics_quality")
 	_sun.add_to_group("shadow_lights")
 	_moon.add_to_group("shadow_lights")
 	var settings := get_node_or_null("/root/Settings")
@@ -78,6 +79,14 @@ func reset() -> void:
 ## Отладка: за несколько секунд до ближайшего заката или рассвета
 func skip_to_next_phase() -> void:
 	cycle_time = (CYCLE if is_night() else DAY_LENGTH) - 3.0
+
+
+## Эффекты экрана и дальность теней по качеству графики (вызывает Settings)
+func apply_quality(level: int) -> void:
+	_environment.ssao_enabled = level >= 2
+	_environment.glow_enabled = level >= 1
+	_sun.directional_shadow_max_distance = [40.0, 60.0, 80.0][clampi(level, 0, 2)]
+	_moon.directional_shadow_max_distance = [30.0, 45.0, 60.0][clampi(level, 0, 2)]
 
 
 func is_night() -> bool:
