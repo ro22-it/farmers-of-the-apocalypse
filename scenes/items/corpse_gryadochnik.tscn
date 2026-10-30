@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/creatures/corpse.gd" id="1_corpse"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_grabbable.tres" id="2_sync"]
+[ext_resource type="PackedScene" path="res://scenes/creatures/models/gryadochnik_model.tscn" id="3_model"]
+
+[sub_resource type="BoxShape3D" id="shape"]
+size = Vector3(0.9, 0.4, 1.1)
+
+[node name="CorpseGryadochnik" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 15.0
+script = ExtResource("1_corpse")
+display_name = "Тело Грядочника"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+shape = SubResource("shape")
+
+[node name="Look" parent="." instance=ExtResource("3_model")]
+frozen_pose = "Death"
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("2_sync")

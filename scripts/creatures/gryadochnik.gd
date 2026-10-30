@@ -24,6 +24,7 @@ var _light_check := 0.0
 var _bite_time := 0.0
 
 @onready var _model: Node3D = $Model
+@onready var _look: CreepyModel = $Model/Look
 @onready var _loot: Node3D = $Model/Loot
 
 
@@ -160,17 +161,16 @@ func _on_died() -> void:
 
 
 ## Анимация по состоянию — одинаково у хоста и клиентов.
-func _animate(delta: float) -> void:
+func _animate(_delta: float) -> void:
 	_loot.visible = carrying != ""
-	var rate := 14.0 if state == State.FLEE or state == State.SCARED else 9.0
-	if _is_moving():
-		_anim_time += delta * rate
-		_model.position.y = absf(sin(_anim_time)) * 0.08
-		_model.rotation.x = 0.0
-	elif state == State.CHEW or state == State.EAT:
-		_anim_time += delta * 18.0
-		_model.position.y = 0.0
-		_model.rotation.x = -0.25 + sin(_anim_time) * 0.12
-	else:
-		_model.position.y = 0.0
-		_model.rotation.x = 0.0
+	match state:
+		State.FLEE, State.SCARED:
+			_look.play("Run", 1.3)
+		State.APPROACH:
+			_look.play("Walk", 1.6)
+		State.CHEW, State.EAT:
+			_look.play("Punch", 1.4)
+		State.TRAPPED:
+			_look.play("No", 1.5)
+		_:
+			_look.play("Idle")

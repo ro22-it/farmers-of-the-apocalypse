@@ -224,7 +224,21 @@ func _run() -> void:
 		player._on_primary()
 		await frames(5)
 	check(not is_instance_valid(thief), "после трёх ударов лопатой Грядочник повержен")
-	check(main.get_node("Items").get_child_count() == items_before + 1, "он выронил украденную морковь")
+	var corpse: Corpse = null
+	var carrots := 0
+	for node in main.get_node("Items").get_children():
+		if node is Corpse:
+			corpse = node
+		elif node.scene_file_path.ends_with("carrot.tscn"):
+			carrots += 1
+	check(main.get_node("Items").get_child_count() == items_before + 2 and carrots > 0, "он выронил украденную морковь")
+	check(corpse != null, "от Грядочника осталось тело")
+	if corpse:
+		await frames(20)
+		check(corpse.global_position.distance_to(player.global_position) > 1.0, "тело отлетело от удара")
+		corpse.lifetime = 0.1
+		await frames(20)
+		check(not is_instance_valid(corpse), "тело исчезает по таймеру")
 
 	# Свет фонаря
 	var shy := director.spawn_gryadochnik(Vector3(3.0, 0.3, 21.0))
@@ -752,6 +766,23 @@ func _run() -> void:
 	await frames(3)
 	check(is_equal_approx(buddy.health, Player.MAX_HEALTH - Player.PRANK_DAMAGE), "удар лопатой по товарищу: −5 здоровья")
 	buddy.queue_free()
+
+	# Пинок пустой рукой: отбрасывает, но не ранит
+	player.inventory.select(0)
+	player.inventory.take_selected()
+	director.reset()
+	await frames(3)
+	player.global_position = Vector3(-4.0, 0.05, 20.0)
+	await frames(3)
+	var kicked := director.spawn_gryadochnik(player.global_position + Vector3(0, 0.3, -1.4))
+	kicked.trap(0.0)
+	await frames(2)
+	var kick_from := kicked.global_position
+	aim_at(kicked.global_position + Vector3(0, 0.5, 0))
+	player._on_primary()
+	await frames(15)
+	check(kicked.hp == kicked.max_hp and kicked.global_position.distance_to(kick_from) > 0.5, "пинок отбрасывает монстра без урона")
+	kicked.queue_free()
 
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

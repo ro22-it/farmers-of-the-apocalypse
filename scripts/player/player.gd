@@ -516,6 +516,10 @@ func _on_primary() -> void:
 		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE + 0.5:
 			_request_prank.rpc_id(1, target.get_path())
 		return
+	if target is Creature and (item == null or item.damage == 0):
+		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE:
+			_request_hit.rpc_id(1, target.get_path(), 0)
+		return
 	if target is Creature and item and item.damage > 0:
 		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE:
 			_request_hit.rpc_id(1, target.get_path(), item.damage)
@@ -639,7 +643,7 @@ func _update_hud() -> void:
 			if weapon and weapon.damage > 0:
 				hint = "%s — ЛКМ: ударить" % target.display_name
 			else:
-				hint = "%s! Посветите фонарём или возьмите лопату" % target.display_name
+				hint = "%s — ЛКМ: пнуть. Посветите фонарём или возьмите лопату" % target.display_name
 			# Охотник знает слабости существ
 			if player_class == "hunter" and target.weakness != "":
 				hint += "\nСлабость: %s" % target.weakness
@@ -748,7 +752,8 @@ func _request_hit(path: NodePath, amount: int) -> void:
 	if creature == null or creature.global_position.distance_to(_camera.global_position) > MELEE_RANGE + 1.0:
 		return
 	# Урон считает хост по классу и навыкам
-	var damage := PlayerClasses.weapon_damage(self, clampi(amount, 0, 3))
+	# 0 — пинок пустой рукой: без урона, только отбросить
+	var damage := 0 if amount <= 0 else PlayerClasses.weapon_damage(self, clampi(amount, 0, 3))
 	if PlayerClasses.has(self, "hunter_a3") and randf() < 0.25:
 		damage *= 2
 	var stun := PlayerClasses.has(self, "hunter_a2")

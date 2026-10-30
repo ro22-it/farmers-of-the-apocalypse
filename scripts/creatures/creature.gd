@@ -18,6 +18,8 @@ const FOREST_RADIUS := 38.0
 @export var display_name := "Существо"
 ## Слабость — её видит охотник в подсказке
 @export var weakness := ""
+## Тело, которое остаётся после победы (физический предмет)
+@export_file("*.tscn") var corpse_scene := ""
 @export var max_hp := 3
 @export var speed := 3.2
 @export var flee_speed := 5.0
@@ -94,6 +96,7 @@ func take_hit(amount: int, from_position: Vector3, knockback := 1.0, scare_time 
 	_knockback_time = KNOCKBACK_TIME
 	if hp <= 0:
 		_on_died()
+		_leave_corpse(_knockback)
 		queue_free()
 		return true
 	if trapped:
@@ -101,6 +104,20 @@ func take_hit(amount: int, from_position: Vector3, knockback := 1.0, scare_time 
 		return false
 	scare(from_position, scare_time)
 	return false
+
+
+## Только на хосте: на месте победы остаётся тело — оно отлетает от удара
+func _leave_corpse(push: Vector3) -> void:
+	if corpse_scene == "":
+		return
+	var items := get_tree().current_scene.get_node_or_null("Items")
+	if items == null:
+		return
+	var corpse: RigidBody3D = load(corpse_scene).instantiate()
+	corpse.transform = global_transform
+	items.add_child(corpse, true)
+	corpse.linear_velocity = push * 0.8 + Vector3.UP * 4.0
+	corpse.angular_velocity = Vector3(randf_range(-4.0, 4.0), randf_range(-2.0, 2.0), randf_range(-4.0, 4.0))
 
 
 ## Только на хосте: капкан держит существо
