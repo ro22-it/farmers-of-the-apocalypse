@@ -242,8 +242,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		if Time.get_ticks_msec() < _ignore_mouse_until:
 			return
-		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-		_head.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
+		var sensitivity: float = MOUSE_SENSITIVITY * _setting("mouse_sensitivity", 1.0)
+		rotate_y(-event.relative.x * sensitivity)
+		_head.rotate_x(-event.relative.y * sensitivity * (-1.0 if _setting("invert_y", false) else 1.0))
 		_head.rotation.x = clampf(_head.rotation.x, deg_to_rad(-89.0), deg_to_rad(89.0))
 	elif event.is_action_pressed("primary"):
 		_on_primary()
@@ -1149,7 +1150,7 @@ func _try_reload() -> void:
 func _update_weapon_feel(delta: float) -> void:
 	var item := _get_held_item()
 	var aiming := _aiming and item is Gun and not _grabbed
-	_camera.fov = lerpf(_camera.fov, Weapons.AIM_FOV if aiming else BASE_FOV, minf(10.0 * delta, 1.0))
+	_camera.fov = lerpf(_camera.fov, Weapons.AIM_FOV if aiming else _setting("fov", BASE_FOV), minf(10.0 * delta, 1.0))
 	_hand_kick = move_toward(_hand_kick, 0.0, delta * 6.0)
 	_shake = move_toward(_shake, 0.0, delta * 0.6)
 	_camera.h_offset = randf_range(-_shake, _shake) * 0.05
@@ -1504,6 +1505,12 @@ func _open_upgrades() -> void:
 		var done := upgrades.is_bought(entry.id)
 		rows.append({"text": "%s — %s" % [entry.name, entry.desc], "button": "Куплено" if done else "Купить за %d" % entry.price, "id": entry.id, "disabled": done})
 	hud.open_panel("upgrade", "Улучшения фермы", hud._money_line(), rows)
+
+
+## Значение из автозагрузки Settings (через дерево — чтобы собиралось и в автотестах)
+func _setting(key: String, fallback: Variant) -> Variant:
+	var settings := get_node_or_null("/root/Settings")
+	return settings.get(key) if settings else fallback
 
 
 func _flat_distance(point: Vector3) -> float:

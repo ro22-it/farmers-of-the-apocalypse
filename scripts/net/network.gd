@@ -121,6 +121,7 @@ func save_settings() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
 	var config := ConfigFile.new()
+	config.load(SETTINGS_PATH)
 	config.set_value("player", "name", player_name)
 	config.set_value("player", "class", player_class)
 	config.set_value("player", "tutorial", tutorial_enabled)

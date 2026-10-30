@@ -22,11 +22,16 @@ var _tutorial_check: CheckBox
 var _status: Label
 var _buttons: Array[Button] = []
 var _in_session := false
+var _settings_panel: SettingsPanel
 
 
 func _ready() -> void:
 	_main_panel = _build_main()
 	_pause_panel = _build_pause()
+	_settings_panel = SettingsPanel.new()
+	add_child(_settings_panel)
+	_settings_panel.hide()
+	_settings_panel.closed.connect(_on_settings_closed)
 	show_main("")
 
 
@@ -59,6 +64,19 @@ func enter_session() -> void:
 	_in_session = true
 	_main_panel.hide()
 	_pause_panel.hide()
+
+
+func _open_settings() -> void:
+	_main_panel.hide()
+	_pause_panel.hide()
+	_settings_panel.show()
+
+
+func _on_settings_closed() -> void:
+	if _in_session:
+		_pause_panel.show()
+	else:
+		_main_panel.show()
 
 
 func _resume() -> void:
@@ -143,6 +161,7 @@ func _build_main() -> Control:
 	_status.add_theme_color_override("font_color", Color(1.0, 0.85, 0.6))
 	box.add_child(_status)
 
+	box.add_child(_make_button("Настройки", _open_settings))
 	box.add_child(_make_button("Выход", func(): get_tree().quit()))
 	var help := _make_label(HELP_TEXT, 13)
 	help.modulate.a = 0.7
@@ -160,6 +179,7 @@ func _build_pause() -> Control:
 	var box := _make_panel(_make_center(shade), 320)
 	box.add_child(_make_label("Пауза", 30))
 	box.add_child(_make_button("Продолжить", _resume, false))
+	box.add_child(_make_button("Настройки", _open_settings, false))
 	box.add_child(_make_button("Выйти в меню", func(): leave_pressed.emit(), false))
 	box.add_child(_make_button("Выйти из игры", func(): get_tree().quit(), false))
 	return shade

@@ -63,6 +63,7 @@ func _ready() -> void:
 	_engine.unit_size = 6.0
 	_engine.max_distance = 80.0
 	_engine.position = Vector3(0.0, 1.0, 1.8)
+	_engine.bus = &"Effects"
 	add_child(_engine)
 	add_to_group("truck")
 	# Фары могут пугать существ (навык механика) — Грядочник проверяет эту группу

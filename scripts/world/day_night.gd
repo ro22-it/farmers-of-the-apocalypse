@@ -46,6 +46,11 @@ var _was_night := false
 
 func _ready() -> void:
 	add_to_group("day_night")
+	_sun.add_to_group("shadow_lights")
+	_moon.add_to_group("shadow_lights")
+	var settings := get_node_or_null("/root/Settings")
+	if settings:
+		settings.apply()
 	_was_night = is_night()
 	_apply_lighting()
 

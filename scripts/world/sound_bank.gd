@@ -78,6 +78,7 @@ static func play_at(tree: SceneTree, sound: String, position: Vector3, volume_db
 	player.pitch_scale = randf_range(0.92, 1.08)
 	player.max_distance = 120.0
 	player.unit_size = 8.0
+	player.bus = &"Effects"
 	tree.current_scene.add_child(player)
 	player.global_position = position
 	player.finished.connect(player.queue_free)
@@ -98,6 +99,7 @@ static func play_ui(tree: SceneTree, sound: String, volume_db := -6.0) -> void:
 	var player := AudioStreamPlayer.new()
 	player.stream = get_stream(sound)
 	player.volume_db = volume_db
+	player.bus = &"Effects"
 	tree.root.add_child(player)
 	player.finished.connect(player.queue_free)
 	player.play()

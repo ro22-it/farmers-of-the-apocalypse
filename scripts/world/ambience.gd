@@ -52,6 +52,7 @@ func _make_loop(sound: String) -> AudioStreamPlayer:
 	var player := AudioStreamPlayer.new()
 	player.stream = SoundBank.loop_stream(sound)
 	player.volume_db = -80.0
+	player.bus = &"Ambience"
 	add_child(player)
 	player.play()
 	return player

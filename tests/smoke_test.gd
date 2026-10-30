@@ -787,5 +787,17 @@ func _run() -> void:
 	check(kicked.hp == kicked.max_hp and kicked.global_position.distance_to(kick_from) > 0.5, "пинок отбрасывает монстра без урона")
 	kicked.queue_free()
 
+	# --- Настройки ---
+	var settings: Node = root.get_node("Settings")
+	settings.fov = 95.0
+	settings.effects_volume = 0.5
+	settings.apply()
+	await frames(60)
+	check(absf(player.get_node("Head/Camera3D").fov - 95.0) < 1.0, "поле зрения из настроек")
+	check(absf(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Effects")) - linear_to_db(0.5)) < 0.1, "громкость эффектов из настроек")
+	settings.fov = 80.0
+	settings.effects_volume = 1.0
+	settings.apply()
+
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)
