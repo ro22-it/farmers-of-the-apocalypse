@@ -12,6 +12,7 @@ const MESSAGE_TIME := 2.5
 const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — присесть   Пробел — прыжок\nЛКМ — тащить / использовать   ПКМ — бросить   E — взять   G — выбросить\n1–4, колесо — слоты   Esc — пауза   F1 — скрыть подсказку"
 
 var _hint: Label
+var _clock: Label
 var _message: Label
 var _message_left := 0.0
 var _controls: Label
@@ -45,8 +46,8 @@ func _ready() -> void:
 
 	_message = _make_label(26)
 	root.add_child(_message)
-	_message.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_message.offset_top = 40
+	_message.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	_message.offset_top = 90
 	_message.offset_bottom = 80
 
 	_controls = _make_label(14)
@@ -56,6 +57,15 @@ func _ready() -> void:
 	_controls.offset_left = 16
 	_controls.offset_top = 12
 	_controls.text = CONTROLS_TEXT
+
+	_clock = _make_label(20)
+	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	root.add_child(_clock)
+	_clock.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_clock.offset_left = -300
+	_clock.offset_right = -16
+	_clock.offset_top = 12
+	_clock.offset_bottom = 40
 
 	_build_slots(root)
 	_build_stamina(root)
@@ -77,6 +87,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func set_hint(text: String) -> void:
 	_hint.text = text
+
+
+func set_clock(text: String) -> void:
+	_clock.text = text
 
 
 func show_message(text: String) -> void:

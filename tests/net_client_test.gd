@@ -113,6 +113,16 @@ func _run() -> void:
 	player._on_primary()
 	check(await wait_for(func(): return plot.state == Plot.State.TILLED), "клиент видит вскопанную грядку")
 
+	var day_night: DayNight = main.get_node("DayNight")
+	check(await wait_for(func(): return day_night.is_night()), "у клиента тоже наступила ночь")
+	var creatures: Node = main.get_node("Creatures")
+	check(await wait_for(func(): return creatures.get_child_count() > 0), "клиент видит Грядочника")
+	if creatures.get_child_count() > 0:
+		var creature: Node3D = creatures.get_child(0)
+		var start := creature.global_position
+		await frames(60)
+		check(creature.global_position.distance_to(start) > 0.5, "Грядочник у клиента движется")
+
 	await frames(30)
 	root.get_node("Network").leave()
 	print("КЛИЕНТ ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))

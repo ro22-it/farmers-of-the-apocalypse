@@ -65,6 +65,10 @@ func _process(_delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	if not multiplayer.is_server():
 		return
+	# Ночью ничего не растёт и не сохнет
+	var day_night := get_tree().get_first_node_in_group("day_night") as DayNight
+	if day_night and day_night.is_night():
+		return
 	if moisture > 0.0:
 		moisture = maxf(moisture - delta / DRY_TIME, 0.0)
 		if state == State.PLANTED and growth < 1.0:
@@ -76,6 +80,21 @@ func reset() -> void:
 	crop = ""
 	growth = 0.0
 	moisture = 0.0
+
+
+## Грядочник ест грядку. Только на хосте. Посаженное пропадает, вскопанное вытаптывается.
+## Возвращает путь к сцене урожая, если было что унести (созревшее), иначе пусто.
+func steal() -> String:
+	var loot := ""
+	if state == State.PLANTED:
+		if is_ripe():
+			loot = Crops.get_info(crop).produce
+		crop = ""
+		growth = 0.0
+		state = State.TILLED
+	elif state == State.TILLED:
+		state = State.UNTILLED
+	return loot
 
 
 func is_ripe() -> bool:

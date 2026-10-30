@@ -1,7 +1,7 @@
 extends Node3D
 
-## Корень игровой сцены: меню, создание игроков и предметов в сети.
-## Позже здесь же появится смена дня и ночи.
+## Корень игровой сцены: меню, создание игроков и предметов в сети,
+## сброс мира (грядки, забор, время, существа) в начале и конце игры.
 
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const SPAWN_POINT := Vector3(0.0, 0.05, 18.0)
@@ -17,6 +17,9 @@ var _placed_items: Array[Dictionary] = []
 @onready var _item_spawner: MultiplayerSpawner = $ItemSpawner
 @onready var _menu: Menu = $Menu
 @onready var _menu_camera: Camera3D = $MenuCamera
+@onready var _day_night: DayNight = $DayNight
+@onready var _night_director: NightDirector = $NightDirector
+@onready var _creature_spawner: MultiplayerSpawner = $CreatureSpawner
 
 
 func _ready() -> void:
@@ -25,11 +28,12 @@ func _ready() -> void:
 		_placed_items.append({"name": item.name, "scene": item.scene_file_path, "transform": item.transform})
 	for path in _item_scene_paths():
 		_item_spawner.add_spawnable_scene(path)
+	_creature_spawner.add_spawnable_scene(NightDirector.GRYADOCHNIK.resource_path)
 
 	_menu.host_pressed.connect(_start_host)
 	_menu.join_pressed.connect(_start_join)
 	_menu.leave_pressed.connect(_leave)
-	Network.session_started.connect(_menu.enter_session)
+	Network.session_started.connect(_on_session_started)
 	Network.session_ended.connect(_on_session_ended)
 	Network.player_joined.connect(_on_player_joined)
 	Network.player_left.connect(_on_player_left)
@@ -42,16 +46,16 @@ func _start_host() -> void:
 		_menu.show_main("Не удалось создать игру (ошибка %d). Возможно, порт %d занят." % [err, Network.DEFAULT_PORT])
 		return
 	# Пересоздаём уже в сети, чтобы спавнер отслеживал предметы и слал их новым игрокам
-	_reset_items(true)
+	_reset_world(true)
 
 
 func _start_join(address: String) -> void:
 	# Свои предметы убираем заранее: хост пришлёт свои сразу после подключения
-	_reset_items(false)
+	_reset_world(false)
 	_menu.show_connecting("Подключение к %s…" % address)
 	var err := Network.join(address)
 	if err != OK:
-		_reset_items(true)
+		_reset_world(true)
 		_menu.show_main("Не удалось начать подключение (ошибка %d)" % err)
 
 
@@ -60,11 +64,17 @@ func _leave() -> void:
 	_on_session_ended("")
 
 
+func _on_session_started() -> void:
+	_menu.enter_session()
+	_day_night.running = true
+
+
 func _on_session_ended(reason: String) -> void:
+	_day_night.running = false
 	for player in _players.get_children():
 		_players.remove_child(player)
 		player.queue_free()
-	_reset_items(true)
+	_reset_world(true)
 	_menu_camera.current = true
 	_menu.show_main(reason)
 
@@ -89,11 +99,14 @@ func _create_player(data: Dictionary) -> Node:
 	return player
 
 
-## Сбрасывает грядки и убирает все предметы. С refill — ставит заново по расстановке из редактора
-## (это делает только хост или игра без сети).
-func _reset_items(refill: bool) -> void:
-	# Грядки тоже начинаются заново. У клиента их состояние потом пришлёт хост
+## Начинает мир заново: утро первого дня, грядки и забор целы, существ нет.
+## Предметы убирает, а с refill — ставит заново по расстановке из редактора
+## (это делает только хост или игра без сети). Клиенту состояние потом пришлёт хост.
+func _reset_world(refill: bool) -> void:
+	_day_night.reset()
+	_night_director.reset()
 	get_tree().call_group("plots", "reset")
+	get_tree().call_group("fence", "reset")
 	for item in _items.get_children():
 		_items.remove_child(item)
 		item.queue_free()

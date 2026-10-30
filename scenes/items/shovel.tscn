@@ -27,11 +27,12 @@ size = Vector3(0.24, 0.3, 0.03)
 
 [node name="Shovel" type="RigidBody3D"]
 collision_layer = 4
-collision_mask = 7
+collision_mask = 23
 mass = 2.0
 script = ExtResource("1_item")
 display_name = "Лопата"
 tool = "shovel"
+damage = 1
 use_hint = "Наведите на грядку"
 use_message = "Лопатой копают грядки"
 hand_position = Vector3(0.4, -0.15, -0.6)

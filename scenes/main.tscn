@@ -14,6 +14,22 @@
 [ext_resource type="PackedScene" path="res://scenes/farm/water_barrel.tscn" id="12_barrel"]
 [ext_resource type="PackedScene" path="res://scenes/farm/seed_bin.tscn" id="13_bin"]
 [ext_resource type="PackedScene" path="res://scenes/items/wheelbarrow.tscn" id="14_wheelbarrow"]
+[ext_resource type="PackedScene" path="res://scenes/farm/fence_segment.tscn" id="15_fence"]
+[ext_resource type="PackedScene" path="res://scenes/items/hammer.tscn" id="16_hammer"]
+[ext_resource type="Script" path="res://scripts/world/day_night.gd" id="17_day_night"]
+[ext_resource type="Script" path="res://scripts/creatures/night_director.gd" id="18_director"]
+
+[sub_resource type="StandardMaterial3D" id="gate_wood"]
+albedo_color = Color(0.55, 0.42, 0.28, 1)
+roughness = 0.95
+
+[sub_resource type="SceneReplicationConfig" id="day_night_sync"]
+properties/0/path = NodePath(".:cycle_time")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:day")
+properties/1/spawn = true
+properties/1/replication_mode = 2
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -49,6 +65,228 @@ light_color = Color(1, 0.94, 0.84, 1)
 light_energy = 1.1
 shadow_enabled = true
 directional_shadow_max_distance = 80.0
+
+[node name="Moon" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866, 0, -0.866, 0.5, 0, 20, 0)
+light_color = Color(0.55, 0.65, 0.9, 1)
+light_energy = 0.0
+shadow_enabled = true
+directional_shadow_max_distance = 60.0
+visible = false
+
+[node name="DayNight" type="Node" parent="."]
+script = ExtResource("17_day_night")
+sun_path = NodePath("../Sun")
+moon_path = NodePath("../Moon")
+environment_path = NodePath("../WorldEnvironment")
+
+[node name="Sync" type="MultiplayerSynchronizer" parent="DayNight"]
+replication_interval = 1.0
+replication_config = SubResource("day_night_sync")
+
+[node name="NightDirector" type="Node" parent="."]
+script = ExtResource("18_director")
+day_night_path = NodePath("../DayNight")
+creatures_path = NodePath("../Creatures")
+
+[node name="Creatures" type="Node3D" parent="."]
+
+[node name="CreatureSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Creatures")
+
+[node name="Fence" type="Node3D" parent="."]
+
+[node name="Segment1" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0, -24)
+
+[node name="Segment2" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0, -24)
+
+[node name="Segment3" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0, -24)
+
+[node name="Segment4" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -24)
+
+[node name="Segment5" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -24)
+
+[node name="Segment6" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -24)
+
+[node name="Segment7" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, -24)
+
+[node name="Segment8" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -24)
+
+[node name="Segment9" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -24)
+
+[node name="Segment10" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -24)
+
+[node name="Segment11" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -24)
+
+[node name="Segment12" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, -24)
+
+[node name="Segment13" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -24)
+
+[node name="Segment14" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -24)
+
+[node name="Segment15" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -24)
+
+[node name="Segment16" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0, -24)
+
+[node name="Segment17" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, -24)
+
+[node name="Segment18" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, -21)
+
+[node name="Segment19" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, -18)
+
+[node name="Segment20" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, -15)
+
+[node name="Segment21" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, -12)
+
+[node name="Segment22" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, -9)
+
+[node name="Segment23" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, -6)
+
+[node name="Segment24" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, 3)
+
+[node name="Segment25" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, 6)
+
+[node name="Segment26" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, 9)
+
+[node name="Segment27" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, 12)
+
+[node name="Segment28" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, 15)
+
+[node name="Segment29" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, 18)
+
+[node name="Segment30" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 24, 0, 21)
+
+[node name="Segment31" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 24, 0, 24)
+
+[node name="Segment32" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 21, 0, 24)
+
+[node name="Segment33" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 18, 0, 24)
+
+[node name="Segment34" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 15, 0, 24)
+
+[node name="Segment35" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 12, 0, 24)
+
+[node name="Segment36" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 9, 0, 24)
+
+[node name="Segment37" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 6, 0, 24)
+
+[node name="Segment38" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 3, 0, 24)
+
+[node name="Segment39" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 24)
+
+[node name="Segment40" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -3, 0, 24)
+
+[node name="Segment41" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -6, 0, 24)
+
+[node name="Segment42" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -9, 0, 24)
+
+[node name="Segment43" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -12, 0, 24)
+
+[node name="Segment44" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -15, 0, 24)
+
+[node name="Segment45" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -18, 0, 24)
+
+[node name="Segment46" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -21, 0, 24)
+
+[node name="Segment47" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 24)
+
+[node name="Segment48" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 21)
+
+[node name="Segment49" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 18)
+
+[node name="Segment50" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 15)
+
+[node name="Segment51" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 12)
+
+[node name="Segment52" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 9)
+
+[node name="Segment53" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 6)
+
+[node name="Segment54" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 3)
+
+[node name="Segment55" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, 0)
+
+[node name="Segment56" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, -3)
+
+[node name="Segment57" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, -6)
+
+[node name="Segment58" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, -9)
+
+[node name="Segment59" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, -12)
+
+[node name="Segment60" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, -15)
+
+[node name="Segment61" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, -18)
+
+[node name="Segment62" parent="Fence" instance=ExtResource("15_fence")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -24, 0, -21)
+
+[node name="GatePost" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, -3)
+use_collision = true
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("gate_wood")
 
 [node name="Farm" parent="." instance=ExtResource("2_farm")]
 
@@ -166,6 +404,9 @@ transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 13.5, 0.15, -6)
 
 [node name="WateringCan2" parent="Items" instance=ExtResource("9_can")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.6, 0.2, -2.5)
+
+[node name="Hammer" parent="Items" instance=ExtResource("16_hammer")]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -9.3, 0.98, -2.2)
 
 [node name="Players" type="Node3D" parent="."]
 

@@ -11,6 +11,8 @@ const ITEMS_DIR := "res://scenes/items/"
 @export var display_name := "Предмет"
 ## Чем предмет работает по грядкам и бочке: shovel, seeds, watering_can. Пусто — ничем.
 @export var tool := ""
+## Урон по существам при ударе (ЛКМ вплотную). 0 — предметом не бьют.
+@export var damage := 0
 ## Подсказка, когда предмет в руке
 @export var use_hint := ""
 ## Сообщение по ЛКМ, пока у предмета нет своего действия

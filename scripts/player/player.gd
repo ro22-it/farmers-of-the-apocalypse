@@ -31,6 +31,12 @@ const DROP_DISTANCE := 0.8
 const DROP_SPEED := 2.5
 ## Дальше этого от игрока хост не даст взять или схватить предмет
 const MAX_REACH := 4.5
+## Удар вплотную по существу
+const MELEE_RANGE := 2.2
+const FLASHLIGHT_SCENE := "res://scenes/items/flashlight.tscn"
+## Луч фонаря: дальность и половина угла раскрытия
+const FLASHLIGHT_RANGE := 14.0
+const FLASHLIGHT_HALF_ANGLE := 22.0
 
 @export var max_stamina := 100.0
 @export var stamina_drain := 22.0
@@ -84,6 +90,7 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+	add_to_group("players")
 	_name_tag.text = player_name
 	_refresh_hand()
 	if not is_multiplayer_authority():
@@ -183,6 +190,30 @@ func get_hold_position() -> Vector3:
 	return _camera.global_position + _look_direction() * _hold_distance
 
 
+## Светит ли этот игрок включённым фонарём на точку (с учётом стен).
+## Вызывает хост для каждой копии игрока: взгляд и фонарь синхронизированы.
+func is_shining_at(point: Vector3) -> bool:
+	if not held_active or held_scene != FLASHLIGHT_SCENE:
+		return false
+	var origin := _camera.global_position
+	var to_point := point - origin
+	if to_point.length() > FLASHLIGHT_RANGE:
+		return false
+	if _look_direction().angle_to(to_point) > deg_to_rad(FLASHLIGHT_HALF_ANGLE):
+		return false
+	var query := PhysicsRayQueryParameters3D.create(origin, point, 1)
+	query.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_ray(query).is_empty()
+
+
+## Смена дня и ночи (вызывает DayNight у своего игрока)
+func on_phase_changed(is_night: bool, day: int) -> void:
+	if is_night:
+		hud.show_message("Ночь %d. Из леса кто-то выходит…" % day)
+	else:
+		hud.show_message("Рассвет. День %d" % day)
+
+
 func release_grab(throw := false) -> void:
 	if _grabbed == null:
 		return
@@ -250,6 +281,12 @@ func _on_primary() -> void:
 		_start_grab(target)
 		return
 	var item := _get_held_item()
+	if target is Creature and item and item.damage > 0:
+		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE:
+			_request_hit.rpc_id(1, target.get_path(), item.damage)
+		else:
+			hud.show_message("Слишком далеко — подойдите вплотную")
+		return
 	if target is Interactable and item:
 		var info := item.get_interaction(self, target)
 		if not info.is_empty():
@@ -304,6 +341,9 @@ func _on_inventory_changed() -> void:
 
 func _update_hud() -> void:
 	hud.set_stamina(stamina / max_stamina, _exhausted)
+	var day_night := get_tree().get_first_node_in_group("day_night") as DayNight
+	if day_night:
+		hud.set_clock(day_night.get_clock_text())
 	var hint := ""
 	if _grabbed:
 		hint = "ПКМ — бросить"
@@ -315,6 +355,12 @@ func _update_hud() -> void:
 			hint = "E — взять: %s" % target.get_display_name()
 		elif target is Interactable:
 			hint = target.get_hint(_get_held_item())
+		elif target is Creature:
+			var weapon := _get_held_item()
+			if weapon and weapon.damage > 0:
+				hint = "%s — ЛКМ: ударить" % target.display_name
+			else:
+				hint = "%s! Посветите фонарём или возьмите лопату" % target.display_name
 		else:
 			var item := _get_held_item()
 			if item:
@@ -398,6 +444,17 @@ func _request_interact(path: NodePath, info: Dictionary) -> void:
 		_give_item.rpc_id(get_multiplayer_authority(), give.scene, give.name, give.state)
 		result.erase("give")
 	_interact_result.rpc_id(get_multiplayer_authority(), result)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_hit(path: NodePath, amount: int) -> void:
+	if not _from_owner():
+		return
+	var creature := get_node_or_null(path) as Creature
+	if creature == null or creature.global_position.distance_to(_camera.global_position) > MELEE_RANGE + 1.0:
+		return
+	if creature.take_hit(clampi(amount, 0, 3), global_position):
+		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "%s повержен!" % creature.display_name})
 
 
 ## Хватка сорвалась на хосте (предмет застрял или отстал) — сообщаем владельцу.

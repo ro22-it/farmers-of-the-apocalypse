@@ -4,7 +4,7 @@ var main: Node
 var player: Player
 
 ## Одиночная игра: хост без друзей. Проверяет хватку, бросок, инвентарь, фонарь
-## и цикл грядки: вскопать, посадить, полить, собрать.
+## цикл грядки (вскопать, посадить, полить, собрать) и ночь: Грядочник, фонарь, забор.
 var failures := 0
 
 
@@ -24,6 +24,14 @@ func check(cond: bool, msg: String) -> void:
 func frames(n: int) -> void:
 	for i in n:
 		await physics_frame
+
+
+func wait_for(cond: Callable, max_frames: int) -> bool:
+	for i in max_frames:
+		if cond.call():
+			return true
+		await physics_frame
+	return false
 
 
 func aim_at(target: Vector3) -> void:
@@ -179,6 +187,78 @@ func _run() -> void:
 
 	var wheelbarrow: Node3D = main.get_node("Items/Wheelbarrow")
 	check(wheelbarrow.global_position.y > -0.3, "тачка стоит на земле")
+
+	# --- Ночь ---
+	var day_night: DayNight = main.get_node("DayNight")
+	check(day_night.running and not day_night.is_night(), "игра идёт, сейчас день")
+	day_night.cycle_time = DayNight.DAY_LENGTH - 0.5
+	await frames(60)
+	check(day_night.is_night(), "наступила ночь")
+	check(main.get_node("Moon").light_energy > 0.2 and not main.get_node("Sun").visible, "ночью светит луна, солнца нет")
+	var director: NightDirector = main.get_node("NightDirector")
+	check(director._queue.size() == 2, "в первую ночь выйдут 2 Грядочника")
+	# Случайные существа тесту мешают — выпускаем своих
+	director._queue.clear()
+
+	# Кража спелой моркови
+	var target: Plot = main.get_node("Plots/Plot2")
+	target.state = Plot.State.PLANTED
+	target.crop = "carrot"
+	target.growth = 1.0
+	var thief := director.spawn_gryadochnik(target.global_position + Vector3(4.0, 0.3, 0.0))
+	check(await wait_for(func(): return target.state == Plot.State.TILLED, 600), "Грядочник съел морковь")
+	check(is_instance_valid(thief) and thief.carrying != "", "и несёт её в лес")
+
+	# Три удара лопатой
+	player.inventory.select(0)
+	await frames(3)
+	var items_before := main.get_node("Items").get_child_count()
+	for i in 3:
+		if not is_instance_valid(thief):
+			break
+		player.global_position = Vector3(thief.global_position.x, 0.05, thief.global_position.z + 1.2)
+		aim_at(thief.global_position + Vector3(0, 0.4, 0))
+		await frames(1)
+		player._on_primary()
+		await frames(5)
+	check(not is_instance_valid(thief), "после трёх ударов лопатой Грядочник повержен")
+	check(main.get_node("Items").get_child_count() == items_before + 1, "он выронил украденную морковь")
+
+	# Свет фонаря
+	var shy := director.spawn_gryadochnik(Vector3(3.0, 0.3, 21.0))
+	player.global_position = Vector3(3.0, 0.05, 13.0)
+	player.held_scene = Player.FLASHLIGHT_SCENE
+	player.held_active = true
+	for i in 30:
+		aim_at(shy.global_position + Vector3(0, 0.4, 0))
+		await physics_frame
+	check(shy.state == Creature.State.SCARED, "в луче фонаря Грядочник убегает")
+	player._on_inventory_changed()
+	shy.queue_free()
+
+	# Забор: существо снаружи, грядка внутри
+	target.state = Plot.State.PLANTED
+	target.crop = "carrot"
+	target.growth = 0.5
+	var chewer := director.spawn_gryadochnik(Vector3(0.0, 0.3, 29.0))
+	var damaged := func():
+		for segment: FenceSegment in get_nodes_in_group("fence"):
+			if segment.hp < FenceSegment.MAX_HP:
+				return segment
+		return null
+	check(await wait_for(func(): return damaged.call() != null, 600), "Грядочник грызёт забор")
+	var segment: FenceSegment = damaged.call()
+	check(await wait_for(func(): return segment.is_broken(), 600), "и прогрызает пролёт")
+	check(await wait_for(func(): return is_instance_valid(chewer) and chewer.global_position.z < 23.0, 300), "и пролезает внутрь")
+	segment.interact(player, {"tool": "hammer"})
+	check(segment.hp == FenceSegment.MAX_HP and segment.collision_layer == FenceSegment.SOLID_LAYER, "молоток чинит пролёт")
+	if is_instance_valid(chewer):
+		chewer.queue_free()
+
+	# Рассвет
+	day_night.cycle_time = DayNight.CYCLE - 0.5
+	await frames(60)
+	check(not day_night.is_night() and day_night.day == 2, "рассвело, день 2")
 
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

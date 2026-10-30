@@ -53,6 +53,13 @@ func _run() -> void:
 
 	var plot: Plot = main.get_node("Plots/Plot18")
 	check(await wait_for(func(): return plot.state == Plot.State.TILLED), "хост видит грядку, вскопанную клиентом")
+
+	# Ночь и существо — клиент должен увидеть
+	var day_night: DayNight = main.get_node("DayNight")
+	day_night.cycle_time = DayNight.DAY_LENGTH + 1.0
+	await physics_frame
+	main.get_node("NightDirector")._queue.clear()
+	main.get_node("NightDirector").spawn_gryadochnik(Vector3(0.0, 0.3, 29.0))
 	check(await wait_for(func(): return players.get_child_count() == 1), "после выхода клиента его персонаж убран")
 	print("ХОСТ ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)
