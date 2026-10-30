@@ -131,7 +131,10 @@ func _run() -> void:
 		var moving := 0
 		var biggest := 0.0
 		var last := creature.global_position
-		for i in 90:
+		# Копим 30 кадров ходьбы (не дольше 10 с): стоять, пока ешь грядку, законно
+		for i in 600:
+			if moving + still >= 30:
+				break
 			await process_frame
 			var step := creature.global_position.distance_to(last)
 			last = creature.global_position
