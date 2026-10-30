@@ -97,6 +97,7 @@ toggle_help={
 3d_physics/layer_1="world"
 3d_physics/layer_2="players"
 3d_physics/layer_3="items"
+3d_physics/layer_4="interact"
 
 [physics]
 

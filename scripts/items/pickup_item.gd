@@ -9,6 +9,8 @@ extends RigidBody3D
 const ITEMS_DIR := "res://scenes/items/"
 
 @export var display_name := "Предмет"
+## Чем предмет работает по грядкам и бочке: shovel, seeds, watering_can. Пусто — ничем.
+@export var tool := ""
 ## Подсказка, когда предмет в руке
 @export var use_hint := ""
 ## Сообщение по ЛКМ, пока у предмета нет своего действия
@@ -44,6 +46,32 @@ func use(user: Player) -> void:
 
 func get_use_hint() -> String:
 	return use_hint
+
+
+func get_display_name() -> String:
+	return display_name
+
+
+## Запас предмета (вода в лейке, семена в пакете). Хранится в слоте инвентаря
+## и переживает выбрасывание.
+func get_state() -> Dictionary:
+	return {}
+
+
+func set_state(_state: Dictionary) -> void:
+	pass
+
+
+## Что отправить хосту при ЛКМ по объекту фермы. Пустой словарь — не отправлять
+## (например, лейка пуста; сообщение игрок уже увидел).
+func get_interaction(_user: Player, _target: Interactable) -> Dictionary:
+	return {"tool": tool} if tool != "" else {}
+
+
+## Применяет ответ хоста (списать заряды, наполнить).
+## Возвращает false, если предмет израсходован и его надо убрать из рук.
+func apply_result(_result: Dictionary) -> bool:
+	return true
 
 
 ## Включённое состояние (например, фонарь). Его видят и другие игроки.

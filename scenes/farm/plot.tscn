@@ -1,0 +1,43 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/farm/plot.gd" id="1_plot"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_plot"]
+size = Vector3(1.9, 0.3, 2.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_soil"]
+size = Vector3(1.9, 0.04, 2.1)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_plot"]
+properties/0/path = NodePath(".:state")
+properties/0/spawn = true
+properties/0/replication_mode = 2
+properties/1/path = NodePath(".:crop")
+properties/1/spawn = true
+properties/1/replication_mode = 2
+properties/2/path = NodePath(".:growth")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+properties/3/path = NodePath(".:moisture")
+properties/3/spawn = true
+properties/3/replication_mode = 1
+
+[node name="Plot" type="StaticBody3D"]
+collision_layer = 8
+collision_mask = 0
+script = ExtResource("1_plot")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+shape = SubResource("BoxShape3D_plot")
+
+[node name="Soil" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
+mesh = SubResource("BoxMesh_soil")
+
+[node name="Plants" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.25
+replication_config = SubResource("SceneReplicationConfig_plot")

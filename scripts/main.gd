@@ -89,9 +89,11 @@ func _create_player(data: Dictionary) -> Node:
 	return player
 
 
-## Убирает все предметы. С refill — ставит заново по расстановке из редактора
+## Сбрасывает грядки и убирает все предметы. С refill — ставит заново по расстановке из редактора
 ## (это делает только хост или игра без сети).
 func _reset_items(refill: bool) -> void:
+	# Грядки тоже начинаются заново. У клиента их состояние потом пришлёт хост
+	get_tree().call_group("plots", "reset")
 	for item in _items.get_children():
 		_items.remove_child(item)
 		item.queue_free()

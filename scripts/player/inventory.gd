@@ -1,7 +1,8 @@
 class_name Inventory
 extends Node
 
-## Инвентарь игрока на 4 слота. Слот — словарь {path, name} или пустой словарь.
+## Инвентарь игрока на 4 слота. Слот — словарь {path, name, state} или пустой словарь.
+## state — запас предмета (вода, семена), см. PickupItem.get_state().
 ## Храним только путь к сцене предмета: так предмет легко пересоздать
 ## при выбрасывании и передать по сети.
 
@@ -20,11 +21,11 @@ func _init() -> void:
 
 ## Кладёт предмет в текущий слот, а если он занят — в первый свободный.
 ## Возвращает false, если места нет.
-func add(path: String, item_name: String) -> bool:
+func add(path: String, item_name: String, state := {}) -> bool:
 	var index := _first_free_slot()
 	if index == -1:
 		return false
-	slots[index] = {"path": path, "name": item_name}
+	slots[index] = {"path": path, "name": item_name, "state": state}
 	selected = index
 	changed.emit()
 	return true
@@ -32,6 +33,15 @@ func add(path: String, item_name: String) -> bool:
 
 func has_free_slot() -> bool:
 	return _first_free_slot() != -1
+
+
+## Обновляет запас и подпись предмета в выбранном слоте.
+func update_selected(state: Dictionary, item_name: String) -> void:
+	if slots[selected].is_empty():
+		return
+	slots[selected].state = state
+	slots[selected].name = item_name
+	changed.emit()
 
 
 func get_selected() -> Dictionary:

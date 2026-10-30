@@ -51,6 +51,8 @@ func _run() -> void:
 	var crate: Node3D = main.get_node("Items/Crate1")
 	check(crate.global_position.distance_to(Vector3(11, 0.4, -5)) > 1.5, "ящик сдвинут клиентом (%.1f м от места)" % crate.global_position.distance_to(Vector3(11, 0.4, -5)))
 
+	var plot: Plot = main.get_node("Plots/Plot18")
+	check(await wait_for(func(): return plot.state == Plot.State.TILLED), "хост видит грядку, вскопанную клиентом")
 	check(await wait_for(func(): return players.get_child_count() == 1), "после выхода клиента его персонаж убран")
 	print("ХОСТ ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/pickup_item.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_carrot"]
+size = Vector3(0.1, 0.3, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_root"]
+albedo_color = Color(0.95, 0.5, 0.15, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_leaf"]
+albedo_color = Color(0.3, 0.55, 0.22, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_root"]
+material = SubResource("StandardMaterial3D_root")
+top_radius = 0.05
+bottom_radius = 0.0
+height = 0.22
+radial_segments = 6
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_leaf"]
+material = SubResource("StandardMaterial3D_leaf")
+top_radius = 0.05
+bottom_radius = 0.0
+height = 0.1
+radial_segments = 5
+rings = 1
+
+[node name="Carrot" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.3
+script = ExtResource("1_item")
+display_name = "Морковь"
+use_hint = "Продать можно будет в деревне"
+hand_position = Vector3(0.3, -0.25, -0.5)
+hand_rotation_degrees = Vector3(0, 0, -30)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, 0)
+shape = SubResource("BoxShape3D_carrot")
+
+[node name="Root" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_root")
+
+[node name="Leaf" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+mesh = SubResource("CylinderMesh_leaf")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")

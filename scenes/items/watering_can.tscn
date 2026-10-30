@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/items/pickup_item.gd" id="1_item"]
+[ext_resource type="Script" path="res://scripts/items/watering_can.gd" id="1_item"]
 [ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_can"]
@@ -35,8 +35,9 @@ collision_mask = 7
 mass = 3.0
 script = ExtResource("1_item")
 display_name = "Лейка"
-use_hint = "ЛКМ — полить"
-use_message = "Поливать научимся на этапе 3"
+tool = "watering_can"
+use_hint = "Наведите на грядку или бочку с водой"
+use_message = "Лейкой поливают грядки"
 hand_position = Vector3(0.35, -0.35, -0.55)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]

@@ -1,0 +1,133 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/grabbable.gd" id="1_grab"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_grabbable.tres" id="9_sync"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bottom"]
+size = Vector3(0.9, 0.06, 1.1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_end"]
+size = Vector3(0.9, 0.35, 0.06)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_side"]
+size = Vector3(0.06, 0.35, 1.1)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_wheel"]
+radius = 0.2
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_legs"]
+size = Vector3(0.6, 0.42, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_metal"]
+albedo_color = Color(0.3, 0.45, 0.4, 1)
+metallic = 0.4
+roughness = 0.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wood"]
+albedo_color = Color(0.55, 0.4, 0.25, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tire"]
+albedo_color = Color(0.12, 0.12, 0.12, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bottom"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.9, 0.06, 1.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_end"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.9, 0.35, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_side"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.06, 0.35, 1.1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_wheel"]
+material = SubResource("StandardMaterial3D_tire")
+top_radius = 0.2
+bottom_radius = 0.2
+height = 0.1
+radial_segments = 10
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_handle"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(0.05, 0.05, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_legs"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(0.6, 0.42, 0.06)
+
+[node name="Wheelbarrow" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 15.0
+script = ExtResource("1_grab")
+display_name = "Тачка"
+
+[node name="Bottom" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("BoxShape3D_bottom")
+
+[node name="Front" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, -0.55)
+shape = SubResource("BoxShape3D_end")
+
+[node name="Back" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0.55)
+shape = SubResource("BoxShape3D_end")
+
+[node name="Left" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0.62, 0)
+shape = SubResource("BoxShape3D_side")
+
+[node name="Right" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.62, 0)
+shape = SubResource("BoxShape3D_side")
+
+[node name="Wheel" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, -0.75)
+shape = SubResource("SphereShape3D_wheel")
+
+[node name="Legs" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21, 0.45)
+shape = SubResource("BoxShape3D_legs")
+
+[node name="BottomMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("BoxMesh_bottom")
+
+[node name="FrontMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, -0.55)
+mesh = SubResource("BoxMesh_end")
+
+[node name="BackMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0.55)
+mesh = SubResource("BoxMesh_end")
+
+[node name="LeftMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0.62, 0)
+mesh = SubResource("BoxMesh_side")
+
+[node name="RightMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.62, 0)
+mesh = SubResource("BoxMesh_side")
+
+[node name="WheelMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.2, -0.75)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="HandleLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.55, 0.9)
+mesh = SubResource("BoxMesh_handle")
+
+[node name="HandleRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.55, 0.9)
+mesh = SubResource("BoxMesh_handle")
+
+[node name="LegsMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21, 0.45)
+mesh = SubResource("BoxMesh_legs")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")

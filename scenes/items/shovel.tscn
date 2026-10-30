@@ -31,8 +31,9 @@ collision_mask = 7
 mass = 2.0
 script = ExtResource("1_item")
 display_name = "Лопата"
-use_hint = "ЛКМ — копать"
-use_message = "Копать научимся на этапе 3"
+tool = "shovel"
+use_hint = "Наведите на грядку"
+use_message = "Лопатой копают грядки"
 hand_position = Vector3(0.4, -0.15, -0.6)
 hand_rotation_degrees = Vector3(-25, 0, -10)
 

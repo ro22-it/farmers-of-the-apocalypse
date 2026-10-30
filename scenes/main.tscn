@@ -10,6 +10,10 @@
 [ext_resource type="PackedScene" path="res://scenes/items/shovel.tscn" id="8_shovel"]
 [ext_resource type="PackedScene" path="res://scenes/items/watering_can.tscn" id="9_can"]
 [ext_resource type="PackedScene" path="res://scenes/items/flashlight.tscn" id="10_flashlight"]
+[ext_resource type="PackedScene" path="res://scenes/farm/plot.tscn" id="11_plot"]
+[ext_resource type="PackedScene" path="res://scenes/farm/water_barrel.tscn" id="12_barrel"]
+[ext_resource type="PackedScene" path="res://scenes/farm/seed_bin.tscn" id="13_bin"]
+[ext_resource type="PackedScene" path="res://scenes/items/wheelbarrow.tscn" id="14_wheelbarrow"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.42, 0.58, 0.78, 1)
@@ -48,6 +52,77 @@ directional_shadow_max_distance = 80.0
 
 [node name="Farm" parent="." instance=ExtResource("2_farm")]
 
+[node name="Plots" type="Node3D" parent="."]
+
+[node name="Plot1" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 5.7)
+
+[node name="Plot2" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 8)
+
+[node name="Plot3" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 10.3)
+
+[node name="Plot4" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 5.7)
+
+[node name="Plot5" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 8)
+
+[node name="Plot6" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 10.3)
+
+[node name="Plot7" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 5.7)
+
+[node name="Plot8" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 8)
+
+[node name="Plot9" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 10.3)
+
+[node name="Plot10" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 5.7)
+
+[node name="Plot11" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 8)
+
+[node name="Plot12" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 10.3)
+
+[node name="Plot13" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 5.7)
+
+[node name="Plot14" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 8)
+
+[node name="Plot15" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 10.3)
+
+[node name="Plot16" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 5.7)
+
+[node name="Plot17" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 8)
+
+[node name="Plot18" parent="Plots" instance=ExtResource("11_plot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 10.3)
+
+[node name="WaterBarrel" parent="." instance=ExtResource("12_barrel")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 0, -2.5)
+
+[node name="SeedBin1" parent="." instance=ExtResource("13_bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -6.5)
+crop = "carrot"
+
+[node name="SeedBin2" parent="." instance=ExtResource("13_bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -5.4)
+crop = "corn"
+
+[node name="SeedBin3" parent="." instance=ExtResource("13_bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -4.3)
+crop = "pumpkin"
+
 [node name="Items" type="Node3D" parent="."]
 
 [node name="Crate1" parent="Items" instance=ExtResource("4_crate")]
@@ -82,6 +157,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.8, 1.08, -2.5)
 
 [node name="Flashlight" parent="Items" instance=ExtResource("10_flashlight")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.1, 0.95, -2.5)
+
+[node name="Wheelbarrow" parent="Items" instance=ExtResource("14_wheelbarrow")]
+transform = Transform3D(0.9063, 0, 0.4226, 0, 1, 0, -0.4226, 0, 0.9063, 6, 0.02, 15)
+
+[node name="Shovel2" parent="Items" instance=ExtResource("8_shovel")]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 13.5, 0.15, -6)
+
+[node name="WateringCan2" parent="Items" instance=ExtResource("9_can")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.6, 0.2, -2.5)
 
 [node name="Players" type="Node3D" parent="."]
 

@@ -1,0 +1,53 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/pickup_item.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cob"]
+size = Vector3(0.12, 0.3, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cob"]
+albedo_color = Color(0.95, 0.82, 0.3, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_husk"]
+albedo_color = Color(0.55, 0.65, 0.3, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_cob"]
+material = SubResource("StandardMaterial3D_cob")
+top_radius = 0.04
+bottom_radius = 0.055
+height = 0.26
+radial_segments = 8
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_husk"]
+material = SubResource("StandardMaterial3D_husk")
+top_radius = 0.0
+bottom_radius = 0.06
+height = 0.1
+radial_segments = 6
+rings = 1
+
+[node name="CornCob" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.4
+script = ExtResource("1_item")
+display_name = "Кукуруза"
+use_hint = "Продать можно будет в деревне"
+hand_position = Vector3(0.3, -0.25, -0.5)
+hand_rotation_degrees = Vector3(0, 0, -30)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_cob")
+
+[node name="Cob" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_cob")
+
+[node name="Husk" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -1, 0, 0, 0, -1, 0, -0.16, 0)
+mesh = SubResource("CylinderMesh_husk")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")

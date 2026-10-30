@@ -250,6 +250,11 @@ func _on_primary() -> void:
 		_start_grab(target)
 		return
 	var item := _get_held_item()
+	if target is Interactable and item:
+		var info := item.get_interaction(self, target)
+		if not info.is_empty():
+			_request_interact.rpc_id(1, target.get_path(), info)
+			return
 	if item:
 		item.use(self)
 		held_active = item.is_active()
@@ -266,6 +271,10 @@ func _start_grab(body: Grabbable) -> void:
 
 func _try_pickup() -> void:
 	var target := _get_target()
+	# E по объекту фермы — работа рукой: собрать урожай, взять семена
+	if target is Interactable:
+		_request_interact.rpc_id(1, target.get_path(), {"tool": "hand"})
+		return
 	if not target is PickupItem:
 		return
 	if not inventory.has_free_slot():
@@ -283,7 +292,7 @@ func _drop_selected() -> void:
 	if _ray.is_colliding():
 		distance = minf(distance, _camera.global_position.distance_to(_ray.get_collision_point()) - 0.3)
 	var drop_position := _camera.global_position + _look_direction() * maxf(distance, 0.1)
-	_request_drop.rpc_id(1, slot.path, drop_position, rotation.y, velocity + _look_direction() * DROP_SPEED)
+	_request_drop.rpc_id(1, slot.path, drop_position, rotation.y, velocity + _look_direction() * DROP_SPEED, slot.get("state", {}))
 
 
 func _on_inventory_changed() -> void:
@@ -303,7 +312,9 @@ func _update_hud() -> void:
 		if target is Grabbable:
 			hint = "ЛКМ — тащить: %s" % target.display_name
 		elif target is PickupItem:
-			hint = "E — взять: %s" % target.display_name
+			hint = "E — взять: %s" % target.get_display_name()
+		elif target is Interactable:
+			hint = target.get_hint(_get_held_item())
 		else:
 			var item := _get_held_item()
 			if item:
@@ -352,13 +363,14 @@ func _request_pickup(path: NodePath) -> void:
 	if item == null or item.is_queued_for_deletion() or not _in_reach(item):
 		return
 	var scene := item.scene_file_path
-	var item_name := item.display_name
+	var item_name := item.get_display_name()
+	var state := item.get_state()
 	item.queue_free()
-	_give_item.rpc_id(get_multiplayer_authority(), scene, item_name)
+	_give_item.rpc_id(get_multiplayer_authority(), scene, item_name, state)
 
 
 @rpc("any_peer", "call_local", "reliable")
-func _request_drop(scene: String, drop_position: Vector3, yaw: float, drop_velocity: Vector3) -> void:
+func _request_drop(scene: String, drop_position: Vector3, yaw: float, drop_velocity: Vector3, state: Dictionary) -> void:
 	if not _from_owner() or not scene.begins_with(PickupItem.ITEMS_DIR):
 		return
 	if drop_position.distance_to(global_position) > MAX_REACH:
@@ -366,8 +378,26 @@ func _request_drop(scene: String, drop_position: Vector3, yaw: float, drop_veloc
 	var item: PickupItem = load(scene).instantiate()
 	item.position = drop_position
 	item.rotation = Vector3(0.0, yaw, 0.0)
+	item.set_state(state)
 	_items_root().add_child(item, true)
 	item.linear_velocity = drop_velocity.limit_length(THROW_SPEED)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_interact(path: NodePath, info: Dictionary) -> void:
+	if not _from_owner():
+		return
+	var target := get_node_or_null(path) as Interactable
+	if target == null or not _in_reach(target):
+		return
+	var result := target.interact(self, info)
+	if result.is_empty():
+		return
+	var give: Dictionary = result.get("give", {})
+	if not give.is_empty():
+		_give_item.rpc_id(get_multiplayer_authority(), give.scene, give.name, give.state)
+		result.erase("give")
+	_interact_result.rpc_id(get_multiplayer_authority(), result)
 
 
 ## Хватка сорвалась на хосте (предмет застрял или отстал) — сообщаем владельцу.
@@ -401,12 +431,32 @@ func _grab_lost() -> void:
 
 
 @rpc("any_peer", "call_local", "reliable")
-func _give_item(scene: String, item_name: String) -> void:
+func _give_item(scene: String, item_name: String, state: Dictionary) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
-	if not inventory.add(scene, item_name):
-		# Пока шёл ответ, инвентарь заполнился — возвращаем предмет в мир
-		_request_drop.rpc_id(1, scene, _camera.global_position, rotation.y, Vector3.ZERO)
+	if not inventory.add(scene, item_name, state):
+		hud.show_message("Инвентарь полон")
+		# Предмет не пропадает: хост кладёт его рядом
+		_request_drop.rpc_id(1, scene, _camera.global_position, rotation.y, Vector3.ZERO, state)
+
+
+## Ответ хоста на работу по ферме: сообщение и изменение запаса предмета в руке.
+@rpc("any_peer", "call_local", "reliable")
+func _interact_result(result: Dictionary) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	var message: String = result.get("message", "")
+	if message != "":
+		hud.show_message(message)
+	if not result.has("consume") and not result.has("refill"):
+		return
+	var item := _get_held_item()
+	if item == null:
+		return
+	if item.apply_result(result):
+		inventory.update_selected(item.get_state(), item.get_display_name())
+	else:
+		inventory.take_selected()
 
 
 # --- Вспомогательное ---
@@ -427,6 +477,9 @@ func _refresh_hand() -> void:
 		return
 	var view: PickupItem = load(held_scene).instantiate()
 	view.make_held_view()
+	# Запас знает только владелец: остальным он не нужен
+	if is_multiplayer_authority():
+		view.set_state(inventory.get_selected().get("state", {}))
 	_hand.add_child(view)
 	view.set_active(held_active)
 
