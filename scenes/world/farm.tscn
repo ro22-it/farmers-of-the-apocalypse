@@ -1,6 +1,8 @@
 [gd_scene format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/world/tree.tscn" id="1_tree"]
+[ext_resource type="PackedScene" path="res://scenes/world/house.tscn" id="2_house"]
+[ext_resource type="PackedScene" path="res://assets/vehicles/tractor.glb" id="3_tractor"]
 
 [sub_resource type="StandardMaterial3D" id="mat_grass"]
 albedo_color = Color(0.36, 0.52, 0.27, 1)
@@ -71,6 +73,9 @@ size = Vector3(2, 30, 220)
 [sub_resource type="BoxShape3D" id="edge_z"]
 size = Vector3(380, 30, 2)
 
+[sub_resource type="BoxShape3D" id="tractor_shape"]
+size = Vector3(2, 2.1, 3)
+
 [node name="Farm" type="Node3D"]
 
 [node name="Ground" type="CSGBox3D" parent="."]
@@ -89,47 +94,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -4)
 size = Vector3(44, 0.02, 3)
 material = SubResource("mat_dirt")
 
-[node name="House" type="Node3D" parent="."]
+[node name="House" parent="." instance=ExtResource("2_house")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -12)
-
-[node name="Walls" type="CSGBox3D" parent="House"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
-use_collision = true
-size = Vector3(8, 4.5, 7)
-material = SubResource("mat_house")
-
-[node name="RoofLeft" type="CSGBox3D" parent="House"]
-transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -2.05, 5.6, 0)
-use_collision = true
-size = Vector3(4.9, 0.25, 7.8)
-material = SubResource("mat_roof")
-
-[node name="RoofRight" type="CSGBox3D" parent="House"]
-transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 2.05, 5.6, 0)
-use_collision = true
-size = Vector3(4.9, 0.25, 7.8)
-material = SubResource("mat_roof")
-
-[node name="Door" type="CSGBox3D" parent="House"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 3.52)
-size = Vector3(1.2, 2.2, 0.06)
-material = SubResource("mat_door")
-
-[node name="WindowLeft" type="CSGBox3D" parent="House"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 2.4, 3.52)
-size = Vector3(1.2, 1, 0.06)
-material = SubResource("mat_glass")
-
-[node name="WindowRight" type="CSGBox3D" parent="House"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 2.4, 3.52)
-size = Vector3(1.2, 1, 0.06)
-material = SubResource("mat_glass")
-
-[node name="Porch" type="CSGBox3D" parent="House"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4.4)
-use_collision = true
-size = Vector3(3, 0.2, 1.6)
-material = SubResource("mat_door")
 
 [node name="Table" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.85, -2.5)
@@ -744,3 +710,13 @@ shape = SubResource("edge_z")
 [node name="South" type="CollisionShape3D" parent="WorldEdge"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 14, 99)
 shape = SubResource("edge_z")
+
+[node name="Tractor" type="StaticBody3D" parent="."]
+transform = Transform3D(-0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, -0.9397, 19.5, 0, -11)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Tractor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0.1)
+shape = SubResource("tractor_shape")
+
+[node name="Model" parent="Tractor" instance=ExtResource("3_tractor")]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, 0, 0)

@@ -19,6 +19,7 @@ var _name_edit: LineEdit
 var _address_edit: LineEdit
 var _class_option: OptionButton
 var _class_description: Label
+var _class_preview: ClassPreview
 var _tutorial_check: CheckBox
 var _status: Label
 var _buttons: Array[Button] = []
@@ -98,6 +99,7 @@ func _set_busy(busy: bool) -> void:
 func _on_class_selected(index: int) -> void:
 	Network.player_class = PlayerClasses.ORDER[index]
 	_class_description.text = PlayerClasses.get_info(Network.player_class).description
+	_class_preview.show_class(Network.player_class)
 
 
 func _on_continue() -> void:
@@ -125,7 +127,14 @@ func _on_join() -> void:
 
 func _build_main() -> Control:
 	var center := _make_center(self)
-	var box := _make_panel(center, 460)
+	# Слева — предпросмотр выбранного персонажа, справа — само меню
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	center.add_child(row)
+	_class_preview = ClassPreview.new(PANEL_BG)
+	_class_preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(_class_preview)
+	var box := _make_panel(row, 460)
 
 	var title := _make_label("Фермеры апокалипсиса", 34)
 	title.add_theme_color_override("font_color", ACCENT)

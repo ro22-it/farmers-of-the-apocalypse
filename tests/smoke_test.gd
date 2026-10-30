@@ -850,5 +850,22 @@ func _run() -> void:
 	saver.delete_save()
 	check(not FileAccess.file_exists(SaveSystem.TEST_SAVE), "тестовое сохранение удалено")
 
+	# --- Дом: дверь открывается, внутрь можно зайти ---
+	var door: Node3D = main.get_node("Farm/House/DoorHinge/Door")
+	player.global_position = Vector3(-12.0, 0.3, -6.6)
+	player.velocity = Vector3.ZERO
+	await frames(5)
+	aim_at(door.global_position)
+	await frames(2)
+	player._try_pickup()
+	await frames(40)
+	check(door.is_open, "дверь дома открылась по E")
+	aim_at(Vector3(-12.0, 1.4, -13.0))
+	player.get_node("Head").rotation.x = 0.0
+	Input.action_press("move_forward")
+	await frames(90)
+	Input.action_release("move_forward")
+	check(player.global_position.z < -9.5, "игрок зашёл в дом (z=%.1f)" % player.global_position.z)
+
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

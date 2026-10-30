@@ -58,6 +58,7 @@ var _engine_last := Vector3.ZERO
 
 
 func _ready() -> void:
+	_attach_wheel_models()
 	_engine = AudioStreamPlayer3D.new()
 	_engine.stream = SoundBank.loop_stream("engine")
 	_engine.unit_size = 6.0
@@ -225,3 +226,23 @@ func reset() -> void:
 	angular_velocity = Vector3.ZERO
 	global_transform = _start_transform
 	set_input(0.0, 0.0, 1.0)
+
+
+## Колёса модели (Kenney Car Kit) переезжают на физические колёса,
+## чтобы крутиться, поворачивать и проседать вместе с подвеской
+func _attach_wheel_models() -> void:
+	var model: Node3D = $Model
+	var pairs := {
+		"wheel-front-left": $WheelFrontLeft, "wheel-front-right": $WheelFrontRight,
+		"wheel-back-left": $WheelRearLeft, "wheel-back-right": $WheelRearRight,
+	}
+	for mesh_name: String in pairs:
+		var mesh := model.find_child(mesh_name) as MeshInstance3D
+		if mesh == null:
+			continue
+		var wheel: VehicleWheel3D = pairs[mesh_name]
+		# Центр колеса в модели смещён вбок от точки привязки сетки
+		var center := mesh.get_aabb().get_center()
+		mesh.get_parent().remove_child(mesh)
+		wheel.add_child(mesh)
+		mesh.transform = Transform3D(Basis.from_scale(model.scale), -center * model.scale)

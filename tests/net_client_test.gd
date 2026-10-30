@@ -57,7 +57,8 @@ func _run() -> void:
 	check(await wait_for(func(): return players.get_child_count() == 2), "виден хост")
 	check(players.get_node("1").player_name == "Хост", "имя хоста дошло")
 	check(players.get_node("1").player_class == "farmer", "клиент видит, что хост — фермер")
-	check(players.get_node("1").get_node("Head/Hat") != null, "у хоста на голове шляпа фермера")
+	var host_model: Node = players.get_node("1").get_node_or_null("Body/Model")
+	check(host_model != null and host_model.get_child(0).scene_file_path.ends_with("farmer.glb"), "клиент видит хоста в модели фермера")
 	var expected: int = main._placed_items.size()
 	check(await wait_for(func(): return items.get_child_count() == expected), "пришли все %d предметов от хоста" % expected)
 	var crate: Grabbable = items.get_node("Crate1")
@@ -134,12 +135,15 @@ func _run() -> void:
 			await process_frame
 			var step := creature.global_position.distance_to(last)
 			last = creature.global_position
+			# Стоять на месте законно, пока существо ест грядку: считаем только ходьбу
+			if creature.state != Creature.State.APPROACH and creature.state != Creature.State.FLEE:
+				continue
 			if step < 0.0005:
 				still += 1
 			else:
 				moving += 1
 			biggest = maxf(biggest, step)
-		check(moving > 70 and biggest < 0.25, "существо у клиента движется плавно (кадров с движением %d из 90, наибольший шаг %.2f м)" % [moving, biggest])
+		check(moving >= (moving + still) * 0.8 and moving >= 5 and biggest < 0.25, "существо у клиента движется плавно (на ходу кадров с движением %d, без %d, наибольший шаг %.2f м)" % [moving, still, biggest])
 		player._try_ability()
 		check(await wait_for(func(): return creature.tracked), "«Выследить» охотника-клиента подсветил существо")
 

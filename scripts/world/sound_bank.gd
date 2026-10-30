@@ -26,6 +26,8 @@ const FILES := {
 	"shell": ["shell_1.ogg", "shell_2.ogg"],
 	"car_door_open": ["car_door_open.ogg"],
 	"car_door_close": ["car_door_close.ogg"],
+	"door_open": ["door_open_1.ogg", "door_open_2.ogg"],
+	"door_close": ["door_close_1.ogg", "door_close_2.ogg"],
 	"bark": ["bark_1.ogg", "bark_2.ogg"],
 	"metal_hit": ["metal_hit_1.ogg", "metal_hit_2.ogg"],
 	"metal_drop": ["metal_drop.ogg"],

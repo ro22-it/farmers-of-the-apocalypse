@@ -182,6 +182,7 @@ var _seat_index := -1
 @onready var _collision: CollisionShape3D = $CollisionShape3D
 @onready var _shape: CapsuleShape3D = $CollisionShape3D.shape
 @onready var _body: MeshInstance3D = $Body
+var _model: CharacterModel
 @onready var _name_tag: Label3D = $NameTag
 @onready var inventory: Inventory = $Inventory
 @onready var hud: Hud = $Hud
@@ -211,7 +212,7 @@ func _ready() -> void:
 	add_to_group("local_player")
 	_name_tag.hide()
 	# Своё тело игрок не видит, но тень от него остаётся
-	_body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+	_model.set_shadow_only(true)
 	_camera.current = true
 	_ray.add_exception(self)
 	inventory.changed.connect(_on_inventory_changed)
@@ -543,14 +544,17 @@ func _on_primary() -> void:
 	if target is Player and item and item.damage > 0 and not target.downed:
 		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE + 0.5:
 			_request_prank.rpc_id(1, target.get_path())
+			_swing_effect.rpc("Sword_Slash")
 		return
 	if target is Creature and (item == null or item.damage == 0):
 		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE:
 			_request_hit.rpc_id(1, target.get_path(), 0)
+			_swing_effect.rpc("Kick_Right")
 		return
 	if target is Creature and item and item.damage > 0:
 		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE:
 			_request_hit.rpc_id(1, target.get_path(), item.damage)
+			_swing_effect.rpc("Sword_Slash")
 		else:
 			hud.show_message("Слишком далеко — подойдите вплотную")
 		return
@@ -1250,12 +1254,21 @@ func _request_shoot(weapon: String, origin: Vector3, direction: Vector3, spread:
 	_shot_effect.rpc(weapon, hits)
 
 
+## Взмах лопатой или пинок: видят все
+@rpc("any_peer", "call_local", "unreliable")
+func _swing_effect(anim_name: String) -> void:
+	if multiplayer.get_remote_sender_id() != get_multiplayer_authority():
+		return
+	_model.play_action(anim_name)
+
+
 @rpc("any_peer", "call_local", "reliable")
 func _shot_effect(weapon: String, hits: Array) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	var info := Weapons.get_info(weapon)
 	var muzzle := _muzzle_position()
+	_model.play_action("Gun_Shoot")
 	Effects.muzzle_flash(get_tree(), muzzle)
 	SoundBank.play_at(get_tree(), info.sound, muzzle)
 	for hit in hits:
@@ -1422,52 +1435,14 @@ func _try_ability() -> void:
 	_request_ability.rpc_id(1)
 
 
-## Цвет одежды и шляпа по классу. Свою шляпу игрок не видит, только её тень.
+## Модель персонажа по классу. Тело-капсула остаётся только у тестов без модели.
 func _apply_class_look() -> void:
-	var info := PlayerClasses.get_info(player_class)
-	if info.is_empty():
-		return
-	var cloth := StandardMaterial3D.new()
-	cloth.albedo_color = info.color
-	_body.material_override = cloth
-	var hat := _build_hat(info.hat)
-	_head.add_child(hat)
-	if is_multiplayer_authority():
-		for part: MeshInstance3D in hat.get_children():
-			part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
-
-
-func _build_hat(kind: String) -> Node3D:
-	var hat := Node3D.new()
-	hat.name = "Hat"
-	match kind:
-		"straw":
-			_hat_part(hat, Plot._cylinder(0.38, 0.38, 0.03), Color(0.9, 0.8, 0.45), Vector3(0, 0.15, 0))
-			_hat_part(hat, Plot._cylinder(0.16, 0.2, 0.16), Color(0.9, 0.8, 0.45), Vector3(0, 0.23, 0))
-		"hardhat":
-			_hat_part(hat, Plot._sphere(0.22, 0.26), Color(1.0, 0.75, 0.1), Vector3(0, 0.15, 0))
-			_hat_part(hat, Plot._cylinder(0.27, 0.27, 0.02), Color(1.0, 0.75, 0.1), Vector3(0, 0.12, 0))
-		"cap":
-			_hat_part(hat, Plot._cylinder(0.18, 0.19, 0.1), Color(0.2, 0.32, 0.2), Vector3(0, 0.17, 0))
-			var visor := BoxMesh.new()
-			visor.size = Vector3(0.22, 0.02, 0.16)
-			_hat_part(hat, visor, Color(0.2, 0.32, 0.2), Vector3(0, 0.13, -0.2))
-		"cowboy":
-			_hat_part(hat, Plot._cylinder(0.4, 0.4, 0.03), Color(0.45, 0.3, 0.18), Vector3(0, 0.15, 0))
-			_hat_part(hat, Plot._cylinder(0.14, 0.18, 0.2), Color(0.45, 0.3, 0.18), Vector3(0, 0.26, 0))
-		"hood":
-			_hat_part(hat, Plot._cone(0.25, 0.5), Color(0.3, 0.2, 0.42), Vector3(0, 0.25, 0.03))
-	return hat
-
-
-func _hat_part(hat: Node3D, mesh: Mesh, color: Color, at: Vector3) -> void:
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	var part := MeshInstance3D.new()
-	part.mesh = mesh
-	part.material_override = material
-	part.position = at
-	hat.add_child(part)
+	_model = CharacterModel.new()
+	_model.name = "Model"
+	_body.add_child(_model)
+	_model.position.y = -STAND_HEIGHT / 2.0
+	_model.setup(player_class, self)
+	_body.mesh = null
 
 
 ## Аура бодрости травника: рядом с ним все восстанавливаются вдвое быстрее
@@ -1563,6 +1538,8 @@ func _ride(controls: bool) -> void:
 
 ## Вид от третьего лица в пикапе (V): камера сзади и сверху, плавно догоняет машину
 func _update_truck_camera() -> void:
+	# Сзади себя видно целиком, из кабины — только тень
+	_model.set_shadow_only(not third_person)
 	if not third_person:
 		_camera.transform = Transform3D.IDENTITY
 		return
@@ -1576,6 +1553,7 @@ func _update_truck_camera() -> void:
 func _leave_truck() -> void:
 	SoundBank.play_at(get_tree(), "car_door_open", global_position, -6.0)
 	_camera.transform = Transform3D.IDENTITY
+	_model.set_shadow_only(true)
 	global_position = _truck.get_exit_position(_seat_index)
 	velocity = Vector3.ZERO
 	_truck = null
@@ -1598,7 +1576,8 @@ func _apply_downed() -> void:
 func _apply_seated() -> void:
 	_collision.disabled = seated
 	if seated:
-		_body.scale.y = 0.6
+		# Ноги уходят под сиденье, тело не сплющиваем
+		_body.scale.y = 1.0
 		_body.position.y = 0.55
 		_head.position.y = SEATED_EYE_HEIGHT
 
