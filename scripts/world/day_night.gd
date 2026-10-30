@@ -70,6 +70,11 @@ func reset() -> void:
 	_was_night = false
 
 
+## Отладка: за несколько секунд до ближайшего заката или рассвета
+func skip_to_next_phase() -> void:
+	cycle_time = (CYCLE if is_night() else DAY_LENGTH) - 3.0
+
+
 func is_night() -> bool:
 	return cycle_time >= DAY_LENGTH
 

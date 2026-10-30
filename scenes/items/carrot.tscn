@@ -34,7 +34,8 @@ collision_mask = 23
 mass = 0.3
 script = ExtResource("1_item")
 display_name = "Морковь"
-use_hint = "Продать можно будет в деревне"
+sell_price = 5
+use_hint = "Продайте в скупке в деревне"
 hand_position = Vector3(0.3, -0.25, -0.5)
 hand_rotation_degrees = Vector3(0, 0, -30)
 

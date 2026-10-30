@@ -1,0 +1,515 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/world/tree.tscn" id="1_tree"]
+[ext_resource type="PackedScene" path="res://scenes/world/shop_counter.tscn" id="2_counter"]
+[ext_resource type="PackedScene" path="res://scenes/world/sale_bin.tscn" id="3_bin"]
+
+[sub_resource type="StandardMaterial3D" id="mat_wall"]
+albedo_color = Color(0.85, 0.8, 0.68, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_wall2"]
+albedo_color = Color(0.75, 0.82, 0.85, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_wood"]
+albedo_color = Color(0.5, 0.36, 0.22, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_roof"]
+albedo_color = Color(0.4, 0.22, 0.18, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_roof2"]
+albedo_color = Color(0.27, 0.22, 0.2, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_cloth"]
+albedo_color = Color(0.75, 0.25, 0.2, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_stone"]
+albedo_color = Color(0.55, 0.55, 0.55, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_skin"]
+albedo_color = Color(0.9, 0.75, 0.6, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_coat"]
+albedo_color = Color(0.35, 0.3, 0.45, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_hat"]
+albedo_color = Color(0.2, 0.15, 0.12, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_door"]
+albedo_color = Color(0.38, 0.26, 0.17, 1)
+roughness = 0.95
+
+[sub_resource type="CapsuleMesh" id="mesh_body"]
+material = SubResource("mat_coat")
+radius = 0.32
+height = 1.5
+
+[sub_resource type="SphereMesh" id="mesh_head"]
+material = SubResource("mat_skin")
+radius = 0.22
+height = 0.44
+
+[sub_resource type="CylinderMesh" id="mesh_hat"]
+material = SubResource("mat_hat")
+top_radius = 0.18
+bottom_radius = 0.35
+height = 0.25
+
+[sub_resource type="CylinderMesh" id="mesh_well"]
+material = SubResource("mat_stone")
+top_radius = 0.9
+bottom_radius = 0.9
+height = 0.8
+
+[sub_resource type="CylinderShape3D" id="shape_well"]
+radius = 0.9
+height = 0.8
+
+[node name="Village" type="Node3D"]
+
+[node name="SignPost" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112, 1, 4.2)
+use_collision = true
+size = Vector3(0.15, 2, 0.15)
+material = SubResource("mat_wood")
+
+[node name="SignBoard" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112, 1.9, 4.2)
+use_collision = true
+size = Vector3(1.8, 0.6, 0.08)
+material = SubResource("mat_wood")
+
+[node name="SignText" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112, 1.9, 4.3)
+billboard = 1
+font_size = 48
+outline_size = 12
+text = "Деревня"
+visibility_range_end = 40.0
+
+[node name="Shop" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, -10)
+
+[node name="Back" type="CSGBox3D" parent="Shop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -3)
+use_collision = true
+size = Vector3(8, 3.5, 0.3)
+material = SubResource("mat_wall2")
+
+[node name="Left" type="CSGBox3D" parent="Shop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.85, 1.75, -0.8)
+use_collision = true
+size = Vector3(0.3, 3.5, 4.6)
+material = SubResource("mat_wall2")
+
+[node name="Right" type="CSGBox3D" parent="Shop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.85, 1.75, -0.8)
+use_collision = true
+size = Vector3(0.3, 3.5, 4.6)
+material = SubResource("mat_wall2")
+
+[node name="Roof" type="CSGBox3D" parent="Shop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -0.5)
+use_collision = true
+size = Vector3(8.8, 0.25, 6)
+material = SubResource("mat_roof2")
+
+[node name="Awning" type="CSGBox3D" parent="Shop"]
+transform = Transform3D(1, 0, 0, 0, 0.966, 0.259, 0, -0.259, 0.966, 0, 3.2, 2.7)
+size = Vector3(8.8, 0.1, 1.2)
+material = SubResource("mat_cloth")
+
+[node name="Counter" parent="Shop" instance=ExtResource("2_counter")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
+
+[node name="Merchant" type="Node3D" parent="Shop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.2)
+
+[node name="Body" type="MeshInstance3D" parent="Shop/Merchant"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+mesh = SubResource("mesh_body")
+
+[node name="Head" type="MeshInstance3D" parent="Shop/Merchant"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
+mesh = SubResource("mesh_head")
+
+[node name="Hat" type="MeshInstance3D" parent="Shop/Merchant"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.88, 0)
+mesh = SubResource("mesh_hat")
+
+[node name="Sign" type="Label3D" parent="Shop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 2.9)
+billboard = 1
+font_size = 64
+outline_size = 12
+text = "Лавка"
+visibility_range_end = 60.0
+
+[node name="Market" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, 0, 9)
+
+[node name="Pole1" type="CSGBox3D" parent="Market"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.4, -1.5)
+use_collision = true
+size = Vector3(0.12, 2.8, 0.12)
+material = SubResource("mat_wood")
+
+[node name="Pole2" type="CSGBox3D" parent="Market"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.4, -1.5)
+use_collision = true
+size = Vector3(0.12, 2.8, 0.12)
+material = SubResource("mat_wood")
+
+[node name="Pole3" type="CSGBox3D" parent="Market"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.4, 1.5)
+use_collision = true
+size = Vector3(0.12, 2.8, 0.12)
+material = SubResource("mat_wood")
+
+[node name="Pole4" type="CSGBox3D" parent="Market"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.4, 1.5)
+use_collision = true
+size = Vector3(0.12, 2.8, 0.12)
+material = SubResource("mat_wood")
+
+[node name="Cloth" type="CSGBox3D" parent="Market"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.85, 0)
+size = Vector3(4.6, 0.08, 3.6)
+material = SubResource("mat_cloth")
+
+[node name="SaleBin" parent="Market" instance=ExtResource("3_bin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.4)
+
+[node name="House1" type="Node3D" parent="."]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 162, 0, 12)
+
+[node name="Walls" type="CSGBox3D" parent="House1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+use_collision = true
+size = Vector3(6, 3.2, 6)
+material = SubResource("mat_wall")
+
+[node name="RoofLeft" type="CSGBox3D" parent="House1"]
+transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -1.65, 4.1526, 0)
+use_collision = true
+size = Vector3(3.8105, 0.25, 6.6)
+material = SubResource("mat_roof")
+
+[node name="RoofRight" type="CSGBox3D" parent="House1"]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 1.65, 4.1526, 0)
+use_collision = true
+size = Vector3(3.8105, 0.25, 6.6)
+material = SubResource("mat_roof")
+
+[node name="Door" type="CSGBox3D" parent="House1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 3.02)
+size = Vector3(1.2, 2.2, 0.06)
+material = SubResource("mat_door")
+
+[node name="House2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 128, 0, -14)
+
+[node name="Walls" type="CSGBox3D" parent="House2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+use_collision = true
+size = Vector3(6, 3, 5)
+material = SubResource("mat_wall2")
+
+[node name="RoofLeft" type="CSGBox3D" parent="House2"]
+transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -1.65, 3.9526, 0)
+use_collision = true
+size = Vector3(3.8105, 0.25, 5.6)
+material = SubResource("mat_roof")
+
+[node name="RoofRight" type="CSGBox3D" parent="House2"]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 1.65, 3.9526, 0)
+use_collision = true
+size = Vector3(3.8105, 0.25, 5.6)
+material = SubResource("mat_roof")
+
+[node name="Door" type="CSGBox3D" parent="House2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 2.52)
+size = Vector3(1.2, 2.2, 0.06)
+material = SubResource("mat_door")
+
+[node name="House3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 166, 0, -18)
+
+[node name="Walls" type="CSGBox3D" parent="House3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
+use_collision = true
+size = Vector3(7, 3.4, 6)
+material = SubResource("mat_wall")
+
+[node name="RoofLeft" type="CSGBox3D" parent="House3"]
+transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -1.9, 4.497, 0)
+use_collision = true
+size = Vector3(4.3879, 0.25, 6.6)
+material = SubResource("mat_roof")
+
+[node name="RoofRight" type="CSGBox3D" parent="House3"]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 1.9, 4.497, 0)
+use_collision = true
+size = Vector3(4.3879, 0.25, 6.6)
+material = SubResource("mat_roof")
+
+[node name="Door" type="CSGBox3D" parent="House3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 3.02)
+size = Vector3(1.2, 2.2, 0.06)
+material = SubResource("mat_door")
+
+[node name="House4" type="Node3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 132, 0, 15)
+
+[node name="Walls" type="CSGBox3D" parent="House4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+use_collision = true
+size = Vector3(5, 3, 5)
+material = SubResource("mat_wall2")
+
+[node name="RoofLeft" type="CSGBox3D" parent="House4"]
+transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -1.4, 3.8083, 0)
+use_collision = true
+size = Vector3(3.2332, 0.25, 5.6)
+material = SubResource("mat_roof")
+
+[node name="RoofRight" type="CSGBox3D" parent="House4"]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 1.4, 3.8083, 0)
+use_collision = true
+size = Vector3(3.2332, 0.25, 5.6)
+material = SubResource("mat_roof")
+
+[node name="Door" type="CSGBox3D" parent="House4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 2.52)
+size = Vector3(1.2, 2.2, 0.06)
+material = SubResource("mat_door")
+
+[node name="Well" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 156, 0, 3)
+
+[node name="Shape" type="CollisionShape3D" parent="Well"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("shape_well")
+
+[node name="Mesh" type="MeshInstance3D" parent="Well"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+mesh = SubResource("mesh_well")
+
+[node name="Tree1" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-1.2097, 0, -0.0596, 0, 1.2112, 0, 0.0596, 0, -1.2097, 185.977, 0, -21.1356)
+
+[node name="Tree2" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.9283, 0, -0.9871, 0, 1.3551, 0, 0.9871, 0, -0.9283, 163.881, 0, 43.3784)
+
+[node name="Tree3" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.1509, 0, 0.7372, 0, 1.3668, 0, -0.7372, 0, 1.1509, 179.774, 0, 23.3536)
+
+[node name="Tree4" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.4661, 0, -0.1647, 0, 1.4753, 0, 0.1647, 0, 1.4661, 132.791, 0, -32.8963)
+
+[node name="Tree5" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.445, 0, 0.6774, 0, 0.8105, 0, -0.6774, 0, 0.445, 116.614, 0, -41.1666)
+
+[node name="Tree6" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.1047, 0, 0.2113, 0, 1.1248, 0, -0.2113, 0, 1.1047, 159.783, 0, 37.4806)
+
+[node name="Tree7" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.4968, 0, -0.022, 0, 1.497, 0, 0.022, 0, 1.4968, 105.241, 0, 10.9226)
+
+[node name="Tree8" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3831, 0, 0.8811, 0, 0.9608, 0, -0.8811, 0, -0.3831, 173.139, 0, -44.2073)
+
+[node name="Tree9" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.1104, 0, -1.0746, 0, 1.0803, 0, 1.0746, 0, 0.1104, 136.3, 0, 34.7534)
+
+[node name="Tree10" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.345, 0, -0.363, 0, 1.3931, 0, 0.363, 0, 1.345, 170.121, 0, -36.1842)
+
+[node name="Tree11" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.9543, 0, -0.6033, 0, 1.129, 0, 0.6033, 0, 0.9543, 184.452, 0, 0.1351)
+
+[node name="Tree12" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.1123, 0, 0.5496, 0, 1.2406, 0, -0.5496, 0, 1.1123, 188.996, 0, -5.4572)
+
+[node name="Tree13" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.8818, 0, 0.5377, 0, 1.0328, 0, -0.5377, 0, 0.8818, 152.308, 0, -40.3578)
+
+[node name="Tree14" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.7172, 0, 0.6567, 0, 0.9725, 0, -0.6567, 0, 0.7172, 197.347, 0, -12.0203)
+
+[node name="Tree15" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.2691, 0, -0.8843, 0, 0.9244, 0, 0.8843, 0, 0.2691, 173.628, 0, 21.0887)
+
+[node name="Tree16" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.4778, 0, 1.2222, 0, 1.3123, 0, -1.2222, 0, 0.4778, 102.498, 0, -16.6106)
+
+[node name="Tree17" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.8141, 0, 0.7316, 0, 1.0945, 0, -0.7316, 0, 0.8141, 179.506, 0, 37.1957)
+
+[node name="Tree18" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.3397, 0, -0.2475, 0, 1.3624, 0, 0.2475, 0, 1.3397, 154.483, 0, 39.9033)
+
+[node name="Tree19" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.2629, 0, 1.0434, 0, 1.076, 0, -1.0434, 0, 0.2629, 125.978, 0, 53.7393)
+
+[node name="Tree20" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.2056, 0, 0.8798, 0, 1.4925, 0, -0.8798, 0, 1.2056, 175.91, 0, -40.1725)
+
+[node name="Tree21" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.1464, 0, -1.0198, 0, 1.0303, 0, 1.0198, 0, 0.1464, 154.32, 0, 39.6342)
+
+[node name="Tree22" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.0194, 0, 0.648, 0, 1.2079, 0, -0.648, 0, 1.0194, 134.695, 0, 34.398)
+
+[node name="Tree23" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.7735, 0, 0.8062, 0, 1.1172, 0, -0.8062, 0, -0.7735, 147.178, 0, 49.5856)
+
+[node name="Tree24" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-1.255, 0, -0.6352, 0, 1.4066, 0, 0.6352, 0, -1.255, 190.05, 0, -11.8283)
+
+[node name="Tree25" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.1515, 0, -0.7468, 0, 1.3725, 0, 0.7468, 0, 1.1515, 160.569, 0, 34.6723)
+
+[node name="Tree26" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0968, 0, -1.4551, 0, 1.4583, 0, 1.4551, 0, -0.0968, 145.123, 0, 38.9346)
+
+[node name="Tree27" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.9026, 0, -0.8245, 0, 1.2225, 0, 0.8245, 0, 0.9026, 164.332, 0, 55.4289)
+
+[node name="Tree28" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.4305, 0, 0.3548, 0, 1.4739, 0, -0.3548, 0, 1.4305, 112.679, 0, 17.3851)
+
+[node name="Tree29" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0604, 0, 1.3753, 0, 1.3766, 0, -1.3753, 0, -0.0604, 148.808, 0, 52.1803)
+
+[node name="Tree30" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.5889, 0, 1.1637, 0, 1.3042, 0, -1.1637, 0, 0.5889, 110.786, 0, -23.7154)
+
+[node name="Tree31" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-1.3006, 0, -0.509, 0, 1.3967, 0, 0.509, 0, -1.3006, 181.267, 0, 16.7265)
+
+[node name="Tree32" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.8185, 0, -0.4678, 0, 0.9428, 0, 0.4678, 0, 0.8185, 113.912, 0, -27.1668)
+
+[node name="Tree33" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.7938, 0, 0.2818, 0, 0.8423, 0, -0.2818, 0, -0.7938, 185.777, 0, 4.262)
+
+[node name="Tree34" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8019, 0, -0.3908, 0, 0.8921, 0, 0.3908, 0, -0.8019, 164.482, 0, 38.9922)
+
+[node name="Tree35" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.2504, 0, -0.154, 0, 1.2599, 0, 0.154, 0, 1.2504, 107.972, 0, 43.5509)
+
+[node name="Tree36" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.5242, 0, 0.6365, 0, 0.8246, 0, -0.6365, 0, 0.5242, 127.242, 0, -45.8784)
+
+[node name="Tree37" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.4469, 0, -1.4045, 0, 1.4739, 0, 1.4045, 0, -0.4469, 202.301, 0, 6.4698)
+
+[node name="Tree38" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-1.3032, 0, 0.1461, 0, 1.3113, 0, -0.1461, 0, -1.3032, 195.091, 0, 6.7309)
+
+[node name="Tree39" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.0525, 0, 0.5385, 0, 1.1823, 0, -0.5385, 0, 1.0525, 119.835, 0, 54.449)
+
+[node name="Tree40" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.1047, 0, -1.2883, 0, 1.2926, 0, 1.2883, 0, -0.1047, 140.318, 0, -57.2139)
+
+[node name="Tree41" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.764, 0, 1.0265, 0, 1.2796, 0, -1.0265, 0, -0.764, 160.518, 0, -55.6677)
+
+[node name="Tree42" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-1.1741, 0, 0.6731, 0, 1.3534, 0, -0.6731, 0, -1.1741, 191.004, 0, -33.0561)
+
+[node name="Tree43" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.7551, 0, -0.7547, 0, 1.0676, 0, 0.7547, 0, -0.7551, 176.98, 0, -36.9838)
+
+[node name="Tree44" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.0925, 0, 0.6024, 0, 1.2476, 0, -0.6024, 0, 1.0925, 101.743, 0, -24.7376)
+
+[node name="Tree45" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.1463, 0, -1.0619, 0, 1.0719, 0, 1.0619, 0, -0.1463, 201.825, 0, -2.3856)
+
+[node name="Tree46" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-1.2911, 0, 0.5063, 0, 1.3869, 0, -0.5063, 0, -1.2911, 140.391, 0, -48.888)
+
+[node name="Tree47" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.1996, 0, 0.2272, 0, 1.2209, 0, -0.2272, 0, 1.1996, 191.262, 0, 26.8833)
+
+[node name="Tree48" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-1.0864, 0, -0.9518, 0, 1.4443, 0, 0.9518, 0, -1.0864, 130.032, 0, -44.4775)
+
+[node name="Tree49" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.4018, 0, 1.2097, 0, 1.2747, 0, -1.2097, 0, -0.4018, 143.744, 0, 34.271)
+
+[node name="Tree50" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.047, 0, -0.7046, 0, 1.262, 0, 0.7046, 0, 1.047, 156.277, 0, 36.7171)
+
+[node name="Tree51" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.3502, 0, 1.0445, 0, 1.1016, 0, -1.0445, 0, 0.3502, 121.143, 0, 45.4301)
+
+[node name="Tree52" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.7806, 0, -0.7305, 0, 1.0691, 0, 0.7305, 0, 0.7806, 164.906, 0, -54.2319)
+
+[node name="Tree53" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.7525, 0, 0.8664, 0, 1.1475, 0, -0.8664, 0, 0.7525, 108.399, 0, -21.0623)
+
+[node name="Tree54" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3535, 0, -1.4217, 0, 1.465, 0, 1.4217, 0, -0.3535, 174.173, 0, -47.879)
+
+[node name="Tree55" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.9453, 0, 0.3029, 0, 0.9926, 0, -0.3029, 0, -0.9453, 138.566, 0, 37.8544)
+
+[node name="Tree56" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8064, 0, -0.8139, 0, 1.1457, 0, 0.8139, 0, -0.8064, 155.017, 0, 43.6284)
+
+[node name="Tree57" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.1096, 0, -0.1258, 0, 1.1167, 0, 0.1258, 0, 1.1096, 122.713, 0, 51.1745)
+
+[node name="Tree58" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.5782, 0, -0.5942, 0, 0.829, 0, 0.5942, 0, 0.5782, 176.055, 0, 15.7448)
+
+[node name="Tree59" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.4908, 0, 1.262, 0, 1.3541, 0, -1.262, 0, -0.4908, 132.449, 0, -47.1947)
+
+[node name="Tree60" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.7846, 0, 0.2288, 0, 0.8173, 0, -0.2288, 0, -0.7846, 182.263, 0, 4.4968)
+
+[node name="Tree61" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.5274, 0, 0.6446, 0, 0.8329, 0, -0.6446, 0, 0.5274, 164.28, 0, -35.2438)
+
+[node name="Tree62" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8617, 0, -0.9172, 0, 1.2585, 0, 0.9172, 0, -0.8617, 113.608, 0, -33.0859)
+
+[node name="Tree63" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3759, 0, -0.8611, 0, 0.9395, 0, 0.8611, 0, -0.3759, 165.787, 0, -55.1314)
+
+[node name="Tree64" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.2066, 0, -0.902, 0, 0.9254, 0, 0.902, 0, -0.2066, 191.171, 0, 3.1282)
+
+[node name="Tree65" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3784, 0, -1.1011, 0, 1.1643, 0, 1.1011, 0, -0.3784, 138.982, 0, 42.5659)
+
+[node name="Tree66" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-1.0624, 0, 0.84, 0, 1.3544, 0, -0.84, 0, -1.0624, 104.625, 0, -35.347)
+
+[node name="Tree67" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(1.1903, 0, -0.5365, 0, 1.3057, 0, 0.5365, 0, 1.1903, 175.154, 0, -20.1516)
+
+[node name="Tree68" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-1.0126, 0, -1.0196, 0, 1.437, 0, 1.0196, 0, -1.0126, 176.366, 0, 33.3631)
+
+[node name="Tree69" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(0.9858, 0, -0.9337, 0, 1.3577, 0, 0.9337, 0, 0.9858, 110.112, 0, 34.1062)
+
+[node name="Tree70" parent="." instance=ExtResource("1_tree")]
+transform = Transform3D(-0.5482, 0, -0.7678, 0, 0.9434, 0, 0.7678, 0, -0.5482, 188.26, 0, -15.8029)

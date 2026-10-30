@@ -1,0 +1,229 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/truck.gd" id="1_truck"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(2, 0.6, 4.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cab"]
+size = Vector3(1.9, 0.9, 1.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bed_side"]
+size = Vector3(0.08, 0.4, 2.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bed_back"]
+size = Vector3(2, 0.4, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_paint"]
+albedo_color = Color(0.55, 0.32, 0.2, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_glass"]
+transparency = 1
+albedo_color = Color(0.6, 0.75, 0.8, 0.15)
+roughness = 0.1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tire"]
+albedo_color = Color(0.12, 0.12, 0.12, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lamp"]
+albedo_color = Color(1, 0.95, 0.75, 1)
+emission_enabled = true
+emission = Color(1, 0.9, 0.6, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+material = SubResource("StandardMaterial3D_paint")
+size = Vector3(2, 0.6, 4.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cab"]
+material = SubResource("StandardMaterial3D_paint")
+size = Vector3(1.9, 0.9, 1.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bed_side"]
+material = SubResource("StandardMaterial3D_paint")
+size = Vector3(0.08, 0.4, 2.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bed_back"]
+material = SubResource("StandardMaterial3D_paint")
+size = Vector3(2, 0.4, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_windshield"]
+material = SubResource("StandardMaterial3D_glass")
+size = Vector3(1.7, 0.6, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lamp"]
+material = SubResource("StandardMaterial3D_lamp")
+size = Vector3(0.3, 0.15, 0.04)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_wheel"]
+material = SubResource("StandardMaterial3D_tire")
+top_radius = 0.4
+bottom_radius = 0.4
+height = 0.3
+radial_segments = 12
+rings = 1
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_truck"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath(".:seats")
+properties/2/spawn = true
+properties/2/replication_mode = 2
+
+[node name="Truck" type="VehicleBody3D"]
+collision_mask = 23
+mass = 800.0
+center_of_mass_mode = 1
+center_of_mass = Vector3(0, 0.1, 0)
+script = ExtResource("1_truck")
+
+[node name="BodyShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("BoxShape3D_body")
+
+[node name="CabShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0.9)
+shape = SubResource("BoxShape3D_cab")
+
+[node name="BedLeftShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.96, 1.4, -0.9)
+shape = SubResource("BoxShape3D_bed_side")
+
+[node name="BedRightShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.96, 1.4, -0.9)
+shape = SubResource("BoxShape3D_bed_side")
+
+[node name="BedBackShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -2.26)
+shape = SubResource("BoxShape3D_bed_back")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("BoxMesh_body")
+
+[node name="Cab" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0.9)
+mesh = SubResource("BoxMesh_cab")
+
+[node name="Windshield" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 1.66)
+mesh = SubResource("BoxMesh_windshield")
+
+[node name="BedLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.96, 1.4, -0.9)
+mesh = SubResource("BoxMesh_bed_side")
+
+[node name="BedRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.96, 1.4, -0.9)
+mesh = SubResource("BoxMesh_bed_side")
+
+[node name="BedBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -2.26)
+mesh = SubResource("BoxMesh_bed_back")
+
+[node name="LampLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 1.0, 2.31)
+mesh = SubResource("BoxMesh_lamp")
+
+[node name="LampRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 1.0, 2.31)
+mesh = SubResource("BoxMesh_lamp")
+
+[node name="Headlight" type="SpotLight3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 0.9962, 0.0872, 0, 0.0872, -0.9962, 0, 1.0, 2.4)
+light_color = Color(1, 0.93, 0.78, 1)
+light_energy = 3.0
+spot_range = 30.0
+spot_angle = 35.0
+
+[node name="WheelFrontLeft" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 0.55, 1.5)
+use_as_traction = true
+use_as_steering = true
+wheel_radius = 0.4
+wheel_rest_length = 0.15
+wheel_friction_slip = 2.5
+suspension_travel = 0.2
+suspension_stiffness = 70.0
+suspension_max_force = 12000.0
+damping_compression = 0.5
+damping_relaxation = 0.6
+wheel_roll_influence = 0.05
+
+[node name="Mesh" type="MeshInstance3D" parent="WheelFrontLeft"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="WheelFrontRight" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.95, 0.55, 1.5)
+use_as_traction = true
+use_as_steering = true
+wheel_radius = 0.4
+wheel_rest_length = 0.15
+wheel_friction_slip = 2.5
+suspension_travel = 0.2
+suspension_stiffness = 70.0
+suspension_max_force = 12000.0
+damping_compression = 0.5
+damping_relaxation = 0.6
+wheel_roll_influence = 0.05
+
+[node name="Mesh" type="MeshInstance3D" parent="WheelFrontRight"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="WheelRearLeft" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 0.55, -1.5)
+use_as_traction = true
+wheel_radius = 0.4
+wheel_rest_length = 0.15
+wheel_friction_slip = 2.5
+suspension_travel = 0.2
+suspension_stiffness = 70.0
+suspension_max_force = 12000.0
+damping_compression = 0.5
+damping_relaxation = 0.6
+wheel_roll_influence = 0.05
+
+[node name="Mesh" type="MeshInstance3D" parent="WheelRearLeft"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="WheelRearRight" type="VehicleWheel3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.95, 0.55, -1.5)
+use_as_traction = true
+wheel_radius = 0.4
+wheel_rest_length = 0.15
+wheel_friction_slip = 2.5
+suspension_travel = 0.2
+suspension_stiffness = 70.0
+suspension_max_force = 12000.0
+damping_compression = 0.5
+damping_relaxation = 0.6
+wheel_roll_influence = 0.05
+
+[node name="Mesh" type="MeshInstance3D" parent="WheelRearRight"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_wheel")
+
+[node name="Seats" type="Node3D" parent="."]
+
+[node name="Driver" type="Marker3D" parent="Seats"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.7, 0.9)
+
+[node name="Passenger" type="Marker3D" parent="Seats"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0.7, 0.9)
+
+[node name="BedLeft" type="Marker3D" parent="Seats"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 1.2, -1.3)
+
+[node name="BedRight" type="Marker3D" parent="Seats"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 1.2, -1.3)
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = SubResource("SceneReplicationConfig_truck")

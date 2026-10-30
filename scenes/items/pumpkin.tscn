@@ -32,6 +32,7 @@ collision_mask = 23
 mass = 6.0
 script = ExtResource("1_grab")
 display_name = "Тыква"
+sell_price = 25
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_pumpkin")

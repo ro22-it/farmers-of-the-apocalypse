@@ -60,14 +60,14 @@ radial_segments = 10
 [node name="Farm" type="Node3D"]
 
 [node name="Ground" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, -0.5, 0)
 use_collision = true
-size = Vector3(200, 1, 200)
+size = Vector3(360, 1, 200)
 material = SubResource("mat_grass")
 
 [node name="Road" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 62, 0.01, 0)
-size = Vector3(76, 0.02, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 84.5, 0.01, 0)
+size = Vector3(121, 0.02, 4)
 material = SubResource("mat_dirt")
 
 [node name="Yard" type="CSGBox3D" parent="."]
@@ -196,42 +196,6 @@ material = SubResource("mat_soil")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0.07, 8)
 size = Vector3(2, 0.15, 7)
 material = SubResource("mat_soil")
-
-[node name="Truck" type="Node3D" parent="."]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 18, 0, 4)
-
-[node name="Body" type="CSGBox3D" parent="Truck"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-use_collision = true
-size = Vector3(2, 0.8, 4.6)
-material = SubResource("mat_truck")
-
-[node name="Cabin" type="CSGBox3D" parent="Truck"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -0.6)
-use_collision = true
-size = Vector3(1.9, 0.9, 1.6)
-material = SubResource("mat_truck")
-
-[node name="Windshield" type="CSGBox3D" parent="Truck"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, -1.42)
-size = Vector3(1.7, 0.6, 0.04)
-material = SubResource("mat_glass")
-
-[node name="Wheel1" type="MeshInstance3D" parent="Truck"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -1, 0.4, -1.5)
-mesh = SubResource("mesh_wheel")
-
-[node name="Wheel2" type="MeshInstance3D" parent="Truck"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1, 0.4, -1.5)
-mesh = SubResource("mesh_wheel")
-
-[node name="Wheel3" type="MeshInstance3D" parent="Truck"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -1, 0.4, 1.5)
-mesh = SubResource("mesh_wheel")
-
-[node name="Wheel4" type="MeshInstance3D" parent="Truck"]
-transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1, 0.4, 1.5)
-mesh = SubResource("mesh_wheel")
 
 [node name="Forest" type="Node3D" parent="."]
 

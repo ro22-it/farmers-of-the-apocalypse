@@ -4,7 +4,7 @@ var main: Node
 var player: Player
 
 ## Одиночная игра: хост без друзей. Проверяет хватку, бросок, инвентарь, фонарь
-## цикл грядки (вскопать, посадить, полить, собрать) и ночь: Грядочник, фонарь, забор.
+## цикл грядки, ночь (Грядочник, фонарь, забор), пикап, продажу, лавку и ступеньки.
 var failures := 0
 
 
@@ -136,15 +136,15 @@ func _run() -> void:
 	await frames(3)
 	check(plot.state == Plot.State.TILLED, "лопатой грядка вскопана")
 
-	# Семена из ящика
-	var bin: Node3D = main.get_node("SeedBin1")
-	player.global_position = bin.global_position + Vector3(1.6, 0.05, 0)
+	# Пакет семян со стола
+	var bag: Node3D = main.get_node("Items/SeedBag")
+	player.global_position = Vector3(-9.9, 0.05, -1.0)
 	await frames(10)
-	aim_at(bin.global_position + Vector3(0, 0.4, 0))
+	aim_at(bag.global_position)
 	await frames(2)
 	player._try_pickup()
 	await frames(3)
-	check(str(player.inventory.get_selected().get("name")).begins_with("Семена моркови ×5"), "пакет семян из ящика")
+	check(str(player.inventory.get_selected().get("name")).begins_with("Семена моркови ×5"), "пакет семян со стола")
 
 	player.global_position = plot.global_position + Vector3(0, 0.05, 2.3)
 	await frames(10)
@@ -259,6 +259,84 @@ func _run() -> void:
 	day_night.cycle_time = DayNight.CYCLE - 0.5
 	await frames(60)
 	check(not day_night.is_night() and day_night.day == 2, "рассвело, день 2")
+
+	# --- Ступеньки: на крыльцо дома без прыжка ---
+	# Нажатия клавиш имитируем через Input, мышь считаем захваченной
+	player.test_controls = true
+	player.global_position = Vector3(-12.0, 0.05, -4.8)
+	player.rotation.y = 0.0
+	player.get_node("Head").rotation.x = 0.0
+	await frames(10)
+	Input.action_press("move_forward")
+	var on_porch := await wait_for(func(): return player.global_position.y > 0.15 and player.global_position.z < -7.0, 120)
+	Input.action_release("move_forward")
+	check(on_porch, "игрок сам зашёл на крыльцо (y=%.2f)" % player.global_position.y)
+
+	# --- Пикап ---
+	var economy: Economy = main.get_node("Economy")
+	var truck: Truck = main.get_node("Truck")
+	player.global_position = truck.global_position + truck.global_basis.x * 2.2 + Vector3(0, -0.05, 0)
+	await frames(10)
+	aim_at(truck.global_position + Vector3(0, 1.0, 0))
+	await frames(2)
+	player._try_pickup()
+	await frames(5)
+	check(player.seated and player._seat_index == Truck.DRIVER_SEAT, "сел за руль пикапа")
+	var truck_start := truck.global_position
+	Input.action_press("move_forward")
+	await frames(150)
+	Input.action_release("move_forward")
+	var driven := truck.global_position - truck_start
+	check(driven.x > 8.0 and absf(driven.z) < 2.0, "пикап поехал по дороге на восток (%.1f м)" % driven.x)
+	check(truck.global_basis.y.dot(Vector3.UP) > 0.95, "пикап не перевернулся")
+	check(player.global_position.distance_to(truck.get_seat_position(0)) < 0.3, "водитель едет вместе с пикапом")
+	Input.action_press("jump")
+	await frames(90)
+	Input.action_release("jump")
+	check(truck.linear_velocity.length() < 1.0, "пикап остановился на тормозе")
+	player._try_pickup()
+	await frames(5)
+	check(not player.seated and truck.seats[0] == 0, "вышел из пикапа")
+
+	# --- Продажа ---
+	var money := economy.money
+	var sale_bin: Node3D = main.get_node("Village/Market/SaleBin")
+	player.inventory.select(3)
+	player.inventory.take_selected()
+	player.inventory.add("res://scenes/items/carrot.tscn", "Морковь")
+	player.global_position = sale_bin.global_position + Vector3(0, 0.05, 2.0)
+	await frames(10)
+	aim_at(sale_bin.global_position + Vector3(0, 0.5, 0))
+	await frames(2)
+	player._try_pickup()
+	await frames(5)
+	check(economy.money == money + 5, "морковь из руки продана за 5")
+	check(player.inventory.get_selected().is_empty(), "проданная морковь пропала из руки")
+	var thrown: Node3D = load("res://scenes/items/corn_cob.tscn").instantiate()
+	thrown.position = sale_bin.global_position + Vector3(0, 1.5, 0)
+	main.get_node("Items").add_child(thrown, true)
+	check(await wait_for(func(): return economy.money == money + 13, 120), "брошенный в ящик початок продан за 8")
+
+	# --- Лавка ---
+	var counter: ShopCounter = main.get_node("Village/Shop/Counter")
+	player.global_position = counter.global_position + Vector3(0, 0.05, 1.6)
+	await frames(10)
+	aim_at(counter.global_position + Vector3(0, 0.9, 0))
+	await frames(2)
+	player._try_pickup()
+	await frames(5)
+	check(player.hud.is_shop_open(), "E у прилавка открывает лавку")
+	var items_count := main.get_node("Items").get_child_count()
+	money = economy.money
+	player.hud.buy_pressed.emit("hammer")
+	await frames(5)
+	check(economy.money == money - 15, "молоток куплен за 15")
+	check(main.get_node("Items").get_child_count() == items_count + 1, "покупка лежит на прилавке")
+	economy.money = 5
+	player.hud.buy_pressed.emit("flashlight")
+	await frames(5)
+	check(economy.money == 5 and main.get_node("Items").get_child_count() == items_count + 1, "без денег не купить")
+	player.hud.close_shop()
 
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

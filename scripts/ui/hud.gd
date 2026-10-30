@@ -1,8 +1,11 @@
 class_name Hud
 extends CanvasLayer
 
-## Интерфейс игрока: прицел, подсказка, сообщения, слоты инвентаря и выносливость.
+## Интерфейс игрока: прицел, подсказка, сообщения, слоты инвентаря, выносливость,
+## часы, монеты и меню лавки.
 ## Собирается из кода, чтобы не держать громоздкую сцену ради прототипа.
+
+signal buy_pressed(id: String)
 
 const SLOT_BG := Color(0.0, 0.0, 0.0, 0.45)
 const SLOT_BORDER := Color(1.0, 0.85, 0.4)
@@ -13,6 +16,10 @@ const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — пр
 
 var _hint: Label
 var _clock: Label
+var _money: Label
+var _shop: Control
+var _shop_list: VBoxContainer
+var _shop_money: Label
 var _message: Label
 var _message_left := 0.0
 var _controls: Label
@@ -67,17 +74,36 @@ func _ready() -> void:
 	_clock.offset_top = 12
 	_clock.offset_bottom = 40
 
+	_money = _make_label(18)
+	_money.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_money.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4))
+	root.add_child(_money)
+	_money.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_money.offset_left = -300
+	_money.offset_right = -16
+	_money.offset_top = 40
+	_money.offset_bottom = 66
+
 	_build_slots(root)
 	_build_stamina(root)
 	# Захваченный курсор стоит в центре экрана, прямо над прицелом.
 	# Если интерфейс ловит мышь, движения не доходят до камеры игрока.
 	_ignore_mouse(root)
+	# Лавка ловит мышь, поэтому собирается после и отдельно от остального
+	_build_shop()
 
 
 func _process(delta: float) -> void:
 	if _message_left > 0.0:
 		_message_left -= delta
 		_message.modulate.a = clampf(_message_left, 0.0, 1.0)
+
+
+func _input(event: InputEvent) -> void:
+	# Esc закрывает лавку раньше, чем меню паузы успеет его перехватить
+	if is_shop_open() and event.is_action_pressed("ui_cancel"):
+		close_shop()
+		get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -87,6 +113,42 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func set_hint(text: String) -> void:
 	_hint.text = text
+
+
+func set_money(amount: int) -> void:
+	_money.text = "Монеты: %d" % amount
+	_shop_money.text = "У команды %d монет" % amount
+
+
+func open_shop(items: Array) -> void:
+	for child in _shop_list.get_children():
+		child.queue_free()
+	for entry in items:
+		var row := HBoxContainer.new()
+		var title := Label.new()
+		title.text = entry.name
+		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title.add_theme_font_size_override("font_size", 18)
+		row.add_child(title)
+		var button := Button.new()
+		button.text = "Купить за %d" % entry.price
+		button.custom_minimum_size = Vector2(170, 38)
+		button.add_theme_font_size_override("font_size", 16)
+		var id: String = entry.id
+		button.pressed.connect(func(): buy_pressed.emit(id))
+		row.add_child(button)
+		_shop_list.add_child(row)
+	_shop.show()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func close_shop() -> void:
+	_shop.hide()
+	get_tree().call_group("local_player", "capture_mouse")
+
+
+func is_shop_open() -> bool:
+	return _shop.visible
 
 
 func set_clock(text: String) -> void:
@@ -111,6 +173,41 @@ func update_inventory(inventory: Inventory) -> void:
 		_slot_labels[i].text = "%d\n%s" % [i + 1, slot.get("name", "—")]
 		var style := _slot_selected_style if i == inventory.selected else _slot_style
 		_slot_panels[i].add_theme_stylebox_override("panel", style)
+
+
+func _build_shop() -> void:
+	_shop = CenterContainer.new()
+	# Клики мимо панели не должны уходить в игру
+	_shop.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_shop)
+	_shop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.08, 0.06, 0.92)
+	style.set_corner_radius_all(10)
+	style.set_content_margin_all(22)
+	panel.add_theme_stylebox_override("panel", style)
+	panel.custom_minimum_size = Vector2(520, 0)
+	_shop.add_child(panel)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
+
+	var title := _make_label(28)
+	title.text = "Лавка старого торговца"
+	title.add_theme_color_override("font_color", Color(0.93, 0.5, 0.12))
+	box.add_child(title)
+	_shop_money = _make_label(16)
+	box.add_child(_shop_money)
+	_shop_list = VBoxContainer.new()
+	_shop_list.add_theme_constant_override("separation", 6)
+	box.add_child(_shop_list)
+	var close := Button.new()
+	close.text = "Уйти (Esc)"
+	close.custom_minimum_size = Vector2(0, 40)
+	close.pressed.connect(close_shop)
+	box.add_child(close)
+	_shop.hide()
 
 
 func _build_slots(root: Control) -> void:

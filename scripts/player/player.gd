@@ -22,6 +22,8 @@ const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.1
 const CROUCH_LERP := 10.0
 const EYE_OFFSET := 0.15
+## Препятствия ниже этого игрок перешагивает сам (бортики, крыльцо, кочки)
+const STEP_HEIGHT := 0.35
 const PUSH_FORCE := 80.0
 const THROW_SPEED := 10.0
 const THROW_LIFT := 0.3
@@ -37,6 +39,10 @@ const FLASHLIGHT_SCENE := "res://scenes/items/flashlight.tscn"
 ## Луч фонаря: дальность и половина угла раскрытия
 const FLASHLIGHT_RANGE := 14.0
 const FLASHLIGHT_HALF_ANGLE := 22.0
+## Высота глаз сидя (в машине)
+const SEATED_EYE_HEIGHT := 1.0
+## Дальше этого от прилавка купить нельзя
+const SHOP_REACH := 6.0
 
 @export var max_stamina := 100.0
 @export var stamina_drain := 22.0
@@ -61,6 +67,16 @@ var held_active := false:
 			var item := _get_held_item()
 			if item:
 				item.set_active(value)
+## Сидит ли в пикапе. Синхронизируется: сидящий ни с чем не сталкивается,
+## иначе пикап упирался бы в собственных пассажиров.
+var seated := false:
+	set(value):
+		seated = value
+		if is_node_ready():
+			_apply_seated()
+
+## Только для автотестов: без окна мышь не захватить, а без захвата клавиши не слушаются
+var test_controls := false
 
 var stamina := max_stamina
 var _exhausted := false
@@ -72,6 +88,9 @@ var _ignore_mouse_until := 0
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 ## Только на хосте: что этот игрок сейчас держит
 var _server_grabbed: Grabbable = null
+## Пикап и место, где сидит владелец (только у владельца)
+var _truck: Truck = null
+var _seat_index := -1
 
 @onready var _head: Node3D = $Head
 @onready var _camera: Camera3D = $Head/Camera3D
@@ -93,6 +112,7 @@ func _ready() -> void:
 	add_to_group("players")
 	_name_tag.text = player_name
 	_refresh_hand()
+	_apply_seated()
 	if not is_multiplayer_authority():
 		_camera.current = false
 		hud.hide()
@@ -106,12 +126,16 @@ func _ready() -> void:
 	_ray.add_exception(self)
 	inventory.changed.connect(_on_inventory_changed)
 	_on_inventory_changed()
+	hud.buy_pressed.connect(func(id: String): _request_buy.rpc_id(1, id))
 	capture_mouse()
 
 
 func _exit_tree() -> void:
 	if multiplayer.is_server():
 		_server_release_grab(false)
+		var truck := get_tree().get_first_node_in_group("truck") as Truck
+		if truck:
+			truck.free_seat(get_multiplayer_authority())
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -137,6 +161,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_try_pickup()
 	elif event.is_action_pressed("drop"):
 		_drop_selected()
+	elif event.is_action_pressed("debug_skip_phase"):
+		_request_skip_phase.rpc_id(1)
 	elif event.is_action_pressed("slot_next"):
 		inventory.select_offset(1)
 	elif event.is_action_pressed("slot_prev"):
@@ -151,7 +177,11 @@ func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
 	# Пока открыта пауза или меню, персонаж стоит
-	var controls := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	var controls := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or test_controls
+	if _truck:
+		_ride(controls)
+		_update_hud()
+		return
 	if not is_on_floor():
 		velocity.y -= _gravity * delta
 	_update_crouch(delta, controls)
@@ -173,6 +203,7 @@ func _physics_process(delta: float) -> void:
 	velocity.x = lerpf(velocity.x, direction.x * speed, weight)
 	velocity.z = lerpf(velocity.z, direction.z * speed, weight)
 
+	_step_up(delta)
 	move_and_slide()
 	_push_bodies(delta)
 	_update_hud()
@@ -204,6 +235,10 @@ func is_shining_at(point: Vector3) -> bool:
 	var query := PhysicsRayQueryParameters3D.create(origin, point, 1)
 	query.exclude = [get_rid()]
 	return get_world_3d().direct_space_state.intersect_ray(query).is_empty()
+
+
+func show_message(text: String) -> void:
+	hud.show_message(text)
 
 
 ## Смена дня и ночи (вызывает DayNight у своего игрока)
@@ -253,6 +288,37 @@ func _update_crouch(delta: float, controls: bool) -> void:
 	_body.scale.y = _height / STAND_HEIGHT
 	_body.position.y = _height / 2.0
 	_head.position.y = _height - EYE_OFFSET
+
+
+## Ступенька, как в Source и Unity: если впереди низкое препятствие, пробуем
+## подняться на STEP_HEIGHT, шагнуть и опуститься на его верх. Если там стена
+## или не пол (слишком круто) — ничего не делаем, дальше обычный move_and_slide.
+func _step_up(delta: float) -> void:
+	if not is_on_floor():
+		return
+	var motion := Vector3(velocity.x, 0.0, velocity.z) * delta
+	if motion.length() < 0.001:
+		return
+	var start := global_transform
+	if not test_move(start, motion):
+		return
+	var up := Vector3.UP * STEP_HEIGHT
+	if test_move(start, up):
+		return
+	var raised := start.translated(up)
+	# Шагаем чуть дальше, чтобы встать на край, а не повиснуть на нём
+	var step := motion.normalized() * maxf(motion.length(), 0.1)
+	if test_move(raised, step):
+		return
+	var landing := KinematicCollision3D.new()
+	if not test_move(raised.translated(step), -up, landing):
+		return
+	if landing.get_normal().y < cos(floor_max_angle):
+		return
+	var height := STEP_HEIGHT - landing.get_travel().length()
+	if height <= 0.01:
+		return
+	global_position.y += height
 
 
 func _blocked_above() -> bool:
@@ -307,7 +373,13 @@ func _start_grab(body: Grabbable) -> void:
 
 
 func _try_pickup() -> void:
+	if _truck:
+		_leave_truck()
+		return
 	var target := _get_target()
+	if target is Truck:
+		_request_seat.rpc_id(1, target.get_path())
+		return
 	# E по объекту фермы — работа рукой: собрать урожай, взять семена
 	if target is Interactable:
 		_request_interact.rpc_id(1, target.get_path(), {"tool": "hand"})
@@ -344,8 +416,13 @@ func _update_hud() -> void:
 	var day_night := get_tree().get_first_node_in_group("day_night") as DayNight
 	if day_night:
 		hud.set_clock(day_night.get_clock_text())
+	var economy := get_tree().get_first_node_in_group("economy") as Economy
+	if economy:
+		hud.set_money(economy.money)
 	var hint := ""
-	if _grabbed:
+	if _truck:
+		hint = "WASD — ехать   Пробел — тормоз   E — выйти" if _seat_index == Truck.DRIVER_SEAT else "E — выйти"
+	elif _grabbed:
 		hint = "ПКМ — бросить"
 	else:
 		var target := _get_target()
@@ -355,6 +432,12 @@ func _update_hud() -> void:
 			hint = "E — взять: %s" % target.get_display_name()
 		elif target is Interactable:
 			hint = target.get_hint(_get_held_item())
+		elif target is Truck:
+			var truck: Truck = target
+			if truck.free_seats_count() == 0:
+				hint = "Пикап: мест нет"
+			else:
+				hint = "E — сесть %s" % Truck.SEAT_NAMES[truck.seats.find(0)]
 		elif target is Creature:
 			var weapon := _get_held_item()
 			if weapon and weapon.damage > 0:
@@ -457,6 +540,70 @@ func _request_hit(path: NodePath, amount: int) -> void:
 		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "%s повержен!" % creature.display_name})
 
 
+@rpc("any_peer", "call_local", "reliable")
+func _request_buy(id: String) -> void:
+	if not _from_owner():
+		return
+	var entry := ShopCatalog.find(id)
+	var counter := get_tree().get_first_node_in_group("shop_counter") as ShopCounter
+	var economy := get_tree().get_first_node_in_group("economy") as Economy
+	if entry.is_empty() or counter == null or economy == null:
+		return
+	if counter.global_position.distance_to(global_position) > SHOP_REACH:
+		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "Подойдите к прилавку"})
+		return
+	if not economy.try_spend(entry.price):
+		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "Не хватает монет: нужно %d" % entry.price})
+		return
+	var item: PickupItem = load(entry.scene).instantiate()
+	item.position = counter.get_spawn_position()
+	item.set_state(entry.state)
+	_items_root().add_child(item, true)
+	economy.announce.rpc("%s купил: %s (−%d)" % [player_name, entry.name, entry.price])
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_seat(path: NodePath) -> void:
+	if not _from_owner():
+		return
+	var truck := get_node_or_null(path) as Truck
+	if truck == null or truck.global_position.distance_to(global_position) > MAX_REACH + 2.0:
+		return
+	var index := truck.take_seat(get_multiplayer_authority())
+	if index == -1:
+		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "Мест нет"})
+		return
+	_seated.rpc_id(get_multiplayer_authority(), path, index)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_unseat() -> void:
+	if not _from_owner():
+		return
+	var truck := get_tree().get_first_node_in_group("truck") as Truck
+	if truck:
+		truck.free_seat(get_multiplayer_authority())
+
+
+@rpc("any_peer", "call_local", "unreliable_ordered")
+func _drive(throttle: float, steer: float, brake_amount: float) -> void:
+	if not _from_owner():
+		return
+	var truck := get_tree().get_first_node_in_group("truck") as Truck
+	if truck and truck.seats[Truck.DRIVER_SEAT] == get_multiplayer_authority():
+		truck.set_input(throttle, steer, brake_amount)
+
+
+## Отладка: перемотать к ближайшему закату или рассвету
+@rpc("any_peer", "call_local", "reliable")
+func _request_skip_phase() -> void:
+	if not _from_owner():
+		return
+	var day_night := get_tree().get_first_node_in_group("day_night") as DayNight
+	if day_night:
+		day_night.skip_to_next_phase()
+
+
 ## Хватка сорвалась на хосте (предмет застрял или отстал) — сообщаем владельцу.
 func server_force_release() -> void:
 	_server_release_grab(false)
@@ -505,6 +652,12 @@ func _interact_result(result: Dictionary) -> void:
 	var message: String = result.get("message", "")
 	if message != "":
 		hud.show_message(message)
+	if result.get("open_shop", false):
+		hud.open_shop(ShopCatalog.ITEMS)
+		return
+	if result.get("remove_held", false):
+		inventory.take_selected()
+		return
 	if not result.has("consume") and not result.has("refill"):
 		return
 	var item := _get_held_item()
@@ -514,6 +667,59 @@ func _interact_result(result: Dictionary) -> void:
 		inventory.update_selected(item.get_state(), item.get_display_name())
 	else:
 		inventory.take_selected()
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _seated(path: NodePath, index: int) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	release_grab()
+	_truck = get_node_or_null(path) as Truck
+	_seat_index = index
+	seated = true
+	# Смотрим туда же, куда пикап (у пикапа перед — +Z, у игрока — −Z)
+	rotation.y = _truck.global_rotation.y + PI
+	_head.rotation.x = 0.0
+
+
+# --- Пикап ---
+
+## Сидим на месте: позиция берётся у пикапа, водитель шлёт хосту клавиши.
+func _ride(controls: bool) -> void:
+	if not is_instance_valid(_truck):
+		_truck = null
+		seated = false
+		return
+	velocity = Vector3.ZERO
+	global_position = _truck.get_seat_position(_seat_index)
+	if _seat_index != Truck.DRIVER_SEAT:
+		return
+	var throttle := 0.0
+	var steer := 0.0
+	var brake_amount := 0.0
+	if controls:
+		throttle = Input.get_axis("move_back", "move_forward")
+		steer = Input.get_axis("move_right", "move_left")
+		brake_amount = 1.0 if Input.is_action_pressed("jump") else 0.0
+	_drive.rpc_id(1, throttle, steer, brake_amount)
+
+
+func _leave_truck() -> void:
+	global_position = _truck.get_exit_position(_seat_index)
+	velocity = Vector3.ZERO
+	_truck = null
+	_seat_index = -1
+	seated = false
+	_request_unseat.rpc_id(1)
+
+
+## Сидя: не сталкиваемся ни с чем, глаза ниже, тело короче
+func _apply_seated() -> void:
+	_collision.disabled = seated
+	if seated:
+		_body.scale.y = 0.6
+		_body.position.y = 0.55
+		_head.position.y = SEATED_EYE_HEIGHT
 
 
 # --- Вспомогательное ---

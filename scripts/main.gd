@@ -20,6 +20,8 @@ var _placed_items: Array[Dictionary] = []
 @onready var _day_night: DayNight = $DayNight
 @onready var _night_director: NightDirector = $NightDirector
 @onready var _creature_spawner: MultiplayerSpawner = $CreatureSpawner
+@onready var _economy: Economy = $Economy
+@onready var _truck: Truck = $Truck
 
 
 func _ready() -> void:
@@ -105,6 +107,9 @@ func _create_player(data: Dictionary) -> Node:
 func _reset_world(refill: bool) -> void:
 	_day_night.reset()
 	_night_director.reset()
+	_economy.reset()
+	if multiplayer.is_server():
+		_truck.reset()
 	get_tree().call_group("plots", "reset")
 	get_tree().call_group("fence", "reset")
 	for item in _items.get_children():

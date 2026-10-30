@@ -15,6 +15,8 @@ const HEAVY_MASS := 40.0
 const MAX_SAG := 0.8
 
 @export var display_name := "Предмет"
+## Сколько монет дают в скупке. 0 — не покупают.
+@export var sell_price := 0
 ## Если предмет отстал от точки удержания дальше этого, хватка срывается
 @export var break_distance := 3.0
 

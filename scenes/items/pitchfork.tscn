@@ -1,0 +1,74 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/pickup_item.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fork"]
+size = Vector3(0.25, 1.5, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_handle"]
+albedo_color = Color(0.6, 0.45, 0.28, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_metal"]
+albedo_color = Color(0.4, 0.4, 0.43, 1)
+metallic = 0.7
+roughness = 0.4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_handle"]
+material = SubResource("StandardMaterial3D_handle")
+top_radius = 0.022
+bottom_radius = 0.022
+height = 1.2
+radial_segments = 6
+rings = 1
+
+[sub_resource type="BoxMesh" id="BoxMesh_bar"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.24, 0.03, 0.03)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_tine"]
+material = SubResource("StandardMaterial3D_metal")
+top_radius = 0.0
+bottom_radius = 0.012
+height = 0.3
+radial_segments = 4
+rings = 1
+
+[node name="Pitchfork" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 23
+mass = 2.0
+script = ExtResource("1_item")
+display_name = "Вилы"
+damage = 2
+use_hint = "Наведите на существо вплотную"
+use_message = "Вилами бьют существ вплотную"
+hand_position = Vector3(0.4, -0.2, -0.6)
+hand_rotation_degrees = Vector3(-70, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+shape = SubResource("BoxShape3D_fork")
+
+[node name="Handle" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_handle")
+
+[node name="Bar" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+mesh = SubResource("BoxMesh_bar")
+
+[node name="Tine1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 0.75, 0)
+mesh = SubResource("CylinderMesh_tine")
+
+[node name="Tine2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+mesh = SubResource("CylinderMesh_tine")
+
+[node name="Tine3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.75, 0)
+mesh = SubResource("CylinderMesh_tine")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")

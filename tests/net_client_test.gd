@@ -123,6 +123,28 @@ func _run() -> void:
 		await frames(60)
 		check(creature.global_position.distance_to(start) > 0.5, "Грядочник у клиента движется")
 
+	# Деньги общие: хост поставил 100
+	var economy: Economy = main.get_node("Economy")
+	check(await wait_for(func(): return economy.money == 100), "клиент видит общие деньги")
+
+	# Клиент за рулём: клавиши уходят хосту, пикап едет у всех
+	var truck: Truck = main.get_node("Truck")
+	player.test_controls = true
+	player.global_position = truck.global_position + truck.global_basis.x * 2.2 + Vector3(0, -0.05, 0)
+	await frames(10)
+	aim_at(truck.global_position + Vector3(0, 1.0, 0))
+	await frames(5)
+	player._try_pickup()
+	check(await wait_for(func(): return player.seated), "клиент сел за руль")
+	var truck_start := truck.global_position
+	Input.action_press("move_forward")
+	await frames(150)
+	Input.action_release("move_forward")
+	check(truck.global_position.distance_to(truck_start) > 8.0, "пикап едет от клавиш клиента (%.1f м)" % truck.global_position.distance_to(truck_start))
+	check(player.global_position.distance_to(truck.get_seat_position(0)) < 0.5, "клиент сидит в едущем пикапе")
+	player._try_pickup()
+	await frames(10)
+
 	await frames(30)
 	root.get_node("Network").leave()
 	print("КЛИЕНТ ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))

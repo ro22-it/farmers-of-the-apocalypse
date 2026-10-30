@@ -1,0 +1,91 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/sale_bin.gd" id="1_bin"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bottom"]
+size = Vector3(1.4, 0.1, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_long"]
+size = Vector3(1.4, 0.8, 0.08)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_short"]
+size = Vector3(0.08, 0.8, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hopper"]
+size = Vector3(1.25, 0.7, 0.85)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wood"]
+albedo_color = Color(0.5, 0.36, 0.22, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_bottom"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(1.4, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_long"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(1.4, 0.8, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_short"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(0.08, 0.8, 1)
+
+[node name="SaleBin" type="StaticBody3D"]
+script = ExtResource("1_bin")
+
+[node name="Bottom" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+shape = SubResource("BoxShape3D_bottom")
+
+[node name="Front" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0.46)
+shape = SubResource("BoxShape3D_long")
+
+[node name="Back" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -0.46)
+shape = SubResource("BoxShape3D_long")
+
+[node name="Left" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.66, 0.4, 0)
+shape = SubResource("BoxShape3D_short")
+
+[node name="Right" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.66, 0.4, 0)
+shape = SubResource("BoxShape3D_short")
+
+[node name="BottomMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+mesh = SubResource("BoxMesh_bottom")
+
+[node name="FrontMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0.46)
+mesh = SubResource("BoxMesh_long")
+
+[node name="BackMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -0.46)
+mesh = SubResource("BoxMesh_long")
+
+[node name="LeftMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.66, 0.4, 0)
+mesh = SubResource("BoxMesh_short")
+
+[node name="RightMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.66, 0.4, 0)
+mesh = SubResource("BoxMesh_short")
+
+[node name="Hopper" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hopper"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("BoxShape3D_hopper")
+
+[node name="Label" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+billboard = 1
+font_size = 40
+outline_size = 10
+text = "Скупка урожая
+бросайте сюда"
+visibility_range_end = 15.0
