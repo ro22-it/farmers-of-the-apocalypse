@@ -61,6 +61,20 @@ const SHOP_REACH := 6.0
 var player_name := ""
 ## Класс игрока (см. PlayerClasses). Задаётся при появлении у всех одинаково.
 var player_class := ""
+## Опыт и взятые навыки. Меняет только хост, синхронизируются для всех:
+## хосту они нужны для бонусов, остальным — для подсказок.
+var xp := 0:
+	set(value):
+		xp = value
+		if is_node_ready() and is_multiplayer_authority():
+			_refresh_panel()
+var skills := PackedStringArray():
+	set(value):
+		skills = value
+		if is_node_ready():
+			max_stamina = PlayerClasses.max_stamina(self)
+			if is_multiplayer_authority():
+				_refresh_panel()
 ## Что игрок держит в руке (путь к сцене) и включён ли предмет.
 ## Синхронизируются, чтобы другие видели предмет и свет фонаря.
 var held_scene := "":
@@ -120,13 +134,15 @@ var _seat_index := -1
 
 func _enter_tree() -> void:
 	set_multiplayer_authority(name.to_int())
+	# Опыт и навыки меняет хост, поэтому их синхронизатор принадлежит хосту
+	$ServerSync.set_multiplayer_authority(1)
 
 
 func _ready() -> void:
 	add_to_group("players")
 	var class_name_text := PlayerClasses.display_name(player_class)
 	_name_tag.text = "%s\n%s" % [player_name, class_name_text] if class_name_text != "" else player_name
-	max_stamina = PlayerClasses.max_stamina(player_class)
+	max_stamina = PlayerClasses.max_stamina(self)
 	stamina = max_stamina
 	_apply_class_look()
 	_refresh_hand()
@@ -144,7 +160,7 @@ func _ready() -> void:
 	_ray.add_exception(self)
 	inventory.changed.connect(_on_inventory_changed)
 	_on_inventory_changed()
-	hud.buy_pressed.connect(func(id: String): _request_buy.rpc_id(1, id))
+	hud.panel_action.connect(_on_panel_action)
 	capture_mouse()
 
 
@@ -181,6 +197,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_drop_selected()
 	elif event.is_action_pressed("ability"):
 		_try_ability()
+	elif event.is_action_pressed("skills"):
+		_open_skills()
 	elif event.is_action_pressed("debug_skip_phase"):
 		_request_skip_phase.rpc_id(1)
 	elif event.is_action_pressed("slot_next"):
@@ -288,8 +306,8 @@ func _update_stamina(delta: float, input_dir: Vector2) -> float:
 		stamina = maxf(stamina - stamina_drain * delta, 0.0)
 		if stamina == 0.0:
 			_exhausted = true
-		return SPRINT_SPEED * PlayerClasses.sprint_multiplier(player_class)
-	stamina = minf(stamina + stamina_regen * delta, max_stamina)
+		return SPRINT_SPEED * PlayerClasses.sprint_multiplier(self)
+	stamina = minf(stamina + stamina_regen * delta * _vigor_multiplier(), max_stamina)
 	if _exhausted and stamina >= stamina_recover_threshold:
 		_exhausted = false
 	return CROUCH_SPEED if _crouching else WALK_SPEED
@@ -369,7 +387,7 @@ func _on_primary() -> void:
 	var item := _get_held_item()
 	if target is Creature and item and item.damage > 0:
 		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE:
-			_request_hit.rpc_id(1, target.get_path(), PlayerClasses.weapon_damage(player_class, item.damage))
+			_request_hit.rpc_id(1, target.get_path(), item.damage)
 		else:
 			hud.show_message("Слишком далеко — подойдите вплотную")
 		return
@@ -445,7 +463,13 @@ func _update_hud() -> void:
 	var info := PlayerClasses.get_info(player_class)
 	if not info.is_empty():
 		var left := (_ability_ready_msec - Time.get_ticks_msec()) / 1000.0
-		hud.set_ability("Q — %s: %s" % [info.ability, "готово" if left <= 0.0 else "через %d с" % ceili(left)])
+		var text := "Q — %s: %s" % [info.ability, "готово" if left <= 0.0 else "через %d с" % ceili(left)]
+		var next := PlayerClasses.next_level_xp(xp)
+		text += "\nУровень %d · опыт %s" % [PlayerClasses.level_for(xp), "%d/%d" % [xp, next] if next > 0 else "максимум"]
+		var points := PlayerClasses.free_points(xp, skills)
+		if points > 0:
+			text += "   K — навыки (+%d)" % points
+		hud.set_ability(text)
 	var hint := ""
 	if _truck:
 		hint = "WASD — ехать   Пробел — тормоз   E — выйти" if _seat_index == Truck.DRIVER_SEAT else "E — выйти"
@@ -570,7 +594,16 @@ func _request_hit(path: NodePath, amount: int) -> void:
 	var creature := get_node_or_null(path) as Creature
 	if creature == null or creature.global_position.distance_to(_camera.global_position) > MELEE_RANGE + 1.0:
 		return
-	if creature.take_hit(clampi(amount, 0, 4), global_position):
+	# Урон считает хост по классу и навыкам
+	var damage := PlayerClasses.weapon_damage(self, clampi(amount, 0, 3))
+	if PlayerClasses.has(self, "hunter_a3") and randf() < 0.25:
+		damage *= 2
+	var stun := PlayerClasses.has(self, "hunter_a2")
+	if player_class == "hunter":
+		add_xp(PlayerClasses.XP_HIT)
+	if creature.take_hit(damage, global_position, 2.0 if stun else 1.0, 5.0 if stun else 2.0):
+		if player_class == "hunter":
+			add_xp(PlayerClasses.XP_KILL)
 		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "%s повержен!" % creature.display_name})
 
 
@@ -595,6 +628,21 @@ func _request_buy(id: String) -> void:
 	item.set_state(entry.state)
 	_items_root().add_child(item, true)
 	economy.announce.rpc("%s купил: %s (−%d)" % [player_name, entry.name, price])
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_upgrade(id: String) -> void:
+	if not _from_owner():
+		return
+	var upgrades := get_tree().get_first_node_in_group("farm_upgrades") as FarmUpgrades
+	if upgrades == null:
+		return
+	var message := upgrades.buy(id)
+	if message != "":
+		_interact_result.rpc_id(get_multiplayer_authority(), {"message": message})
+		return
+	var economy := get_tree().get_first_node_in_group("economy") as Economy
+	economy.announce.rpc("%s купил для фермы: %s" % [player_name, FarmUpgrades.find(id).name])
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -646,8 +694,9 @@ func _request_ability() -> void:
 	if info.is_empty() or Time.get_ticks_msec() < _server_ability_ready_msec:
 		return
 	var message := _perform_ability()
-	_server_ability_ready_msec = Time.get_ticks_msec() + int(info.cooldown * 1000.0)
-	_ability_used.rpc_id(get_multiplayer_authority(), info.cooldown, message)
+	var cooldown := PlayerClasses.ability_cooldown(self)
+	_server_ability_ready_msec = Time.get_ticks_msec() + int(cooldown * 1000.0)
+	_ability_used.rpc_id(get_multiplayer_authority(), cooldown, message)
 	_ability_effect.rpc(player_class, global_position)
 
 
@@ -657,34 +706,62 @@ func _perform_ability() -> String:
 	match player_class:
 		"farmer":
 			for plot: Plot in get_tree().get_nodes_in_group("plots"):
-				if plot.state == Plot.State.PLANTED and not plot.is_ripe() and _flat_distance(plot.global_position) <= PlayerClasses.FEED_RADIUS:
-					plot.growth = minf(plot.growth + PlayerClasses.FEED_GROWTH, 1.0)
+				if plot.enabled and plot.state == Plot.State.PLANTED and not plot.is_ripe() and _flat_distance(plot.global_position) <= PlayerClasses.feed_radius(self):
+					plot.growth = minf(plot.growth + PlayerClasses.feed_growth(self), 1.0)
 					count += 1
 			return "Подкормка: грядок %d" % count
 		"mechanic":
 			for segment: FenceSegment in get_tree().get_nodes_in_group("fence"):
-				if segment.hp < FenceSegment.MAX_HP and _flat_distance(segment.get_center()) <= PlayerClasses.REPAIR_RADIUS:
-					segment.hp = FenceSegment.MAX_HP
+				if segment.hp < segment.max_hp and _flat_distance(segment.get_center()) <= PlayerClasses.REPAIR_RADIUS:
+					add_xp(PlayerClasses.XP_REPAIR_PER_HP * (segment.max_hp - segment.hp))
+					segment.repair_by(self, true)
 					count += 1
 			return "Быстрый ремонт: пролётов %d" % count
 		"hunter":
 			for creature: Creature in get_tree().get_nodes_in_group("creatures"):
-				creature.track(PlayerClasses.TRACK_TIME)
+				creature.track(PlayerClasses.track_time(self))
 				count += 1
 			return "Выслежено существ: %d" % count
 		"herder":
 			for cow: Cow in get_tree().get_nodes_in_group("cows"):
-				if _flat_distance(cow.global_position) <= PlayerClasses.WHISTLE_RADIUS:
+				if cow.enabled and _flat_distance(cow.global_position) <= PlayerClasses.whistle_radius(self):
 					cow.follow(self, PlayerClasses.WHISTLE_TIME)
 					count += 1
+			add_xp(PlayerClasses.XP_WHISTLE * count)
 			return "Свист: за вами идут коровы (%d)" % count
 		"herbalist":
 			for creature: Creature in get_tree().get_nodes_in_group("creatures"):
-				if _flat_distance(creature.global_position) <= PlayerClasses.SMOKE_RADIUS:
-					creature.scare(global_position, PlayerClasses.SMOKE_SCARE_TIME)
+				if _flat_distance(creature.global_position) <= PlayerClasses.smoke_radius(self):
+					creature.scare(global_position, PlayerClasses.smoke_scare_time(self))
 					count += 1
+			add_xp(PlayerClasses.XP_SMOKE * count)
+			# Бодрящий отвар: союзникам рядом — вся выносливость
+			if PlayerClasses.has(self, "herbalist_a3"):
+				for ally: Player in get_tree().get_nodes_in_group("players"):
+					if _flat_distance(ally.global_position) <= PlayerClasses.smoke_radius(self):
+						ally._restore_stamina.rpc_id(ally.get_multiplayer_authority())
 			return "Дым: разбежалось существ %d" % count
 	return ""
+
+
+## Только на хосте: опыт за дела своего класса
+func add_xp(amount: int) -> void:
+	if amount <= 0 or not multiplayer.is_server():
+		return
+	var old_level := PlayerClasses.level_for(xp)
+	xp += amount
+	var new_level := PlayerClasses.level_for(xp)
+	if new_level > old_level:
+		_level_up.rpc_id(get_multiplayer_authority(), new_level)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_learn(id: String) -> void:
+	if not _from_owner() or not PlayerClasses.can_learn(player_class, xp, skills, id):
+		return
+	var learned := skills.duplicate()
+	learned.append(id)
+	skills = learned
 
 
 ## Отладка: перемотать к ближайшему закату или рассвету
@@ -748,6 +825,9 @@ func _interact_result(result: Dictionary) -> void:
 	if result.get("open_shop", false):
 		hud.open_shop(ShopCatalog.ITEMS, player_class)
 		return
+	if result.get("open_upgrades", false):
+		_open_upgrades()
+		return
 	if result.get("remove_held", false):
 		inventory.take_selected()
 		return
@@ -773,6 +853,21 @@ func _seated(path: NodePath, index: int) -> void:
 	# Смотрим туда же, куда пикап (у пикапа перед — +Z, у игрока — −Z)
 	rotation.y = _truck.global_rotation.y + PI
 	_head.rotation.x = 0.0
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _level_up(level: int) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	hud.show_message("Уровень %d! K — выбрать навык" % level)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _restore_stamina() -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	stamina = max_stamina
+	_exhausted = false
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -871,6 +966,64 @@ func _hat_part(hat: Node3D, mesh: Mesh, color: Color, at: Vector3) -> void:
 	part.material_override = material
 	part.position = at
 	hat.add_child(part)
+
+
+## Аура бодрости травника: рядом с ним все восстанавливаются вдвое быстрее
+func _vigor_multiplier() -> float:
+	for herbalist: Player in get_tree().get_nodes_in_group("players"):
+		if PlayerClasses.has(herbalist, "herbalist_a2") and herbalist.global_position.distance_to(global_position) <= PlayerClasses.VIGOR_RADIUS:
+			return 2.0
+	return 1.0
+
+
+# --- Окна: лавка, улучшения, навыки ---
+
+func _on_panel_action(kind: String, id: String) -> void:
+	match kind:
+		"shop":
+			_request_buy.rpc_id(1, id)
+		"upgrade":
+			_request_upgrade.rpc_id(1, id)
+		"skill":
+			_request_learn.rpc_id(1, id)
+
+
+## Перерисовать открытое окно, когда изменились навыки, опыт или улучшения
+func _refresh_panel() -> void:
+	match hud.panel_kind():
+		"skill":
+			_open_skills()
+		"upgrade":
+			_open_upgrades()
+
+
+func _open_skills() -> void:
+	var branches: Array = PlayerClasses.SKILLS.get(player_class, [])
+	if branches.is_empty():
+		return
+	var rows := []
+	for branch in branches:
+		rows.append({"header": true, "text": branch.name})
+		for skill in branch.skills:
+			var button := "Взято"
+			var disabled := true
+			if not skill.id in skills:
+				disabled = not PlayerClasses.can_learn(player_class, xp, skills, skill.id)
+				button = "Взять" if not disabled else "Закрыто"
+			rows.append({"text": "%s — %s" % [skill.name, skill.desc], "button": button, "id": skill.id, "disabled": disabled})
+	var subtitle := "%s, уровень %d · свободных очков: %d" % [PlayerClasses.display_name(player_class), PlayerClasses.level_for(xp), PlayerClasses.free_points(xp, skills)]
+	hud.open_panel("skill", "Навыки", subtitle, rows)
+
+
+func _open_upgrades() -> void:
+	var upgrades := get_tree().get_first_node_in_group("farm_upgrades") as FarmUpgrades
+	if upgrades == null:
+		return
+	var rows := []
+	for entry in FarmUpgrades.CATALOG:
+		var done := upgrades.is_bought(entry.id)
+		rows.append({"text": "%s — %s" % [entry.name, entry.desc], "button": "Куплено" if done else "Купить за %d" % entry.price, "id": entry.id, "disabled": done})
+	hud.open_panel("upgrade", "Улучшения фермы", hud._money_line(), rows)
 
 
 func _flat_distance(point: Vector3) -> float:

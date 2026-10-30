@@ -17,6 +17,8 @@ const MILK_SCENE := "res://scenes/items/milk_bottle.tscn"
 
 ## Можно ли сегодня подоить. Синхронизируется для подсказки.
 var milk_ready := true
+## Корову можно выключить: так стоит та, что ещё не куплена (общие улучшения)
+var enabled := true
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _target := Vector3.ZERO
@@ -25,6 +27,7 @@ var _leader: Node3D = null
 var _follow_left := 0.0
 var _start: Transform3D
 var _anim_time := 0.0
+var _last_cycle := 0.0
 
 @onready var _model: Node3D = $Model
 
@@ -40,9 +43,12 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not enabled:
+		return
 	if not multiplayer.is_server():
 		_animate(delta, true)
 		return
+	_check_noon()
 	var direction := Vector3.ZERO
 	var speed := WANDER_SPEED
 	if is_instance_valid(_leader) and _follow_left > 0.0:
@@ -83,7 +89,9 @@ func milk(player: Node3D) -> String:
 	if not milk_ready:
 		return "Молоко будет после рассвета"
 	milk_ready = false
-	var amount := PlayerClasses.milk_amount(player.get("player_class"))
+	var amount := PlayerClasses.milk_amount(player)
+	if PlayerClasses.class_of(player) == "herder":
+		player.add_xp(PlayerClasses.XP_MILK * amount)
 	for i in amount:
 		var bottle: Node3D = load(MILK_SCENE).instantiate()
 		bottle.position = global_position + global_basis.x * 0.9 + Vector3(0.0, 0.6 + i * 0.4, 0.0)
@@ -97,6 +105,28 @@ func reset() -> void:
 	milk_ready = true
 	_leader = null
 	_target = global_position
+
+
+func set_enabled(value: bool) -> void:
+	enabled = value
+	visible = value
+	collision_layer = 32 if value else 0
+	if not value:
+		_leader = null
+
+
+## Навык скотника «Дважды в день»: в полдень молоко снова есть
+func _check_noon() -> void:
+	var day_night := get_tree().get_first_node_in_group("day_night") as DayNight
+	if day_night == null:
+		return
+	var noon := DayNight.DAY_LENGTH / 2.0
+	if _last_cycle < noon and day_night.cycle_time >= noon:
+		for player: Player in get_tree().get_nodes_in_group("players"):
+			if PlayerClasses.has(player, "herder_a2"):
+				milk_ready = true
+				break
+	_last_cycle = day_night.cycle_time
 
 
 func _on_phase_changed(is_night: bool, _day: int) -> void:

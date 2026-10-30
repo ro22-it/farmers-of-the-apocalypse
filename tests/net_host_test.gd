@@ -63,10 +63,13 @@ func _run() -> void:
 	main.get_node("NightDirector")._queue.clear()
 	main.get_node("NightDirector").spawn_gryadochnik(Vector3(0.0, 0.3, 29.0))
 	main.get_node("Economy").money = 100
+	remote.add_xp(40)
 
 	var truck: Truck = main.get_node("Truck")
 	var truck_start := truck.global_position
 	check(await wait_for(func(): return truck.global_position.distance_to(truck_start) > 8.0), "хост видит, как клиент ведёт пикап")
+	check("hunter_a1" in remote.skills or await wait_for(func(): return "hunter_a1" in remote.skills), "хост видит навык клиента")
+	check(main.get_node("FarmUpgrades").is_bought("pump"), "хост видит купленную клиентом колонку")
 	check(await wait_for(func(): return players.get_child_count() == 1), "после выхода клиента его персонаж убран")
 	print("ХОСТ ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

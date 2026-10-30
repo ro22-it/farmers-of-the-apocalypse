@@ -1,0 +1,63 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/upgrade_board.gd" id="1_board"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_board"]
+size = Vector3(1.6, 2.2, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wood"]
+albedo_color = Color(0.5, 0.36, 0.22, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_paper"]
+albedo_color = Color(0.93, 0.9, 0.8, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_post"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(0.12, 2.2, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_board"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(1.6, 1, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_paper"]
+material = SubResource("StandardMaterial3D_paper")
+size = Vector3(0.35, 0.45, 0.02)
+
+[node name="UpgradeBoard" type="StaticBody3D"]
+script = ExtResource("1_board")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+shape = SubResource("BoxShape3D_board")
+
+[node name="PostLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 1.1, 0)
+mesh = SubResource("BoxMesh_post")
+
+[node name="PostRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 1.1, 0)
+mesh = SubResource("BoxMesh_post")
+
+[node name="Board" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+mesh = SubResource("BoxMesh_board")
+
+[node name="Paper1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 1.55, 0.05)
+mesh = SubResource("BoxMesh_paper")
+
+[node name="Paper2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 1.6, 0.05)
+mesh = SubResource("BoxMesh_paper")
+
+[node name="Paper3" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.97, -0.26, 0, 0.26, 0.97, 0, 0, 0, 1, 0.5, 1.5, 0.05)
+mesh = SubResource("BoxMesh_paper")
+
+[node name="Label" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.35, 0)
+billboard = 1
+font_size = 40
+outline_size = 10
+text = "Улучшения фермы"
+visibility_range_end = 15.0

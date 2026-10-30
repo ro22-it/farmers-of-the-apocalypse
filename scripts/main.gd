@@ -22,6 +22,7 @@ var _placed_items: Array[Dictionary] = []
 @onready var _creature_spawner: MultiplayerSpawner = $CreatureSpawner
 @onready var _economy: Economy = $Economy
 @onready var _truck: Truck = $Truck
+@onready var _farm_upgrades: FarmUpgrades = $FarmUpgrades
 
 
 func _ready() -> void:
@@ -109,6 +110,7 @@ func _reset_world(refill: bool) -> void:
 	_day_night.reset()
 	_night_director.reset()
 	_economy.reset()
+	_farm_upgrades.reset()
 	if multiplayer.is_server():
 		_truck.reset()
 	get_tree().call_group("plots", "reset")

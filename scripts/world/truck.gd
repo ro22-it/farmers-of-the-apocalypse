@@ -17,6 +17,16 @@ const MAX_REVERSE_SPEED := 5.0
 const INPUT_TIMEOUT := 0.3
 const SEAT_NAMES := ["за руль", "на пассажирское место", "в кузов", "в кузов"]
 const DRIVER_SEAT := 0
+## Навыки механика-водителя и мотор (общее улучшение)
+const SKILL_BOOST := 1.3
+const MOTOR_BOOST := 1.4
+const HEADLIGHT_RANGE := 20.0
+const HEADLIGHT_HALF_ANGLE := 25.0
+const RAM_SPEED := 6.0
+const RAM_REACH := 2.8
+
+## Мотор куплен (общее улучшение). Только на хосте.
+var motor_upgraded := false
 
 ## Кто где сидит: id игрока или 0, если место свободно
 var seats: Array[int] = [0, 0, 0, 0]
@@ -26,12 +36,16 @@ var _steer_input := 0.0
 var _brake_input := 0.0
 var _input_age := INF
 var _start_transform: Transform3D
+var _driven := 0.0
+var _last_position := Vector3.ZERO
 
 @onready var _seat_markers: Array[Marker3D] = [$Seats/Driver, $Seats/Passenger, $Seats/BedLeft, $Seats/BedRight]
 
 
 func _ready() -> void:
 	add_to_group("truck")
+	# Фары могут пугать существ (навык механика) — Грядочник проверяет эту группу
+	add_to_group("scare_lights")
 	_start_transform = global_transform
 	if not multiplayer.is_server():
 		freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
@@ -46,14 +60,55 @@ func _physics_process(delta: float) -> void:
 		_throttle = 0.0
 		_steer_input = 0.0
 		_brake_input = 1.0
+	var driver := _driver()
+	var boost := (SKILL_BOOST if PlayerClasses.has(driver, "mechanic_b1") else 1.0) * (MOTOR_BOOST if motor_upgraded else 1.0)
 	var speed := linear_velocity.dot(global_basis.z)
 	var steer_limit := lerpf(MAX_STEER, HIGH_SPEED_STEER, clampf(absf(speed) / MAX_SPEED, 0.0, 1.0))
 	steering = move_toward(steering, _steer_input * steer_limit, STEER_SPEED * delta)
-	var force := _throttle * MAX_ENGINE_FORCE
-	if (_throttle > 0.0 and speed > MAX_SPEED) or (_throttle < 0.0 and speed < -MAX_REVERSE_SPEED):
+	var force := _throttle * MAX_ENGINE_FORCE * boost
+	if (_throttle > 0.0 and speed > MAX_SPEED * boost) or (_throttle < 0.0 and speed < -MAX_REVERSE_SPEED):
 		force = 0.0
 	engine_force = force
 	brake = _brake_input * MAX_BRAKE
+	_award_driving(driver)
+	if PlayerClasses.has(driver, "mechanic_b3") and speed > RAM_SPEED:
+		_ram(driver)
+
+
+## Фары пугают существ, если за рулём механик с «Дальним светом». Только на хосте.
+func scares(point: Vector3) -> bool:
+	if not PlayerClasses.has(_driver(), "mechanic_b2"):
+		return false
+	var from := global_position + global_basis.z * 2.4 + Vector3.UP
+	var to_point := point - from
+	return to_point.length() <= HEADLIGHT_RANGE and global_basis.z.angle_to(to_point) <= deg_to_rad(HEADLIGHT_HALF_ANGLE)
+
+
+func _driver() -> Node:
+	if seats[DRIVER_SEAT] == 0:
+		return null
+	return get_tree().current_scene.get_node_or_null("Players/%d" % seats[DRIVER_SEAT])
+
+
+## Механику за рулём — опыт за каждые 25 м
+func _award_driving(driver: Node) -> void:
+	var moved := global_position.distance_to(_last_position)
+	_last_position = global_position
+	if PlayerClasses.class_of(driver) != "mechanic" or moved > 5.0:
+		return
+	_driven += moved
+	if _driven >= PlayerClasses.XP_DRIVE_METERS:
+		_driven -= PlayerClasses.XP_DRIVE_METERS
+		driver.add_xp(1)
+
+
+## Таран: существа перед бампером на скорости
+func _ram(driver: Node) -> void:
+	var bumper := global_position + global_basis.z * 2.5
+	for creature: Creature in get_tree().get_nodes_in_group("creatures"):
+		if creature.global_position.distance_to(bumper) < RAM_REACH:
+			creature.take_hit(10, global_position, 3.0)
+			driver.add_xp(PlayerClasses.XP_KILL)
 
 
 ## Только на хосте. Ввод водителя: газ и задний ход -1..1, руль -1..1 (плюс — влево), тормоз 0..1.
@@ -101,6 +156,7 @@ func free_seats_count() -> int:
 
 ## Только на хосте: вернуть пикап к воротам, всех высадить
 func reset() -> void:
+	motor_upgraded = false
 	seats = [0, 0, 0, 0]
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO

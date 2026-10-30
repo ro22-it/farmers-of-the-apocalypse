@@ -45,6 +45,15 @@ var moisture := 0.0:
 		moisture = value
 		_dirty = true
 
+## Участок можно выключить: так лежат грядки, которые ещё не купили (общие улучшения)
+var enabled := true
+
+## Только на хосте: эффекты навыков фермера, который сажал или поливал
+var growth_boost := 1.0
+var thorny := false
+var biting := false
+var sticky := false
+
 var _dirty := true
 var _built_key := ""
 ## «Созрело» над грядкой — видит только фермер
@@ -69,7 +78,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	var local := get_tree().get_first_node_in_group("local_player") as Player
-	_ripe_label.visible = is_ripe() and local != null and local.player_class == "farmer"
+	_ripe_label.visible = enabled and is_ripe() and local != null and local.player_class == "farmer"
 	if _dirty:
 		_dirty = false
 		_update_visuals()
@@ -85,7 +94,7 @@ func _physics_process(delta: float) -> void:
 	if moisture > 0.0:
 		moisture = maxf(moisture - delta / DRY_TIME, 0.0)
 		if state == State.PLANTED and growth < 1.0:
-			growth = minf(growth + delta / Crops.get_info(crop).grow_time, 1.0)
+			growth = minf(growth + delta * growth_boost / Crops.get_info(crop).grow_time, 1.0)
 
 
 func reset() -> void:
@@ -93,6 +102,23 @@ func reset() -> void:
 	crop = ""
 	growth = 0.0
 	moisture = 0.0
+	_clear_care()
+
+
+## Включить или выключить участок (купленные позже грядки)
+func set_enabled(value: bool) -> void:
+	enabled = value
+	visible = value
+	collision_layer = 8 if value else 0
+	if not value and multiplayer.is_server():
+		reset()
+
+
+func _clear_care() -> void:
+	growth_boost = 1.0
+	thorny = false
+	biting = false
+	sticky = false
 
 
 ## Грядочник ест грядку. Только на хосте. Посаженное пропадает, вскопанное вытаптывается.
@@ -105,6 +131,7 @@ func steal() -> String:
 		crop = ""
 		growth = 0.0
 		state = State.TILLED
+		_clear_care()
 	elif state == State.TILLED:
 		state = State.UNTILLED
 	return loot
@@ -135,7 +162,9 @@ func get_hint(item: PickupItem) -> String:
 
 
 func interact(player: Node3D, info: Dictionary) -> Dictionary:
-	var player_class: String = player.get("player_class") if player.get("player_class") != null else ""
+	if not enabled:
+		return {}
+	var is_farmer := PlayerClasses.class_of(player) == "farmer"
 	match info.get("tool", ""):
 		"shovel":
 			if state != State.UNTILLED:
@@ -153,18 +182,28 @@ func interact(player: Node3D, info: Dictionary) -> Dictionary:
 			crop = seed
 			growth = 0.0
 			state = State.PLANTED
+			# Боевые растения: грядка запоминает навыки посадившего фермера
+			thorny = PlayerClasses.has(player, "farmer_b1")
+			biting = PlayerClasses.has(player, "farmer_b2")
+			sticky = PlayerClasses.has(player, "farmer_b3")
+			if is_farmer:
+				player.add_xp(PlayerClasses.XP_PLANT)
 			return {"consume": 1}
 		"watering_can":
 			if state == State.UNTILLED:
 				return {"message": "Сначала вскопайте лопатой"}
-			moisture = maxf(moisture, PlayerClasses.water_amount(player_class))
+			moisture = maxf(moisture, PlayerClasses.water_amount(player))
+			if PlayerClasses.has(player, "farmer_a2"):
+				growth_boost = 1.25
 			return {"consume": 1}
 		"hand":
 			if state != State.PLANTED:
 				return {"message": "Здесь ничего не растёт"}
 			if not is_ripe():
 				return {"message": "Ещё не созрело: %d%%" % int(growth * 100.0)}
-			_spawn_produce(PlayerClasses.harvest_bonus(player_class))
+			_spawn_produce(PlayerClasses.harvest_bonus(player))
+			if is_farmer:
+				player.add_xp(PlayerClasses.XP_HARVEST)
 			reset()
 			return {"message": ""}
 	return {}

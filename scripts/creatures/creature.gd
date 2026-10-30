@@ -68,7 +68,7 @@ func _process(delta: float) -> void:
 			tracked = false
 	var local := get_tree().get_first_node_in_group("local_player") as Player
 	var hunter_sees := local != null and local.player_class == "hunter" \
-			and local.global_position.distance_to(global_position) <= PlayerClasses.HUNTER_SIGHT
+			and local.global_position.distance_to(global_position) <= PlayerClasses.hunter_sight(local)
 	_marker.visible = tracked or hunter_sees
 
 
@@ -78,18 +78,21 @@ func track(duration: float) -> void:
 	_track_left = duration
 
 
-## Удар игрока. Только на хосте. Возвращает true, если существо повержено.
-func take_hit(amount: int, from_position: Vector3) -> bool:
+## Удар. Только на хосте. Возвращает true, если существо повержено.
+## knockback — во сколько раз сильнее отбросить, scare_time — сколько потом бояться.
+func take_hit(amount: int, from_position: Vector3, knockback := 1.0, scare_time := 2.0) -> bool:
+	if is_queued_for_deletion():
+		return false
 	hp -= amount
 	var away := global_position - from_position
 	away.y = 0.0
-	_knockback = away.normalized() * KNOCKBACK_SPEED
+	_knockback = away.normalized() * KNOCKBACK_SPEED * knockback
 	_knockback_time = KNOCKBACK_TIME
 	if hp <= 0:
 		_on_died()
 		queue_free()
 		return true
-	scare(from_position, 2.0)
+	scare(from_position, scare_time)
 	return false
 
 
@@ -133,6 +136,7 @@ func _stand(delta: float) -> void:
 
 
 func _move(direction: Vector3, move_speed: float, delta: float) -> FenceSegment:
+	move_speed *= _speed_factor()
 	velocity.x = direction.x * move_speed
 	velocity.z = direction.z * move_speed
 	if _knockback_time > 0.0:
@@ -159,6 +163,21 @@ func _move(direction: Vector3, move_speed: float, delta: float) -> FenceSegment:
 			_detour = direction.cross(Vector3.UP) * (1.0 if randf() < 0.5 else -1.0)
 			_detour_time = DETOUR_TIME
 	return fence
+
+
+## Замедления от навыков: «Загнать зверя» охотника и «Липкая земля» фермера
+func _speed_factor() -> float:
+	var factor := 1.0
+	if tracked:
+		for player: Player in get_tree().get_nodes_in_group("players"):
+			if PlayerClasses.has(player, "hunter_b3"):
+				factor *= 0.65
+				break
+	for plot: Plot in get_tree().get_nodes_in_group("plots"):
+		if plot.sticky and Vector2(plot.global_position.x - global_position.x, plot.global_position.z - global_position.z).length() < 1.6:
+			factor *= 0.6
+			break
+	return factor
 
 
 func _is_moving() -> bool:

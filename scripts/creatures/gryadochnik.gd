@@ -9,6 +9,8 @@ const CHEW_INTERVAL := 1.5
 const EAT_DISTANCE := 0.9
 const LIGHT_CHECK_INTERVAL := 0.2
 const SCARE_TIME := 4.0
+## Кусачие грядки фермера кусают раз в столько секунд
+const BITE_INTERVAL := 1.5
 
 ## Путь к сцене украденного урожая. Пусто — ничего не несёт.
 ## Синхронизируется, чтобы все видели добычу на спине.
@@ -19,6 +21,7 @@ var _chewing: FenceSegment = null
 ## Куда вернуться, когда забор прогрызен
 var _state_before_chew: int = State.APPROACH
 var _light_check := 0.0
+var _bite_time := 0.0
 
 @onready var _model: Node3D = $Model
 @onready var _loot: Node3D = $Model/Loot
@@ -65,13 +68,23 @@ func _approach(delta: float) -> void:
 	flat.y = 0.0
 	if state == State.APPROACH and flat.length() < EAT_DISTANCE:
 		state = State.EAT
-		_state_time = EAT_TIME
+		# Колючие грядки фермера едятся вдвое дольше
+		_state_time = EAT_TIME * (2.0 if _target_plot.thorny else 1.0)
+		_bite_time = BITE_INTERVAL
 
 
 func _eat(delta: float) -> void:
 	_stand(delta)
 	if not is_instance_valid(_target_plot) or _target_plot.state == Plot.State.UNTILLED:
 		state = State.APPROACH
+		return
+	if _target_plot.biting:
+		_bite_time -= delta
+		if _bite_time <= 0.0:
+			_bite_time = BITE_INTERVAL
+			if take_hit(1, _target_plot.global_position):
+				return
+	if state != State.EAT:
 		return
 	_state_time -= delta
 	if _state_time <= 0.0:
@@ -106,6 +119,8 @@ func _pick_plot() -> Plot:
 	var best: Plot = null
 	var best_score := -INF
 	for plot: Plot in get_tree().get_nodes_in_group("plots"):
+		if not plot.enabled:
+			continue
 		var score := -INF
 		if plot.state == Plot.State.PLANTED:
 			score = 100.0 + plot.growth * 100.0 - global_position.distance_to(plot.global_position)
@@ -122,6 +137,11 @@ func _check_light() -> void:
 	for player: Player in get_tree().get_nodes_in_group("players"):
 		if player.is_shining_at(chest):
 			scare(player.global_position, SCARE_TIME)
+			return
+	# Прочий свет: фонарь на вышке, фары пикапа
+	for light in get_tree().get_nodes_in_group("scare_lights"):
+		if light.scares(chest):
+			scare(light.global_position, SCARE_TIME)
 			return
 
 

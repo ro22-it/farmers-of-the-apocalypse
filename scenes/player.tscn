@@ -46,6 +46,14 @@ properties/8/path = NodePath(".:seated")
 properties/8/spawn = true
 properties/8/replication_mode = 2
 
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_server"]
+properties/0/path = NodePath(".:xp")
+properties/0/spawn = true
+properties/0/replication_mode = 2
+properties/1/path = NodePath(".:skills")
+properties/1/spawn = true
+properties/1/replication_mode = 2
+
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
 collision_mask = 53
@@ -88,3 +96,6 @@ text = "Фермер"
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_player")
+
+[node name="ServerSync" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_server")

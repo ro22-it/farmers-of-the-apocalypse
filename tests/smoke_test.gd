@@ -5,7 +5,7 @@ var player: Player
 
 ## Одиночная игра: хост без друзей. Проверяет хватку, бросок, инвентарь, фонарь
 ## цикл грядки, ночь (Грядочник, фонарь, забор), пикап, продажу, лавку, ступеньки
-## и классы. Общие проверки — без класса, потом каждый класс отдельно.
+## классы, опыт, навыки и улучшения фермы. Общие проверки — без класса, потом классы.
 var failures := 0
 
 
@@ -327,18 +327,18 @@ func _run() -> void:
 	await frames(2)
 	player._try_pickup()
 	await frames(5)
-	check(player.hud.is_shop_open(), "E у прилавка открывает лавку")
+	check(player.hud.is_panel_open(), "E у прилавка открывает лавку")
 	var items_count := main.get_node("Items").get_child_count()
 	money = economy.money
-	player.hud.buy_pressed.emit("hammer")
+	player.hud.panel_action.emit("shop", "hammer")
 	await frames(5)
 	check(economy.money == money - 15, "молоток куплен за 15")
 	check(main.get_node("Items").get_child_count() == items_count + 1, "покупка лежит на прилавке")
 	economy.money = 5
-	player.hud.buy_pressed.emit("flashlight")
+	player.hud.panel_action.emit("shop", "flashlight")
 	await frames(5)
 	check(economy.money == 5 and main.get_node("Items").get_child_count() == items_count + 1, "без денег не купить")
-	player.hud.close_shop()
+	player.hud.close_panel()
 
 	# --- Классы ---
 	var reset_ability := func():
@@ -367,7 +367,7 @@ func _run() -> void:
 	player._try_ability()
 	await frames(5)
 	check(absf(farm_plot.growth - 0.65) < 0.02, "подкормка фермера: +15%% роста (%.2f)" % farm_plot.growth)
-	check(PlayerClasses.weapon_damage("farmer", 2) == 1, "у фермера вилы бьют как лопата")
+	check(PlayerClasses.weapon_damage(player, 2) == 1, "у фермера вилы бьют как лопата")
 
 	# Механик: чинит целиком, остальные — по 1
 	var fence_piece: FenceSegment = get_nodes_in_group("fence")[0]
@@ -448,6 +448,91 @@ func _run() -> void:
 	var intruder := director.spawn_gryadochnik(dog.global_position + Vector3(6.0, 0.3, 6.0))
 	check(await wait_for(func(): return str(player.hud._message.text).begins_with("Собака лает"), 180), "собака лает на существо")
 	intruder.queue_free()
+
+	# --- Опыт и навыки ---
+	player.player_class = "farmer"
+	player.xp = 0
+	player.skills = PackedStringArray()
+	var xp_plot: Plot = main.get_node("Plots/Plot10")
+	xp_plot.reset()
+	xp_plot.state = Plot.State.TILLED
+	xp_plot.interact(player, {"tool": "seeds", "crop": "carrot"})
+	check(player.xp == PlayerClasses.XP_PLANT, "фермер получил опыт за посадку")
+	xp_plot.growth = 1.0
+	xp_plot.interact(player, {"tool": "hand"})
+	check(player.xp == PlayerClasses.XP_PLANT + PlayerClasses.XP_HARVEST, "и за сбор урожая")
+	player.add_xp(40 - player.xp)
+	check(PlayerClasses.level_for(player.xp) == 2 and PlayerClasses.free_points(player.xp, player.skills) == 1, "40 опыта — уровень 2 и очко навыка")
+	player._request_learn.rpc_id(1, "farmer_a2")
+	await frames(2)
+	check(player.skills.is_empty(), "второй навык ветки без первого не взять")
+	player._request_learn.rpc_id(1, "farmer_b1")
+	await frames(2)
+	check("farmer_b1" in player.skills, "взят навык «Колючие грядки»")
+	player._request_learn.rpc_id(1, "farmer_b2")
+	await frames(2)
+	check(not "farmer_b2" in player.skills, "без свободного очка навык не взять")
+	player._open_skills()
+	check(player.hud.panel_kind() == "skill", "K открывает окно навыков")
+	player.hud.close_panel()
+
+	# Боевые растения: колючие и кусачие грядки
+	player.skills = PackedStringArray(["farmer_b1", "farmer_b2"])
+	get_root().get_tree().call_group("plots", "reset")
+	xp_plot.reset()
+	xp_plot.state = Plot.State.TILLED
+	xp_plot.interact(player, {"tool": "seeds", "crop": "carrot"})
+	check(xp_plot.thorny and xp_plot.biting, "грядка фермера колючая и кусачая")
+	var biter_victim := director.spawn_gryadochnik(xp_plot.global_position + Vector3(1.5, 0.3, 0.0))
+	var victim_ref: WeakRef = weakref(biter_victim)
+	biter_victim = null
+	check(await wait_for(func(): return victim_ref.get_ref() == null or victim_ref.get_ref().hp < victim_ref.get_ref().max_hp, 400), "кусачая грядка кусает Грядочника")
+	if victim_ref.get_ref():
+		victim_ref.get_ref().queue_free()
+	player.skills = PackedStringArray()
+
+	# Механик: двойные жерди
+	player.player_class = "mechanic"
+	player.skills = PackedStringArray(["mechanic_a1", "mechanic_a2"])
+	var strong_piece: FenceSegment = get_nodes_in_group("fence")[5]
+	strong_piece.hp = 1
+	strong_piece.interact(player, {"tool": "hammer"})
+	check(strong_piece.max_hp == FenceSegment.MAX_HP + 2 and strong_piece.hp == strong_piece.max_hp, "пролёт механика с навыком прочнее на 2")
+	check(PlayerClasses.ability_cooldown(player) == 30.0, "«Расторопность»: перезарядка 30 с вместо 60")
+	player.skills = PackedStringArray()
+
+	# --- Общие улучшения ---
+	var upgrades: FarmUpgrades = main.get_node("FarmUpgrades")
+	var extra_plot: Plot = main.get_node("UpgradeBeds/Plot19")
+	check(not extra_plot.enabled and not extra_plot.visible, "новые грядки до покупки спрятаны")
+	economy.money = 1000
+	for id in ["pump", "cow", "beds", "tower", "motor", "stone"]:
+		player._request_upgrade.rpc_id(1, id)
+		await frames(2)
+	check(upgrades.bought.size() == 6 and economy.money == 1000 - 570, "куплены все 6 улучшений за 570")
+	check(extra_plot.enabled and extra_plot.visible, "новые грядки появились")
+	check(main.get_node("UpgradeCow/Cow3").enabled, "третья корова появилась")
+	check(main.get_node("Truck").motor_upgraded, "у пикапа новый мотор")
+	var stone_piece: FenceSegment = get_nodes_in_group("fence")[0]
+	check(stone_piece.stone and stone_piece.max_hp == FenceSegment.STONE_HP and stone_piece.hp == FenceSegment.STONE_HP, "забор стал каменным")
+	player._request_upgrade.rpc_id(1, "beds")
+	await frames(2)
+	check(economy.money == 430, "второй раз то же улучшение не купить")
+	var tower_light: Node3D = main.get_node("UpgradeTower/Light")
+	day_night.cycle_time = DayNight.DAY_LENGTH + 10.0
+	await frames(3)
+	check(tower_light.scares(tower_light.global_position + Vector3(5, -5, 0)), "ночью фонарь вышки отпугивает рядом")
+	check(not tower_light.scares(tower_light.global_position + Vector3(15, -5, 0)), "а дальше 10 м — нет")
+
+	# По лестнице на вышку
+	player.global_position = Vector3(-18.0, 0.05, 21.5)
+	player.rotation.y = 0.0
+	player.get_node("Head").rotation.x = 0.0
+	await frames(5)
+	Input.action_press("move_forward")
+	var climbed := await wait_for(func(): return player.global_position.y > 3.8, 240)
+	Input.action_release("move_forward")
+	check(climbed, "игрок поднялся на вышку по лестнице (y=%.1f)" % player.global_position.y)
 
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

@@ -132,6 +132,15 @@ func _run() -> void:
 	var economy: Economy = main.get_node("Economy")
 	check(await wait_for(func(): return economy.money == 100), "клиент видит общие деньги")
 
+	# Навык и улучшение от клиента: хост дал 40 опыта
+	check(await wait_for(func(): return PlayerClasses.free_points(player.xp, player.skills) == 1), "клиенту пришёл опыт и очко навыка")
+	player._request_learn.rpc_id(1, "hunter_a1")
+	check(await wait_for(func(): return "hunter_a1" in player.skills), "клиент взял навык")
+	player._request_upgrade.rpc_id(1, "pump")
+	var upgrades: FarmUpgrades = main.get_node("FarmUpgrades")
+	check(await wait_for(func(): return upgrades.is_bought("pump")), "клиент купил колонку для всей фермы")
+	check(main.get_node("UpgradePump").visible, "и видит её")
+
 	# Клиент за рулём: клавиши уходят хосту, пикап едет у всех
 	var truck: Truck = main.get_node("Truck")
 	player.test_controls = true
