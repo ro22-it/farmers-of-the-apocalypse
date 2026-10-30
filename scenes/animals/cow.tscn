@@ -1,54 +1,11 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://scripts/animals/animal_model.gd" id="2_model"]
 [ext_resource type="Script" path="res://scripts/animals/cow.gd" id="1_cow"]
 [ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_cow"]
 size = Vector3(0.8, 1.1, 1.7)
-
-[sub_resource type="StandardMaterial3D" id="white"]
-albedo_color = Color(0.95, 0.94, 0.9, 1)
-roughness = 1.0
-
-[sub_resource type="StandardMaterial3D" id="spot"]
-albedo_color = Color(0.15, 0.13, 0.12, 1)
-roughness = 1.0
-
-[sub_resource type="StandardMaterial3D" id="pink"]
-albedo_color = Color(0.95, 0.7, 0.7, 1)
-roughness = 1.0
-
-[sub_resource type="StandardMaterial3D" id="horn"]
-albedo_color = Color(0.9, 0.85, 0.7, 1)
-roughness = 1.0
-
-[sub_resource type="BoxMesh" id="body"]
-material = SubResource("white")
-size = Vector3(0.8, 0.75, 1.5)
-
-[sub_resource type="BoxMesh" id="spot1"]
-material = SubResource("spot")
-size = Vector3(0.82, 0.4, 0.45)
-
-[sub_resource type="BoxMesh" id="head"]
-material = SubResource("white")
-size = Vector3(0.45, 0.45, 0.5)
-
-[sub_resource type="BoxMesh" id="nose"]
-material = SubResource("pink")
-size = Vector3(0.35, 0.22, 0.12)
-
-[sub_resource type="BoxMesh" id="leg"]
-material = SubResource("spot")
-size = Vector3(0.15, 0.55, 0.15)
-
-[sub_resource type="BoxMesh" id="horn"]
-material = SubResource("horn")
-size = Vector3(0.6, 0.06, 0.06)
-
-[sub_resource type="BoxMesh" id="udder"]
-material = SubResource("pink")
-size = Vector3(0.3, 0.12, 0.3)
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_cow"]
 properties/0/path = NodePath("NetSmooth:target_position")
@@ -71,46 +28,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
 shape = SubResource("BoxShape3D_cow")
 
 [node name="Model" type="Node3D" parent="."]
-
-[node name="Body" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.92, 0)
-mesh = SubResource("body")
-
-[node name="Spot" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0.25)
-mesh = SubResource("spot1")
-
-[node name="Head" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -0.9)
-mesh = SubResource("head")
-
-[node name="Nose" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.12, -1.18)
-mesh = SubResource("nose")
-
-[node name="Horns" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -0.85)
-mesh = SubResource("horn")
-
-[node name="LegFL" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.27, 0.28, -0.55)
-mesh = SubResource("leg")
-
-[node name="LegFR" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.27, 0.28, -0.55)
-mesh = SubResource("leg")
-
-[node name="LegBL" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.27, 0.28, 0.55)
-mesh = SubResource("leg")
-
-[node name="LegBR" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.27, 0.28, 0.55)
-mesh = SubResource("leg")
-
-[node name="Udder" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.52, 0.35)
-mesh = SubResource("udder")
+script = ExtResource("2_model")
+model_path = "res://assets/animals/cow.gltf"
+model_scale = 0.33
+gallop_speed = 2.5
+walk_speed = 1.2
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_interval = 0.1

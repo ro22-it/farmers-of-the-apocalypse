@@ -139,9 +139,6 @@ func _pick_target() -> void:
 	_wait = randf_range(4.0, 9.0)
 
 
-func _animate(delta: float, moving: bool) -> void:
-	if moving:
-		_anim_time += delta * 6.0
-		_model.rotation.z = sin(_anim_time) * 0.04
-	else:
-		_model.rotation.z = 0.0
+## Походку и покой рисует AnimalModel по скорости, здесь ничего не нужно
+func _animate(_delta: float, _moving: bool) -> void:
+	pass

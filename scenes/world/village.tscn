@@ -1,6 +1,11 @@
 [gd_scene format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/world/tree.tscn" id="1_tree"]
+[ext_resource type="Script" path="res://scripts/world/village_house.gd" id="4_vhouse"]
+[ext_resource type="Script" path="res://scripts/world/merchant.gd" id="5_merchant"]
+[ext_resource type="PackedScene" path="res://assets/village/Prop_Wagon.gltf" id="6_wagon"]
+[ext_resource type="PackedScene" path="res://assets/village/Prop_Crate.gltf" id="7_crate"]
+[ext_resource type="Script" path="res://scripts/animals/animal_model.gd" id="8_animal"]
 [ext_resource type="PackedScene" path="res://scenes/world/shop_counter.tscn" id="2_counter"]
 [ext_resource type="PackedScene" path="res://scenes/world/sale_bin.tscn" id="3_bin"]
 
@@ -74,6 +79,12 @@ height = 0.8
 radius = 0.9
 height = 0.8
 
+[sub_resource type="BoxShape3D" id="wagon_shape"]
+size = Vector3(2, 1.5, 4)
+
+[sub_resource type="BoxShape3D" id="crate_shape"]
+size = Vector3(1.08, 1.06, 1.08)
+
 [node name="Village" type="Node3D"]
 
 [node name="SignPost" type="CSGBox3D" parent="."]
@@ -99,55 +110,23 @@ visibility_range_end = 40.0
 [node name="Shop" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, -10)
 
-[node name="Back" type="CSGBox3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -3)
-use_collision = true
-size = Vector3(8, 3.5, 0.3)
-material = SubResource("mat_wall2")
-
-[node name="Left" type="CSGBox3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.85, 1.75, -0.8)
-use_collision = true
-size = Vector3(0.3, 3.5, 4.6)
-material = SubResource("mat_wall2")
-
-[node name="Right" type="CSGBox3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.85, 1.75, -0.8)
-use_collision = true
-size = Vector3(0.3, 3.5, 4.6)
-material = SubResource("mat_wall2")
-
-[node name="Roof" type="CSGBox3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -0.5)
-use_collision = true
-size = Vector3(8.8, 0.25, 6)
-material = SubResource("mat_roof2")
-
-[node name="Awning" type="CSGBox3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 0.966, 0.259, 0, -0.259, 0.966, 0, 3.2, 2.7)
-size = Vector3(8.8, 0.1, 1.2)
-material = SubResource("mat_cloth")
+[node name="Building" type="StaticBody3D" parent="Shop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1)
+script = ExtResource("4_vhouse")
+width_cells = 4
+depth_cells = 4
+variant = 7
+open_front = true
 
 [node name="Counter" parent="Shop" instance=ExtResource("2_counter")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.5)
 
 [node name="Merchant" type="Node3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.2)
-
-[node name="Body" type="MeshInstance3D" parent="Shop/Merchant"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
-mesh = SubResource("mesh_body")
-
-[node name="Head" type="MeshInstance3D" parent="Shop/Merchant"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
-mesh = SubResource("mesh_head")
-
-[node name="Hat" type="MeshInstance3D" parent="Shop/Merchant"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.88, 0)
-mesh = SubResource("mesh_hat")
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0.2)
+script = ExtResource("5_merchant")
 
 [node name="Sign" type="Label3D" parent="Shop"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 2.9)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.7, 3.6)
 billboard = 1
 font_size = 64
 outline_size = 12
@@ -189,109 +168,37 @@ material = SubResource("mat_cloth")
 [node name="SaleBin" parent="Market" instance=ExtResource("3_bin")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.4)
 
-[node name="House1" type="Node3D" parent="."]
+[node name="House1" type="StaticBody3D" parent="."]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 162, 0, 12)
+script = ExtResource("4_vhouse")
+width_cells = 3
+depth_cells = 3
+style = "Plaster"
+variant = 1
 
-[node name="Walls" type="CSGBox3D" parent="House1"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
-use_collision = true
-size = Vector3(6, 3.2, 6)
-material = SubResource("mat_wall")
-
-[node name="RoofLeft" type="CSGBox3D" parent="House1"]
-transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -1.65, 4.1526, 0)
-use_collision = true
-size = Vector3(3.8105, 0.25, 6.6)
-material = SubResource("mat_roof")
-
-[node name="RoofRight" type="CSGBox3D" parent="House1"]
-transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 1.65, 4.1526, 0)
-use_collision = true
-size = Vector3(3.8105, 0.25, 6.6)
-material = SubResource("mat_roof")
-
-[node name="Door" type="CSGBox3D" parent="House1"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 3.02)
-size = Vector3(1.2, 2.2, 0.06)
-material = SubResource("mat_door")
-
-[node name="House2" type="Node3D" parent="."]
+[node name="House2" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 128, 0, -14)
+script = ExtResource("4_vhouse")
+width_cells = 3
+depth_cells = 3
+style = "UnevenBrick"
+variant = 2
 
-[node name="Walls" type="CSGBox3D" parent="House2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
-use_collision = true
-size = Vector3(6, 3, 5)
-material = SubResource("mat_wall2")
-
-[node name="RoofLeft" type="CSGBox3D" parent="House2"]
-transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -1.65, 3.9526, 0)
-use_collision = true
-size = Vector3(3.8105, 0.25, 5.6)
-material = SubResource("mat_roof")
-
-[node name="RoofRight" type="CSGBox3D" parent="House2"]
-transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 1.65, 3.9526, 0)
-use_collision = true
-size = Vector3(3.8105, 0.25, 5.6)
-material = SubResource("mat_roof")
-
-[node name="Door" type="CSGBox3D" parent="House2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 2.52)
-size = Vector3(1.2, 2.2, 0.06)
-material = SubResource("mat_door")
-
-[node name="House3" type="Node3D" parent="."]
+[node name="House3" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 166, 0, -18)
+script = ExtResource("4_vhouse")
+width_cells = 4
+depth_cells = 4
+style = "Plaster"
+variant = 3
 
-[node name="Walls" type="CSGBox3D" parent="House3"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, 0)
-use_collision = true
-size = Vector3(7, 3.4, 6)
-material = SubResource("mat_wall")
-
-[node name="RoofLeft" type="CSGBox3D" parent="House3"]
-transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -1.9, 4.497, 0)
-use_collision = true
-size = Vector3(4.3879, 0.25, 6.6)
-material = SubResource("mat_roof")
-
-[node name="RoofRight" type="CSGBox3D" parent="House3"]
-transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 1.9, 4.497, 0)
-use_collision = true
-size = Vector3(4.3879, 0.25, 6.6)
-material = SubResource("mat_roof")
-
-[node name="Door" type="CSGBox3D" parent="House3"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 3.02)
-size = Vector3(1.2, 2.2, 0.06)
-material = SubResource("mat_door")
-
-[node name="House4" type="Node3D" parent="."]
+[node name="House4" type="StaticBody3D" parent="."]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 132, 0, 15)
-
-[node name="Walls" type="CSGBox3D" parent="House4"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
-use_collision = true
-size = Vector3(5, 3, 5)
-material = SubResource("mat_wall2")
-
-[node name="RoofLeft" type="CSGBox3D" parent="House4"]
-transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -1.4, 3.8083, 0)
-use_collision = true
-size = Vector3(3.2332, 0.25, 5.6)
-material = SubResource("mat_roof")
-
-[node name="RoofRight" type="CSGBox3D" parent="House4"]
-transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 1.4, 3.8083, 0)
-use_collision = true
-size = Vector3(3.2332, 0.25, 5.6)
-material = SubResource("mat_roof")
-
-[node name="Door" type="CSGBox3D" parent="House4"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 2.52)
-size = Vector3(1.2, 2.2, 0.06)
-material = SubResource("mat_door")
+script = ExtResource("4_vhouse")
+width_cells = 2
+depth_cells = 3
+style = "UnevenBrick"
+variant = 4
 
 [node name="Well" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 156, 0, 3)
@@ -513,3 +420,40 @@ transform = Transform3D(0.9858, 0, -0.9337, 0, 1.3577, 0, 0.9337, 0, 0.9858, 110
 
 [node name="Tree70" parent="." instance=ExtResource("1_tree")]
 transform = Transform3D(-0.5482, 0, -0.7678, 0, 0.9434, 0, 0.7678, 0, -0.5482, 188.26, 0, -15.8029)
+
+[node name="Wagon" type="StaticBody3D" parent="."]
+transform = Transform3D(0.8, 0, 0.6, 0, 1, 0, -0.6, 0, 0.8, 133, 0, 4)
+
+[node name="Shape" type="CollisionShape3D" parent="Wagon"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, -1.1)
+shape = SubResource("wagon_shape")
+
+[node name="Model" parent="Wagon" instance=ExtResource("6_wagon")]
+
+[node name="Horse" type="Node3D" parent="Wagon"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 1.9)
+
+[node name="Model" type="Node3D" parent="Wagon/Horse"]
+script = ExtResource("8_animal")
+model_path = "res://assets/animals/horse.gltf"
+model_scale = 0.36
+idle_animations = PackedStringArray("Idle", "Idle_Headlow", "Eating", "Idle_2")
+
+[node name="Crates" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 155.2, 0, -7)
+
+[node name="Shape1" type="CollisionShape3D" parent="Crates"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.53, 0)
+shape = SubResource("crate_shape")
+
+[node name="Shape2" type="CollisionShape3D" parent="Crates"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.53, 1.2)
+shape = SubResource("crate_shape")
+
+[node name="Crate1" parent="Crates" instance=ExtResource("7_crate")]
+
+[node name="Crate2" parent="Crates" instance=ExtResource("7_crate")]
+transform = Transform3D(0.94, 0, 0.34, 0, 1, 0, -0.34, 0, 0.94, 0, 0, 1.2)
+
+[node name="Crate3" parent="Crates" instance=ExtResource("7_crate")]
+transform = Transform3D(0.8, 0, -0.6, 0, 1, 0, 0.6, 0, 0.8, 0.1, 1.06, 0.5)

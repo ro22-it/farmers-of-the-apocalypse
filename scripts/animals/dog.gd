@@ -54,8 +54,6 @@ func _physics_process(delta: float) -> void:
 	velocity.y = -0.5 if is_on_floor() else velocity.y - _gravity * delta
 	if direction != Vector3.ZERO:
 		rotation.y = lerp_angle(rotation.y, atan2(-direction.x, -direction.z), minf(8.0 * delta, 1.0))
-		_anim_time += delta * 14.0
-		_model.position.y = absf(sin(_anim_time)) * 0.06
 	move_and_slide()
 
 	_check -= delta
