@@ -1,0 +1,82 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/grabbable.gd" id="1_grab"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_body"]
+size = Vector3(0.5, 2.4, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_arms"]
+size = Vector3(1.4, 0.15, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wood"]
+albedo_color = Color(0.45, 0.33, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_shirt"]
+albedo_color = Color(0.65, 0.2, 0.18, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_burlap"]
+albedo_color = Color(0.78, 0.68, 0.5, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hat"]
+albedo_color = Color(0.25, 0.2, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_post"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(0.12, 2.0, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_arms"]
+material = SubResource("StandardMaterial3D_wood")
+size = Vector3(1.4, 0.1, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_shirt"]
+material = SubResource("StandardMaterial3D_shirt")
+size = Vector3(0.5, 0.6, 0.25)
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+material = SubResource("StandardMaterial3D_burlap")
+radius = 0.2
+height = 0.4
+radial_segments = 10
+rings = 5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hat"]
+material = SubResource("StandardMaterial3D_hat")
+top_radius = 0.12
+bottom_radius = 0.3
+height = 0.2
+radial_segments = 10
+
+[node name="Scarecrow" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 8.0
+script = ExtResource("1_grab")
+display_name = "Пугало"
+
+[node name="BodyShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+shape = SubResource("BoxShape3D_body")
+
+[node name="ArmsShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+shape = SubResource("BoxShape3D_arms")
+
+[node name="Post" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("BoxMesh_post")
+
+[node name="Arms" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+mesh = SubResource("BoxMesh_arms")
+
+[node name="Shirt" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+mesh = SubResource("BoxMesh_shirt")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
+mesh = SubResource("SphereMesh_head")
+
+[node name="Hat" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.3, 0)
+mesh = SubResource("CylinderMesh_hat")

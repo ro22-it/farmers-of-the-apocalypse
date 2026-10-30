@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/pickup_item.gd" id="1_item"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_shovel"]
+size = Vector3(0.25, 1.4, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_handle"]
+albedo_color = Color(0.55, 0.4, 0.25, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_metal"]
+albedo_color = Color(0.55, 0.57, 0.6, 1)
+metallic = 0.6
+roughness = 0.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_handle"]
+material = SubResource("StandardMaterial3D_handle")
+top_radius = 0.025
+bottom_radius = 0.025
+height = 1.1
+radial_segments = 6
+
+[sub_resource type="BoxMesh" id="BoxMesh_blade"]
+material = SubResource("StandardMaterial3D_metal")
+size = Vector3(0.24, 0.3, 0.03)
+
+[node name="Shovel" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 2.0
+script = ExtResource("1_item")
+display_name = "Лопата"
+use_hint = "ЛКМ — копать"
+use_message = "Копать научимся на этапе 3"
+hand_position = Vector3(0.4, -0.15, -0.6)
+hand_rotation_degrees = Vector3(-25, 0, -10)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
+shape = SubResource("BoxShape3D_shovel")
+
+[node name="Handle" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_handle")
+
+[node name="Blade" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.7, 0)
+mesh = SubResource("BoxMesh_blade")

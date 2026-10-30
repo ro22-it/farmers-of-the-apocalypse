@@ -1,0 +1,87 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/world/farm.tscn" id="2_farm"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://scenes/items/crate.tscn" id="4_crate"]
+[ext_resource type="PackedScene" path="res://scenes/items/pumpkin.tscn" id="5_pumpkin"]
+[ext_resource type="PackedScene" path="res://scenes/items/hay_bale.tscn" id="6_hay"]
+[ext_resource type="PackedScene" path="res://scenes/items/scarecrow.tscn" id="7_scarecrow"]
+[ext_resource type="PackedScene" path="res://scenes/items/shovel.tscn" id="8_shovel"]
+[ext_resource type="PackedScene" path="res://scenes/items/watering_can.tscn" id="9_can"]
+[ext_resource type="PackedScene" path="res://scenes/items/flashlight.tscn" id="10_flashlight"]
+
+[sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
+sky_top_color = Color(0.42, 0.58, 0.78, 1)
+sky_horizon_color = Color(0.82, 0.8, 0.72, 1)
+ground_horizon_color = Color(0.82, 0.8, 0.72, 1)
+ground_bottom_color = Color(0.3, 0.32, 0.25, 1)
+
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_mat")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_energy = 0.8
+tonemap_mode = 2
+ssao_enabled = true
+glow_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.78, 0.8, 0.76, 1)
+fog_density = 0.012
+fog_sky_affect = 0.3
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.8192, 0.4263, -0.3838, 0, 0.6691, 0.7431, 0.5736, -0.6087, 0.5481, 0, 20, 0)
+light_color = Color(1, 0.94, 0.84, 1)
+light_energy = 1.1
+shadow_enabled = true
+directional_shadow_max_distance = 80.0
+
+[node name="Farm" parent="." instance=ExtResource("2_farm")]
+
+[node name="Items" type="Node3D" parent="."]
+
+[node name="Crate1" parent="Items" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0.41, -5)
+
+[node name="Crate2" parent="Items" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.41, -5.2)
+
+[node name="Crate3" parent="Items" instance=ExtResource("4_crate")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 1.23, -5.1)
+
+[node name="Pumpkin1" parent="Items" instance=ExtResource("5_pumpkin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.37, 13)
+
+[node name="Pumpkin2" parent="Items" instance=ExtResource("5_pumpkin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.37, 13.5)
+
+[node name="Pumpkin3" parent="Items" instance=ExtResource("5_pumpkin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.37, 13)
+
+[node name="HayBale" parent="Items" instance=ExtResource("6_hay")]
+transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, 16, 0.31, -4)
+
+[node name="Scarecrow" parent="Items" instance=ExtResource("7_scarecrow")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, 8)
+
+[node name="Shovel" parent="Items" instance=ExtResource("8_shovel")]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -9.7, 1.05, -2.5)
+
+[node name="WateringCan" parent="Items" instance=ExtResource("9_can")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.8, 1.08, -2.5)
+
+[node name="Flashlight" parent="Items" instance=ExtResource("10_flashlight")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.1, 0.95, -2.5)
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 18)

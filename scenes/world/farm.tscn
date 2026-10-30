@@ -1,0 +1,1690 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/world/tree.tscn" id="1_tree"]
+
+[sub_resource type="StandardMaterial3D" id="mat_grass"]
+albedo_color = Color(0.36, 0.52, 0.27, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_dirt"]
+albedo_color = Color(0.45, 0.35, 0.24, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_soil"]
+albedo_color = Color(0.3, 0.21, 0.14, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_fence"]
+albedo_color = Color(0.55, 0.42, 0.28, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_barn"]
+albedo_color = Color(0.62, 0.18, 0.15, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_roof"]
+albedo_color = Color(0.27, 0.22, 0.2, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_house"]
+albedo_color = Color(0.85, 0.8, 0.68, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_door"]
+albedo_color = Color(0.38, 0.26, 0.17, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_truck"]
+albedo_color = Color(0.55, 0.32, 0.2, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_tire"]
+albedo_color = Color(0.12, 0.12, 0.12, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_glass"]
+albedo_color = Color(0.55, 0.7, 0.75, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="mat_trim"]
+albedo_color = Color(0.95, 0.95, 0.92, 1)
+roughness = 0.95
+
+[sub_resource type="CylinderMesh" id="mesh_wheel"]
+material = SubResource("mat_tire")
+top_radius = 0.4
+bottom_radius = 0.4
+height = 0.3
+radial_segments = 10
+
+[node name="Farm" type="Node3D"]
+
+[node name="Ground" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+use_collision = true
+size = Vector3(200, 1, 200)
+material = SubResource("mat_grass")
+
+[node name="Road" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 62, 0.01, 0)
+size = Vector3(76, 0.02, 4)
+material = SubResource("mat_dirt")
+
+[node name="Yard" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -4)
+size = Vector3(44, 0.02, 3)
+material = SubResource("mat_dirt")
+
+[node name="House" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -12)
+
+[node name="Walls" type="CSGBox3D" parent="House"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+use_collision = true
+size = Vector3(8, 4.5, 7)
+material = SubResource("mat_house")
+
+[node name="RoofLeft" type="CSGBox3D" parent="House"]
+transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, -2.05, 5.6, 0)
+use_collision = true
+size = Vector3(4.9, 0.25, 7.8)
+material = SubResource("mat_roof")
+
+[node name="RoofRight" type="CSGBox3D" parent="House"]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 2.05, 5.6, 0)
+use_collision = true
+size = Vector3(4.9, 0.25, 7.8)
+material = SubResource("mat_roof")
+
+[node name="Door" type="CSGBox3D" parent="House"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 3.52)
+size = Vector3(1.2, 2.2, 0.06)
+material = SubResource("mat_door")
+
+[node name="WindowLeft" type="CSGBox3D" parent="House"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 2.4, 3.52)
+size = Vector3(1.2, 1, 0.06)
+material = SubResource("mat_glass")
+
+[node name="WindowRight" type="CSGBox3D" parent="House"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 2.4, 3.52)
+size = Vector3(1.2, 1, 0.06)
+material = SubResource("mat_glass")
+
+[node name="Porch" type="CSGBox3D" parent="House"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 4.4)
+use_collision = true
+size = Vector3(3, 0.2, 1.6)
+material = SubResource("mat_door")
+
+[node name="Table" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.85, -2.5)
+use_collision = true
+size = Vector3(2.2, 0.1, 0.9)
+material = SubResource("mat_door")
+
+[node name="TableLegs" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.4, -2.5)
+use_collision = true
+size = Vector3(2, 0.8, 0.7)
+material = SubResource("mat_door")
+
+[node name="Barn" type="CSGCombiner3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -12)
+use_collision = true
+
+[node name="Walls" type="CSGBox3D" parent="Barn"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+size = Vector3(10, 6, 8)
+material = SubResource("mat_barn")
+
+[node name="Inside" type="CSGBox3D" parent="Barn"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.8, 0)
+operation = 2
+size = Vector3(9.4, 5.8, 7.4)
+material = SubResource("mat_barn")
+
+[node name="Doorway" type="CSGBox3D" parent="Barn"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, 4)
+operation = 2
+size = Vector3(4, 4.1, 1)
+material = SubResource("mat_barn")
+
+[node name="RoofLeft" type="CSGBox3D" parent="."]
+transform = Transform3D(0.866, -0.5, 0, 0.5, 0.866, 0, 0, 0, 1, 9.4, 6.75, -12)
+use_collision = true
+size = Vector3(6.1, 0.25, 8.6)
+material = SubResource("mat_roof")
+
+[node name="RoofRight" type="CSGBox3D" parent="."]
+transform = Transform3D(0.866, 0.5, 0, -0.5, 0.866, 0, 0, 0, 1, 14.6, 6.75, -12)
+use_collision = true
+size = Vector3(6.1, 0.25, 8.6)
+material = SubResource("mat_roof")
+
+[node name="Gable" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.4, -8.05)
+size = Vector3(8.6, 1.4, 0.1)
+material = SubResource("mat_trim")
+
+[node name="Bed1" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0.07, 8)
+use_collision = true
+size = Vector3(2, 0.15, 7)
+material = SubResource("mat_soil")
+
+[node name="Bed2" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0.07, 8)
+use_collision = true
+size = Vector3(2, 0.15, 7)
+material = SubResource("mat_soil")
+
+[node name="Bed3" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.07, 8)
+use_collision = true
+size = Vector3(2, 0.15, 7)
+material = SubResource("mat_soil")
+
+[node name="Bed4" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.07, 8)
+use_collision = true
+size = Vector3(2, 0.15, 7)
+material = SubResource("mat_soil")
+
+[node name="Bed5" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.07, 8)
+use_collision = true
+size = Vector3(2, 0.15, 7)
+material = SubResource("mat_soil")
+
+[node name="Bed6" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0.07, 8)
+use_collision = true
+size = Vector3(2, 0.15, 7)
+material = SubResource("mat_soil")
+
+[node name="Truck" type="Node3D" parent="."]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 18, 0, 4)
+
+[node name="Body" type="CSGBox3D" parent="Truck"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+use_collision = true
+size = Vector3(2, 0.8, 4.6)
+material = SubResource("mat_truck")
+
+[node name="Cabin" type="CSGBox3D" parent="Truck"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, -0.6)
+use_collision = true
+size = Vector3(1.9, 0.9, 1.6)
+material = SubResource("mat_truck")
+
+[node name="Windshield" type="CSGBox3D" parent="Truck"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, -1.42)
+size = Vector3(1.7, 0.6, 0.04)
+material = SubResource("mat_glass")
+
+[node name="Wheel1" type="MeshInstance3D" parent="Truck"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -1, 0.4, -1.5)
+mesh = SubResource("mesh_wheel")
+
+[node name="Wheel2" type="MeshInstance3D" parent="Truck"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1, 0.4, -1.5)
+mesh = SubResource("mesh_wheel")
+
+[node name="Wheel3" type="MeshInstance3D" parent="Truck"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -1, 0.4, 1.5)
+mesh = SubResource("mesh_wheel")
+
+[node name="Wheel4" type="MeshInstance3D" parent="Truck"]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 1, 0.4, 1.5)
+mesh = SubResource("mesh_wheel")
+
+[node name="Fence" type="CSGCombiner3D" parent="."]
+use_collision = true
+
+[node name="Post0" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail1" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail2" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post1" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail3" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail4" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post2" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail5" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail6" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post3" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail7" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail8" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post4" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail9" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail10" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post5" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail11" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail12" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post6" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail13" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail14" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post7" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail15" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail16" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post8" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail17" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail18" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post9" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail19" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail20" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post10" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail21" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail22" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post11" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail23" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail24" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post12" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail25" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail26" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post13" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail27" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail28" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post14" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail29" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail30" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post15" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail31" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 0.45, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail32" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 0.95, -24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post16" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, -24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail33" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, -22.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail34" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, -22.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post17" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, -21)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail35" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, -19.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail36" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, -19.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post18" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, -18)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail37" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, -16.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail38" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, -16.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post19" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, -15)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail39" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, -13.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail40" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, -13.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post20" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, -12)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail41" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, -10.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail42" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, -10.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post21" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, -9)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail43" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, -7.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail44" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, -7.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post22" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, -6)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail45" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, -4.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail46" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, -4.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post23" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, -3)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Post25" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, 3)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail47" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, 4.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail48" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, 4.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post26" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, 6)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail49" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, 7.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail50" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, 7.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post27" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, 9)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail51" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, 10.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail52" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, 10.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post28" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, 12)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail53" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, 13.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail54" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, 13.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post29" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, 15)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail55" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, 16.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail56" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, 16.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post30" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, 18)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail57" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, 19.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail58" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, 19.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post31" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, 21)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail59" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.45, 22.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail60" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.95, 22.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post32" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail61" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail62" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post33" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail63" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail64" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post34" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail65" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail66" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post35" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail67" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail68" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post36" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail69" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail70" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post37" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail71" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail72" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post38" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail73" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail74" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post39" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail75" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail76" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post40" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail77" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail78" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post41" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail79" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail80" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post42" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail81" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail82" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post43" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail83" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail84" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post44" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail85" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail86" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post45" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail87" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail88" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post46" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail89" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail90" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post47" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail91" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0.45, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Rail92" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 0.95, 24)
+size = Vector3(3, 0.12, 0.06)
+material = SubResource("mat_fence")
+
+[node name="Post48" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, 24)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail93" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, 22.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail94" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, 22.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post49" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, 21)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail95" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, 19.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail96" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, 19.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post50" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, 18)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail97" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, 16.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail98" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, 16.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post51" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, 15)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail99" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, 13.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail100" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, 13.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post52" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, 12)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail101" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, 10.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail102" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, 10.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post53" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, 9)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail103" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, 7.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail104" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, 7.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post54" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, 6)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail105" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, 4.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail106" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, 4.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post55" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, 3)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail107" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, 1.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail108" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, 1.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post56" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, 0)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail109" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, -1.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail110" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, -1.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post57" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, -3)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail111" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, -4.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail112" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, -4.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post58" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, -6)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail113" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, -7.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail114" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, -7.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post59" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, -9)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail115" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, -10.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail116" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, -10.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post60" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, -12)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail117" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, -13.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail118" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, -13.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post61" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, -15)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail119" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, -16.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail120" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, -16.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post62" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, -18)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail121" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, -19.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail122" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, -19.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Post63" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.6, -21)
+size = Vector3(0.18, 1.2, 0.18)
+material = SubResource("mat_fence")
+
+[node name="Rail123" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.45, -22.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Rail124" type="CSGBox3D" parent="Fence"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.95, -22.5)
+size = Vector3(0.06, 0.12, 3)
+material = SubResource("mat_fence")
+
+[node name="Forest" type="Node3D" parent="."]
+
+[node name="Tree1" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.1278, 0, 0.552, 0, 1.2557, 0, -0.552, 0, 1.1278, -17.8955, 0, 35.768)
+
+[node name="Tree2" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8397, 0, -0.0393, 0, 0.8406, 0, 0.0393, 0, -0.8397, -50.0812, 0, -11.4862)
+
+[node name="Tree3" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.7147, 0, 0.4581, 0, 0.8489, 0, -0.4581, 0, 0.7147, 53.4644, 0, 12.8341)
+
+[node name="Tree4" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.1484, 0, 0.8742, 0, 0.8867, 0, -0.8742, 0, 0.1484, -67.4546, 0, 34.6269)
+
+[node name="Tree5" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.9591, 0, 0.7278, 0, 1.204, 0, -0.7278, 0, -0.9591, -57.2487, 0, -59.0265)
+
+[node name="Tree6" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.6653, 0, 0.6076, 0, 0.901, 0, -0.6076, 0, 0.6653, 29.8291, 0, -36.772)
+
+[node name="Tree7" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8074, 0, -0.4545, 0, 0.9265, 0, 0.4545, 0, -0.8074, -27.0344, 0, 70.2311)
+
+[node name="Tree8" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.0925, 0, 0.4549, 0, 1.1834, 0, -0.4549, 0, 1.0925, -33.2498, 0, -39.638)
+
+[node name="Tree9" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.1465, 0, 0.5608, 0, 1.2763, 0, -0.5608, 0, -1.1465, 39.9416, 0, 15.6983)
+
+[node name="Tree10" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3437, 0, 1.0631, 0, 1.1172, 0, -1.0631, 0, -0.3437, -24.7238, 0, 57.9838)
+
+[node name="Tree11" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8666, 0, -0.4376, 0, 0.9709, 0, 0.4376, 0, -0.8666, 19.0048, 0, -66.3797)
+
+[node name="Tree12" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3095, 0, 1.2736, 0, 1.3106, 0, -1.2736, 0, -0.3095, -77.4021, 0, -12.3573)
+
+[node name="Tree13" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.9042, 0, 0.0628, 0, 0.9064, 0, -0.0628, 0, -0.9042, -62.7924, 0, 35.4912)
+
+[node name="Tree14" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.1971, 0, -0.5914, 0, 1.3352, 0, 0.5914, 0, -1.1971, 65.3802, 0, 16.4401)
+
+[node name="Tree15" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.0671, 0, -0.719, 0, 1.2867, 0, 0.719, 0, -1.0671, 34.4887, 0, -34.2822)
+
+[node name="Tree16" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.305, 0, -0.4728, 0, 1.388, 0, 0.4728, 0, 1.305, -49.2477, 0, -27.032)
+
+[node name="Tree17" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.2528, 0, -0.8036, 0, 0.8425, 0, 0.8036, 0, -0.2528, -66.3121, 0, 10.8883)
+
+[node name="Tree18" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.2966, 0, 1.343, 0, 1.3753, 0, -1.343, 0, -0.2966, -50.9737, 0, -67.5619)
+
+[node name="Tree19" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.7923, 0, 0.1945, 0, 0.8158, 0, -0.1945, 0, -0.7923, -50.8076, 0, 44.3458)
+
+[node name="Tree20" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.0962, 0, -0.8358, 0, 0.8413, 0, 0.8358, 0, 0.0962, 18.8151, 0, 33.252)
+
+[node name="Tree21" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.7419, 0, -0.7761, 0, 1.0737, 0, 0.7761, 0, 0.7419, 31.0253, 0, 32.7653)
+
+[node name="Tree22" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.8806, 0, -0.7924, 0, 1.1846, 0, 0.7924, 0, 0.8806, 48.8055, 0, 27.0636)
+
+[node name="Tree23" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8573, 0, 0.5048, 0, 0.9949, 0, -0.5048, 0, -0.8573, 32.803, 0, -70.5367)
+
+[node name="Tree24" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.8574, 0, 1.1946, 0, 1.4704, 0, -1.1946, 0, 0.8574, -49.798, 0, 61.1507)
+
+[node name="Tree25" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.959, 0, 0.0909, 0, 0.9633, 0, -0.0909, 0, -0.959, 19.8064, 0, 39.6187)
+
+[node name="Tree26" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.701, 0, 0.3914, 0, 0.8029, 0, -0.3914, 0, -0.701, -38.9112, 0, -24.3942)
+
+[node name="Tree27" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.5359, 0, -1.3658, 0, 1.4672, 0, 1.3658, 0, -0.5359, -42.2404, 0, 45.4064)
+
+[node name="Tree28" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.2008, 0, 0.4237, 0, 1.2733, 0, -0.4237, 0, 1.2008, -64.426, 0, -6.2908)
+
+[node name="Tree29" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.4184, 0, -1.3488, 0, 1.4122, 0, 1.3488, 0, 0.4184, 59.2053, 0, -43.2811)
+
+[node name="Tree30" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.5799, 0, -0.6519, 0, 0.8725, 0, 0.6519, 0, -0.5799, -41.4514, 0, 33.2606)
+
+[node name="Tree31" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.4954, 0, 0.8061, 0, 0.9461, 0, -0.8061, 0, 0.4954, 32.8834, 0, 13.5597)
+
+[node name="Tree32" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.4652, 0, 0.6511, 0, 0.8002, 0, -0.6511, 0, 0.4652, -18.6494, 0, 29.3649)
+
+[node name="Tree33" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.5759, 0, -0.5807, 0, 0.8179, 0, 0.5807, 0, 0.5759, 41.2003, 0, 30.5169)
+
+[node name="Tree34" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.561, 0, 0.7994, 0, 0.9766, 0, -0.7994, 0, -0.561, -30.063, 0, -26.1932)
+
+[node name="Tree35" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.3929, 0, -0.0604, 0, 1.3943, 0, 0.0604, 0, 1.3929, -25.3154, 0, 29.0207)
+
+[node name="Tree36" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.6888, 0, 0.5151, 0, 0.8601, 0, -0.5151, 0, 0.6888, -56.3321, 0, 12.2245)
+
+[node name="Tree37" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.729, 0, 1.172, 0, 1.3802, 0, -1.172, 0, 0.729, -25.3055, 0, 38.4524)
+
+[node name="Tree38" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.7076, 0, 0.9315, 0, 1.1698, 0, -0.9315, 0, 0.7076, 81.5361, 0, 11.9159)
+
+[node name="Tree39" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.159, 0, -0.1575, 0, 1.1697, 0, 0.1575, 0, 1.159, -32.2107, 0, -8.9583)
+
+[node name="Tree40" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.6578, 0, 0.7302, 0, 0.9828, 0, -0.7302, 0, -0.6578, 45.0169, 0, -52.1581)
+
+[node name="Tree41" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.2129, 0, -1.1533, 0, 1.1728, 0, 1.1533, 0, 0.2129, 36.3073, 0, 63.2301)
+
+[node name="Tree42" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.3619, 0, -0.1294, 0, 1.3681, 0, 0.1294, 0, 1.3619, -21.0302, 0, 38.4452)
+
+[node name="Tree43" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0873, 0, -1.3701, 0, 1.3728, 0, 1.3701, 0, -0.0873, 44.913, 0, -59.7178)
+
+[node name="Tree44" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.0316, 0, 0.1899, 0, 1.0489, 0, -0.1899, 0, 1.0316, 8.6555, 0, 58.8012)
+
+[node name="Tree45" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3468, 0, -0.9181, 0, 0.9814, 0, 0.9181, 0, -0.3468, 46.0899, 0, 8.1745)
+
+[node name="Tree46" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.4518, 0, -0.1093, 0, 1.4559, 0, 0.1093, 0, 1.4518, 53.6368, 0, -15.0308)
+
+[node name="Tree47" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.1383, 0, 0.9442, 0, 0.9543, 0, -0.9442, 0, 0.1383, 49.2878, 0, -14.3192)
+
+[node name="Tree48" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.002, 0, -0.7251, 0, 1.2368, 0, 0.7251, 0, 1.002, 14.0759, 0, 40.4528)
+
+[node name="Tree49" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.3858, 0, -1.1964, 0, 1.2571, 0, 1.1964, 0, 0.3858, 30.8955, 0, -48.3903)
+
+[node name="Tree50" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.2896, 0, -1.4074, 0, 1.4368, 0, 1.4074, 0, 0.2896, 57.7266, 0, 34.0311)
+
+[node name="Tree51" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.2252, 0, -0.8971, 0, 0.925, 0, 0.8971, 0, 0.2252, 0.0506, 0, -57.3357)
+
+[node name="Tree52" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.1743, 0, 0.901, 0, 1.4802, 0, -0.901, 0, -1.1743, -36.8907, 0, 64.6601)
+
+[node name="Tree53" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.6298, 0, 1.1457, 0, 1.3074, 0, -1.1457, 0, 0.6298, -66.9036, 0, 47.7232)
+
+[node name="Tree54" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.4983, 0, -1.344, 0, 1.4334, 0, 1.344, 0, 0.4983, 27.9274, 0, 28.6521)
+
+[node name="Tree55" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8178, 0, -1.241, 0, 1.4862, 0, 1.241, 0, -0.8178, 46.0182, 0, 60.2389)
+
+[node name="Tree56" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.8881, 0, 0.0797, 0, 0.8917, 0, -0.0797, 0, 0.8881, -36.0277, 0, 49.3218)
+
+[node name="Tree57" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.0684, 0, -0.4734, 0, 1.1686, 0, 0.4734, 0, 1.0684, 65.3247, 0, -12.0831)
+
+[node name="Tree58" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.334, 0, 1.3372, 0, 1.3783, 0, -1.3372, 0, 0.334, -71.5363, 0, 31.5939)
+
+[node name="Tree59" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.829, 0, -0.5005, 0, 0.9684, 0, 0.5005, 0, -0.829, -0.5479, 0, 47.5241)
+
+[node name="Tree60" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.753, 0, -0.4777, 0, 0.8918, 0, 0.4777, 0, 0.753, -3.1878, 0, 54.1139)
+
+[node name="Tree61" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.9964, 0, -0.6836, 0, 1.2083, 0, 0.6836, 0, 0.9964, -34.1552, 0, 44.7342)
+
+[node name="Tree62" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.1282, 0, -0.2287, 0, 1.1512, 0, 0.2287, 0, -1.1282, -70.8175, 0, 38.569)
+
+[node name="Tree63" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.4521, 0, 1.0116, 0, 1.1081, 0, -1.0116, 0, 0.4521, -32.6322, 0, -4.855)
+
+[node name="Tree64" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.2262, 0, -0.4543, 0, 1.3076, 0, 0.4543, 0, -1.2262, 26.7651, 0, 50.433)
+
+[node name="Tree65" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.254, 0, -1.1614, 0, 1.1888, 0, 1.1614, 0, 0.254, -27.3264, 0, 52.8227)
+
+[node name="Tree66" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.1639, 0, 0.9601, 0, 0.9739, 0, -0.9601, 0, -0.1639, 48.4844, 0, 38.1526)
+
+[node name="Tree67" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.0749, 0, -1.1909, 0, 1.1932, 0, 1.1909, 0, 0.0749, 8.2128, 0, -58.3335)
+
+[node name="Tree68" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.228, 0, -0.0429, 0, 1.2288, 0, 0.0429, 0, -1.228, 47.3127, 0, -28.9981)
+
+[node name="Tree69" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.0923, 0, -0.2318, 0, 1.1166, 0, 0.2318, 0, -1.0923, -68.5142, 0, -5.2456)
+
+[node name="Tree70" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.9205, 0, -0.9029, 0, 1.2895, 0, 0.9029, 0, 0.9205, -81.1209, 0, 11.2665)
+
+[node name="Tree71" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.1167, 0, -0.4158, 0, 1.1917, 0, 0.4158, 0, 1.1167, 42.7719, 0, -16.2603)
+
+[node name="Tree72" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8272, 0, 0.3149, 0, 0.8851, 0, -0.3149, 0, -0.8272, 21.0409, 0, -33.1552)
+
+[node name="Tree73" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.4125, 0, -0.7445, 0, 0.8512, 0, 0.7445, 0, -0.4125, 40.1845, 0, 19.7006)
+
+[node name="Tree74" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.1919, 0, -0.8876, 0, 0.9081, 0, 0.8876, 0, -0.1919, 16.8323, 0, -77.741)
+
+[node name="Tree75" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.3886, 0, -0.2872, 0, 1.418, 0, 0.2872, 0, 1.3886, -21.153, 0, -33.4509)
+
+[node name="Tree76" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.0753, 0, 0.0863, 0, 1.0788, 0, -0.0863, 0, -1.0753, 15.6655, 0, 80.9814)
+
+[node name="Tree77" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.6166, 0, 0.9836, 0, 1.1609, 0, -0.9836, 0, -0.6166, 28.9732, 0, 46.5977)
+
+[node name="Tree78" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.2957, 0, 0.1594, 0, 1.3055, 0, -0.1594, 0, 1.2957, 16.3428, 0, 46.069)
+
+[node name="Tree79" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3982, 0, 0.7084, 0, 0.8127, 0, -0.7084, 0, -0.3982, -52.1833, 0, -18.4361)
+
+[node name="Tree80" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.8413, 0, -0.0791, 0, 0.845, 0, 0.0791, 0, 0.8413, -42.1063, 0, -41.5424)
+
+[node name="Tree81" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0853, 0, 0.8692, 0, 0.8733, 0, -0.8692, 0, -0.0853, 19.9327, 0, -81.0859)
+
+[node name="Tree82" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.6792, 0, 0.7193, 0, 0.9893, 0, -0.7193, 0, 0.6792, 71.0313, 0, 18.042)
+
+[node name="Tree83" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0742, 0, 1.3713, 0, 1.3733, 0, -1.3713, 0, -0.0742, -70.9126, 0, 37.6866)
+
+[node name="Tree84" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3676, 0, -1.1417, 0, 1.1994, 0, 1.1417, 0, -0.3676, 47.7027, 0, 65.1118)
+
+[node name="Tree85" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.1432, 0, 0.5796, 0, 1.2817, 0, -0.5796, 0, -1.1432, 29.6561, 0, 18.68)
+
+[node name="Tree86" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.3965, 0, -1.1792, 0, 1.2441, 0, 1.1792, 0, 0.3965, 73.4175, 0, 35.9177)
+
+[node name="Tree87" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.551, 0, -0.6428, 0, 0.8466, 0, 0.6428, 0, 0.551, 66.9135, 0, 38.8622)
+
+[node name="Tree88" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.0633, 0, -0.5278, 0, 1.1871, 0, 0.5278, 0, 1.0633, -47.8819, 0, 14.312)
+
+[node name="Tree89" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.0849, 0, 1.1658, 0, 1.1688, 0, -1.1658, 0, 0.0849, -4.3503, 0, 38.6046)
+
+[node name="Tree90" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.2493, 0, 0.7972, 0, 0.8353, 0, -0.7972, 0, 0.2493, 31.3385, 0, 25.744)
+
+[node name="Tree91" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3309, 0, 1.2899, 0, 1.3316, 0, -1.2899, 0, -0.3309, -18.29, 0, 44.5575)
+
+[node name="Tree92" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.0361, 0, 0.1188, 0, 1.0429, 0, -0.1188, 0, 1.0361, -41.4287, 0, -0.0231)
+
+[node name="Tree93" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.2462, 0, -0.414, 0, 1.3132, 0, 0.414, 0, -1.2462, -0.0925, 0, 32.8132)
+
+[node name="Tree94" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.1419, 0, 0.9005, 0, 1.4542, 0, -0.9005, 0, 1.1419, 21.2242, 0, 53.076)
+
+[node name="Tree95" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.5812, 0, -0.9883, 0, 1.1465, 0, 0.9883, 0, 0.5812, 23.04, 0, -49.8374)
+
+[node name="Tree96" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.2736, 0, -0.1411, 0, 1.2814, 0, 0.1411, 0, 1.2736, -46.0669, 0, 36.6289)
+
+[node name="Tree97" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8502, 0, -0.9764, 0, 1.2947, 0, 0.9764, 0, -0.8502, -41.8685, 0, 63.5605)
+
+[node name="Tree98" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.5744, 0, 0.6103, 0, 0.8381, 0, -0.6103, 0, 0.5744, -41.6477, 0, 28.4195)
+
+[node name="Tree99" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.5076, 0, 0.8371, 0, 0.9789, 0, -0.8371, 0, 0.5076, 64.346, 0, 30.6366)
+
+[node name="Tree100" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.6748, 0, -1.2374, 0, 1.4094, 0, 1.2374, 0, -0.6748, 66.0477, 0, 38.7725)
+
+[node name="Tree101" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.9727, 0, 0.2533, 0, 1.0051, 0, -0.2533, 0, -0.9727, -8.936, 0, 43.9378)
+
+[node name="Tree102" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.956, 0, -0.2341, 0, 0.9843, 0, 0.2341, 0, 0.956, 30.5318, 0, 46.5012)
+
+[node name="Tree103" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.9486, 0, -0.2079, 0, 0.9711, 0, 0.2079, 0, 0.9486, 60.0947, 0, -10.4404)
+
+[node name="Tree104" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.5893, 0, 0.5422, 0, 0.8007, 0, -0.5422, 0, -0.5893, -18.6027, 0, 47.3777)
+
+[node name="Tree105" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.9403, 0, -0.028, 0, 0.9407, 0, 0.028, 0, -0.9403, -57.9038, 0, 9.304)
+
+[node name="Tree106" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.8209, 0, 0.1168, 0, 0.8292, 0, -0.1168, 0, 0.8209, 44.9405, 0, 28.4225)
+
+[node name="Tree107" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.1896, 0, -0.2207, 0, 1.2099, 0, 0.2207, 0, -1.1896, -14.8211, 0, 41.7884)
+
+[node name="Tree108" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.9434, 0, -0.8961, 0, 1.3012, 0, 0.8961, 0, 0.9434, 0.2271, 0, -66.8494)
+
+[node name="Tree109" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.8795, 0, 1.2019, 0, 1.4893, 0, -1.2019, 0, 0.8795, -37.8792, 0, 31.5308)
+
+[node name="Tree110" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.4241, 0, -0.7142, 0, 0.8307, 0, 0.7142, 0, 0.4241, -10.685, 0, -65.2212)
+
+[node name="Tree111" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.5006, 0, -1.2146, 0, 1.3137, 0, 1.2146, 0, 0.5006, 50.7787, 0, -40.9744)
+
+[node name="Tree112" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.5866, 0, -0.9927, 0, 1.1531, 0, 0.9927, 0, 0.5866, 38.2919, 0, 45.8791)
+
+[node name="Tree113" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.945, 0, -0.7539, 0, 1.2088, 0, 0.7539, 0, 0.945, 25.5317, 0, -71.3703)
+
+[node name="Tree114" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.9426, 0, 0.1869, 0, 0.961, 0, -0.1869, 0, 0.9426, -28.1343, 0, -62.7257)
+
+[node name="Tree115" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.4485, 0, -0.7495, 0, 0.8734, 0, 0.7495, 0, 0.4485, 34.2616, 0, 37.9361)
+
+[node name="Tree116" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.5226, 0, -1.1227, 0, 1.2384, 0, 1.1227, 0, -0.5226, -60.9078, 0, -23.4655)
+
+[node name="Tree117" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0148, 0, -1.3583, 0, 1.3584, 0, 1.3583, 0, -0.0148, -32.1029, 0, 2.1627)
+
+[node name="Tree118" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.1544, 0, 0.5086, 0, 1.2615, 0, -0.5086, 0, 1.1544, -60.3551, 0, -1.1268)
+
+[node name="Tree119" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0832, 0, 0.848, 0, 0.8521, 0, -0.848, 0, -0.0832, -3.7616, 0, -45.21)
+
+[node name="Tree120" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.3026, 0, -0.2001, 0, 1.3179, 0, 0.2001, 0, 1.3026, -5.5515, 0, -42.5156)
+
+[node name="Tree121" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.4594, 0, -1.0382, 0, 1.1353, 0, 1.0382, 0, -0.4594, -52.2379, 0, 1.9871)
+
+[node name="Tree122" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.1048, 0, 0.5847, 0, 1.2499, 0, -0.5847, 0, 1.1048, 6.8856, 0, -64.3322)
+
+[node name="Tree123" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.4427, 0, 1.2438, 0, 1.3203, 0, -1.2438, 0, -0.4427, 27.3115, 0, 36.3399)
+
+[node name="Tree124" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0991, 0, 0.8366, 0, 0.8425, 0, -0.8366, 0, -0.0991, -29.7451, 0, -13.4893)
+
+[node name="Tree125" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3232, 0, 1.2313, 0, 1.273, 0, -1.2313, 0, -0.3232, -32.3301, 0, -60.6012)
+
+[node name="Tree126" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.8284, 0, 0.7633, 0, 1.1264, 0, -0.7633, 0, 0.8284, -56.3218, 0, -5.8728)
+
+[node name="Tree127" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.3672, 0, -0.5789, 0, 1.4847, 0, 0.5789, 0, 1.3672, 33.4089, 0, -26.3671)
+
+[node name="Tree128" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.3464, 0, -0.2735, 0, 1.3739, 0, 0.2735, 0, 1.3464, 55.9851, 0, 6.1824)
+
+[node name="Tree129" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.8921, 0, -0.3175, 0, 0.9469, 0, 0.3175, 0, 0.8921, -43.9262, 0, 14.4402)
+
+[node name="Tree130" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.889, 0, -0.1355, 0, 0.8992, 0, 0.1355, 0, -0.889, 15.3511, 0, 60.9135)
+
+[node name="Tree131" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.3721, 0, -0.0755, 0, 1.3742, 0, 0.0755, 0, -1.3721, 37.32, 0, -11.4195)
+
+[node name="Tree132" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.77, 0, -0.5766, 0, 0.962, 0, 0.5766, 0, 0.77, 52.4978, 0, -45.2025)
+
+[node name="Tree133" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8014, 0, 0.0419, 0, 0.8025, 0, -0.0419, 0, -0.8014, -33.19, 0, 2.8975)
+
+[node name="Tree134" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.5002, 0, 0.7464, 0, 0.8985, 0, -0.7464, 0, -0.5002, -45.7243, 0, 14.6156)
+
+[node name="Tree135" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.0037, 0, -0.8012, 0, 0.8012, 0, 0.8012, 0, 0.0037, -30.8697, 0, 70.0303)
+
+[node name="Tree136" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3335, 0, -1.4096, 0, 1.4485, 0, 1.4096, 0, -0.3335, 20.3742, 0, -32.5046)
+
+[node name="Tree137" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.8294, 0, 0.661, 0, 1.0606, 0, -0.661, 0, -0.8294, 38.5881, 0, -27.4597)
+
+[node name="Tree138" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.9473, 0, 0.2964, 0, 0.9926, 0, -0.2964, 0, 0.9473, -35.0461, 0, 41.9811)
+
+[node name="Tree139" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.9192, 0, -0.3937, 0, 0.9999, 0, 0.3937, 0, 0.9192, 61.1927, 0, 45.4715)
+
+[node name="Tree140" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.4272, 0, 1.076, 0, 1.1577, 0, -1.076, 0, 0.4272, 0.1955, 0, 46.0832)
+
+[node name="Tree141" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.5386, 0, -1.3128, 0, 1.419, 0, 1.3128, 0, 0.5386, -57.8518, 0, 59.0645)
+
+[node name="Tree142" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.3893, 0, -0.444, 0, 1.4585, 0, 0.444, 0, -1.3893, -54.7146, 0, -58.9263)
+
+[node name="Tree143" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.2506, 0, 0.3989, 0, 1.3126, 0, -0.3989, 0, -1.2506, -6.5789, 0, -33.9914)
+
+[node name="Tree144" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.9534, 0, 0.303, 0, 1.0003, 0, -0.303, 0, 0.9534, 1.109, 0, -66.1487)
+
+[node name="Tree145" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.6276, 0, 0.9403, 0, 1.1305, 0, -0.9403, 0, -0.6276, 34.7185, 0, -17.2044)
+
+[node name="Tree146" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0947, 0, 1.4804, 0, 1.4834, 0, -1.4804, 0, -0.0947, -21.0426, 0, 67.9867)
+
+[node name="Tree147" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.9375, 0, 0.7332, 0, 1.1901, 0, -0.7332, 0, -0.9375, -26.7002, 0, -39.8216)
+
+[node name="Tree148" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.7852, 0, -0.5267, 0, 0.9455, 0, 0.5267, 0, 0.7852, 20.1368, 0, 35.2173)
+
+[node name="Tree149" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.434, 0, -0.0318, 0, 1.4344, 0, 0.0318, 0, 1.434, -43.654, 0, 0.8022)
+
+[node name="Tree150" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.7869, 0, 0.5044, 0, 0.9347, 0, -0.5044, 0, 0.7869, -37.4673, 0, 12.1841)
+
+[node name="Tree151" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.0508, 0, 0.9661, 0, 0.9674, 0, -0.9661, 0, -0.0508, -20.1139, 0, 30.8501)
+
+[node name="Tree152" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.1308, 0, 0.6902, 0, 1.3248, 0, -0.6902, 0, -1.1308, -71.584, 0, -33.4751)
+
+[node name="Tree153" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.5598, 0, 0.9046, 0, 1.0638, 0, -0.9046, 0, -0.5598, -51.2412, 0, 30.7912)
+
+[node name="Tree154" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.0389, 0, 1.0504, 0, 1.4774, 0, -1.0504, 0, 1.0389, 43.2022, 0, 17.755)
+
+[node name="Tree155" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.298, 0, 1.372, 0, 1.404, 0, -1.372, 0, 0.298, -65.3553, 0, -1.3946)
+
+[node name="Tree156" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.0179, 0, 0.3603, 0, 1.0798, 0, -0.3603, 0, -1.0179, -5.9484, 0, 44.7746)
+
+[node name="Tree157" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.3978, 0, 0.1928, 0, 1.411, 0, -0.1928, 0, 1.3978, 73.7794, 0, -21.967)
+
+[node name="Tree158" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.4069, 0, 0.2386, 0, 1.427, 0, -0.2386, 0, -1.4069, 68.1806, 0, 14.005)
+
+[node name="Tree159" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.9625, 0, -0.4766, 0, 1.0741, 0, 0.4766, 0, 0.9625, -27.3265, 0, -16.6694)
+
+[node name="Tree160" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.0143, 0, 1.4805, 0, 1.4806, 0, -1.4805, 0, 0.0143, 35.3663, 0, -68.7796)
+
+[node name="Tree161" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.4825, 0, -1.0611, 0, 1.1657, 0, 1.0611, 0, -0.4825, 31.1138, 0, 25.427)
+
+[node name="Tree162" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.1164, 0, -1.2477, 0, 1.2531, 0, 1.2477, 0, 0.1164, 65.558, 0, -25.2486)
+
+[node name="Tree163" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.1668, 0, -0.8107, 0, 0.8277, 0, 0.8107, 0, 0.1668, -59.0416, 0, 16.2217)
+
+[node name="Tree164" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.415, 0, 1.1811, 0, 1.2519, 0, -1.1811, 0, -0.415, 8.8229, 0, 80.2723)
+
+[node name="Tree165" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.3954, 0, -1.181, 0, 1.2454, 0, 1.181, 0, -0.3954, 31.4606, 0, 32.6559)
+
+[node name="Tree166" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-1.0124, 0, -0.5807, 0, 1.1671, 0, 0.5807, 0, -1.0124, 27.2218, 0, 23.1411)
+
+[node name="Tree167" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.2181, 0, 0.0802, 0, 1.2207, 0, -0.0802, 0, 1.2181, -33.4476, 0, 28.3561)
+
+[node name="Tree168" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(-0.9048, 0, -1.1601, 0, 1.4713, 0, 1.1601, 0, -0.9048, -17.9458, 0, 53.4863)
+
+[node name="Tree169" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(0.0178, 0, 0.9642, 0, 0.9643, 0, -0.9642, 0, 0.0178, 42.6071, 0, -38.1505)
+
+[node name="Tree170" parent="Forest" instance=ExtResource("1_tree")]
+transform = Transform3D(1.0057, 0, 0.1385, 0, 1.0152, 0, -0.1385, 0, 1.0057, 67.234, 0, -16.9865)
