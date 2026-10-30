@@ -52,8 +52,18 @@ var _run_over := {}
 @onready var _seat_markers: Array[Marker3D] = [$Seats/Driver, $Seats/Passenger, $Seats/BedLeft, $Seats/BedRight]
 @onready var _rear_wheels: Array[VehicleWheel3D] = [$WheelRearLeft, $WheelRearRight]
 
+## Мотор: звучит, пока кто-то за рулём, тон растёт со скоростью
+var _engine: AudioStreamPlayer3D
+var _engine_last := Vector3.ZERO
+
 
 func _ready() -> void:
+	_engine = AudioStreamPlayer3D.new()
+	_engine.stream = SoundBank.loop_stream("engine")
+	_engine.unit_size = 6.0
+	_engine.max_distance = 80.0
+	_engine.position = Vector3(0.0, 1.0, 1.8)
+	add_child(_engine)
 	add_to_group("truck")
 	# Фары могут пугать существ (навык механика) — Грядочник проверяет эту группу
 	add_to_group("scare_lights")
@@ -61,6 +71,19 @@ func _ready() -> void:
 	if not multiplayer.is_server():
 		freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
 		freeze = true
+
+
+func _process(delta: float) -> void:
+	# Скорость считаем по перемещению — так одинаково у хоста и клиентов
+	var speed := global_position.distance_to(_engine_last) / maxf(delta, 0.001)
+	_engine_last = global_position
+	var running := seats[DRIVER_SEAT] != 0
+	if running and not _engine.playing:
+		_engine.play()
+	elif not running and _engine.playing:
+		_engine.stop()
+	_engine.pitch_scale = lerpf(_engine.pitch_scale, 0.7 + clampf(speed / MAX_SPEED, 0.0, 1.5) * 0.9, minf(5.0 * delta, 1.0))
+	_engine.volume_db = -8.0
 
 
 func _physics_process(delta: float) -> void:

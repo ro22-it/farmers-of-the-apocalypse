@@ -48,4 +48,5 @@ func _sell(item_name: String, price: int) -> void:
 			break
 	var economy := get_tree().get_first_node_in_group("economy") as Economy
 	economy.add(price)
+	SoundBank.everyone(get_tree(), "coins", global_position + Vector3.UP)
 	economy.announce.rpc("Продано: %s +%d%s" % [item_name, price, bonus])

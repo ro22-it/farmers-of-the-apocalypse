@@ -163,6 +163,9 @@ func _run() -> void:
 	player._on_primary()
 	await frames(3)
 	check(plot.moisture > 0.9, "грядка полита")
+	await frames(40)
+	var tutorial := player.get_node_or_null("Tutorial") as Tutorial
+	check(tutorial != null and tutorial.step == 4, "обучение засчитало лопату, вскопку, посадку и полив (шаг %d)" % (tutorial.step if tutorial else -1))
 	check(player.inventory.get_selected().get("name") == "Лейка 4/5", "в лейке 4 полива")
 	var before_growth := plot.growth
 	await frames(60)

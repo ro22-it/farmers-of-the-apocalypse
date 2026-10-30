@@ -18,6 +18,8 @@ const SETTINGS_PATH := "user://settings.cfg"
 
 var player_name := "Фермер"
 var player_class := "farmer"
+## Показывать обучение. Само выключается, когда его пройдут
+var tutorial_enabled := true
 var last_address := "127.0.0.1"
 ## На хосте: имена игроков в сессии, id -> имя
 var names: Dictionary = {}
@@ -108,14 +110,19 @@ func _load_settings() -> void:
 		return
 	player_name = config.get_value("player", "name", player_name)
 	player_class = config.get_value("player", "class", player_class)
+	tutorial_enabled = config.get_value("player", "tutorial", tutorial_enabled)
 	last_address = config.get_value("network", "last_address", last_address)
 
 
 ## Сохраняет имя и последний IP. Вызывает меню, чтобы тесты и отладочный
 ## запуск не перезаписывали настройки игрока.
 func save_settings() -> void:
+	# Без окна (автотесты, сервер) настройки игрока не трогаем
+	if DisplayServer.get_name() == "headless":
+		return
 	var config := ConfigFile.new()
 	config.set_value("player", "name", player_name)
 	config.set_value("player", "class", player_class)
+	config.set_value("player", "tutorial", tutorial_enabled)
 	config.set_value("network", "last_address", last_address)
 	config.save(SETTINGS_PATH)

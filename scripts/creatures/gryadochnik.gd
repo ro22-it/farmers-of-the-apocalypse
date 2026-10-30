@@ -92,6 +92,8 @@ func _eat(delta: float) -> void:
 	_state_time -= delta
 	if _state_time <= 0.0:
 		carrying = _target_plot.steal()
+		if carrying != "":
+			SoundBank.everyone(get_tree(), "goblin_laugh", global_position)
 		_target_plot = null
 		state = State.FLEE
 

@@ -48,6 +48,7 @@ func damage(amount: int) -> void:
 	var was_broken := is_broken()
 	hp = maxi(hp - amount, 0)
 	if is_broken() and not was_broken:
+		SoundBank.everyone(get_tree(), "fence_break", get_center())
 		_raise_alarm()
 
 
@@ -90,6 +91,7 @@ func interact(player: Node3D, info: Dictionary) -> Dictionary:
 	# Механик чинит сразу целиком, остальные — по одной прочности за удар
 	var is_mechanic := PlayerClasses.class_of(player) == "mechanic"
 	repair_by(player, is_mechanic)
+	SoundBank.everyone(get_tree(), "chop", get_center())
 	if is_mechanic:
 		player.add_xp(PlayerClasses.XP_REPAIR_PER_HP * (hp - before))
 	return {"message": "Забор починен" if hp >= max_hp else "Забор подлатан (%d/%d)" % [hp, max_hp]}

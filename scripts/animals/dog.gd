@@ -117,6 +117,7 @@ func _sniff(radius: float) -> void:
 		var economy := get_tree().get_first_node_in_group("economy") as Economy
 		if economy:
 			economy.announce.rpc("Собака лает: %s %s!" % [creature.display_name, _side(creature.global_position)])
+		SoundBank.everyone(get_tree(), "bark", global_position + Vector3.UP * 0.5)
 		return
 
 

@@ -75,6 +75,7 @@ func _wander(delta: float) -> void:
 	if prey:
 		_charge_dir = _flat(prey.global_position - global_position)
 		state = State.WINDUP
+		SoundBank.everyone(get_tree(), "giant_roar", global_position + Vector3.UP * 1.5)
 		_state_time = WINDUP_TIME
 		return
 	var fence := _walk_to(_goal, speed, delta)
@@ -96,7 +97,7 @@ func _ram_fence(delta: float) -> void:
 	if _state_time <= 0.0:
 		_state_time = RAM_INTERVAL
 		_fence.damage(RAM_DAMAGE)
-		SoundBank.play_at(get_tree(), "thud", global_position)
+		SoundBank.everyone(get_tree(), "thud", global_position)
 
 
 func _charge(delta: float) -> void:

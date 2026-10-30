@@ -20,6 +20,10 @@ const FOREST_RADIUS := 38.0
 @export var weakness := ""
 ## Тело, которое остаётся после победы (физический предмет)
 @export_file("*.tscn") var corpse_scene := ""
+## Голос: рычание вблизи, боль, смерть (см. SoundBank)
+@export var growl_sound := "growl"
+@export var hurt_sound := "goblin_hurt"
+@export var death_sound := "goblin_death"
 @export var max_hp := 3
 @export var speed := 3.2
 @export var flee_speed := 5.0
@@ -31,6 +35,7 @@ var tracked := false
 
 var _track_left := 0.0
 var _marker: Label3D
+var _next_growl := randf_range(3.0, 8.0)
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 ## Куда убегать: место, откуда пришёл
@@ -72,6 +77,11 @@ func _process(delta: float) -> void:
 	var hunter_sees := local != null and local.player_class == "hunter" \
 			and local.global_position.distance_to(global_position) <= PlayerClasses.hunter_sight(local)
 	_marker.visible = tracked or hunter_sees
+	# Рычание вблизи — у каждого своё, по сети не шлём
+	_next_growl -= delta
+	if _next_growl <= 0.0:
+		_next_growl = randf_range(5.0, 12.0)
+		SoundBank.play_at(get_tree(), growl_sound, global_position + Vector3.UP, -6.0)
 
 
 ## Только на хосте: подсветить для всех на время
@@ -90,11 +100,14 @@ func take_hit(amount: int, from_position: Vector3, knockback := 1.0, scare_time 
 	if trapped:
 		amount *= 2
 	hp -= amount
+	if amount > 0:
+		SoundBank.everyone(get_tree(), death_sound if hp <= 0 else hurt_sound, global_position)
 	var away := global_position - from_position
 	away.y = 0.0
 	_knockback = away.normalized() * KNOCKBACK_SPEED * knockback
 	_knockback_time = KNOCKBACK_TIME
 	if hp <= 0:
+		SoundBank.everyone(get_tree(), "creature_death", global_position, -4.0)
 		_on_died()
 		_leave_corpse(_knockback)
 		queue_free()

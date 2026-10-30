@@ -170,6 +170,7 @@ func interact(player: Node3D, info: Dictionary) -> Dictionary:
 			if state != State.UNTILLED:
 				return {"message": "Уже вскопано" if state == State.TILLED else "Здесь уже растёт"}
 			state = State.TILLED
+			SoundBank.everyone(get_tree(), "squish", global_position, -6.0)
 			return {"message": ""}
 		"seeds":
 			if state == State.UNTILLED:
@@ -188,6 +189,7 @@ func interact(player: Node3D, info: Dictionary) -> Dictionary:
 			sticky = PlayerClasses.has(player, "farmer_b3")
 			if is_farmer:
 				player.add_xp(PlayerClasses.XP_PLANT)
+			SoundBank.everyone(get_tree(), "pickup", global_position, -6.0)
 			return {"consume": 1}
 		"watering_can":
 			if state == State.UNTILLED:
@@ -195,6 +197,7 @@ func interact(player: Node3D, info: Dictionary) -> Dictionary:
 			moisture = maxf(moisture, PlayerClasses.water_amount(player))
 			if PlayerClasses.has(player, "farmer_a2"):
 				growth_boost = 1.25
+			SoundBank.everyone(get_tree(), "splash", global_position, -8.0)
 			return {"consume": 1}
 		"hand":
 			if state != State.PLANTED:
@@ -202,6 +205,7 @@ func interact(player: Node3D, info: Dictionary) -> Dictionary:
 			if not is_ripe():
 				return {"message": "Ещё не созрело: %d%%" % int(growth * 100.0)}
 			_spawn_produce(PlayerClasses.harvest_bonus(player))
+			SoundBank.everyone(get_tree(), "squish", global_position, -6.0)
 			if is_farmer:
 				player.add_xp(PlayerClasses.XP_HARVEST)
 			reset()

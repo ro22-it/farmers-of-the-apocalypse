@@ -42,7 +42,8 @@ func _on_body_entered(body: Node3D) -> void:
 		return
 	armed = false
 	body.trap(HOLD_TIME)
-	SoundBank.play_at(get_tree(), "thud", global_position)
+	SoundBank.everyone(get_tree(), "trap", global_position)
+	SoundBank.everyone(get_tree(), "metal_hit", global_position)
 
 
 func _update_look() -> void:

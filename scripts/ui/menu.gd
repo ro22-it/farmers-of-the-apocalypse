@@ -18,6 +18,7 @@ var _name_edit: LineEdit
 var _address_edit: LineEdit
 var _class_option: OptionButton
 var _class_description: Label
+var _tutorial_check: CheckBox
 var _status: Label
 var _buttons: Array[Button] = []
 var _in_session := false
@@ -121,6 +122,13 @@ func _build_main() -> Control:
 	box.add_child(_class_description)
 	_on_class_selected(_class_option.selected)
 
+	_tutorial_check = CheckBox.new()
+	_tutorial_check.text = "Обучение для новичков"
+	_tutorial_check.add_theme_font_size_override("font_size", 16)
+	_tutorial_check.button_pressed = Network.tutorial_enabled
+	_tutorial_check.toggled.connect(func(on: bool): Network.tutorial_enabled = on)
+	box.add_child(_tutorial_check)
+
 	var host_button := _make_button("Создать игру", _on_host)
 	box.add_child(host_button)
 
@@ -205,6 +213,7 @@ func _make_button(text: String, callback: Callable, lockable := true) -> Button:
 	button.add_theme_font_size_override("font_size", 20)
 	button.custom_minimum_size = Vector2(0, 46)
 	button.pressed.connect(callback)
+	button.pressed.connect(func(): SoundBank.play_ui(get_tree(), "ui_click"))
 	if lockable:
 		_buttons.append(button)
 	return button

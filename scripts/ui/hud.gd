@@ -23,6 +23,9 @@ var _health_fill: StyleBoxFlat
 var _ammo: Label
 var _damage_flash: ColorRect
 var _downed_text: Label
+var _tutorial: PanelContainer
+var _tutorial_title: Label
+var _tutorial_text: Label
 var _panel: Control
 var _panel_title: Label
 var _panel_subtitle: Label
@@ -105,6 +108,7 @@ func _ready() -> void:
 	_build_slots(root)
 	_build_stamina(root)
 	_build_combat(root)
+	_build_tutorial(root)
 	# Захваченный курсор стоит в центре экрана, прямо над прицелом.
 	# Если интерфейс ловит мышь, движения не доходят до камеры игрока.
 	_ignore_mouse(root)
@@ -130,6 +134,8 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_help"):
 		_controls.visible = not _controls.visible
+	elif event.is_action_pressed("toggle_tutorial") and _tutorial_title.text != "":
+		_tutorial.visible = not _tutorial.visible
 
 
 func set_hint(text: String) -> void:
@@ -163,6 +169,13 @@ func set_ammo(text: String) -> void:
 ## Красная вспышка по краям экрана при ударе
 func flash_damage() -> void:
 	_damage_flash.color.a = 0.45
+
+
+## Панель обучения. Пустой заголовок — спрятать
+func set_tutorial(title: String, text: String) -> void:
+	_tutorial_title.text = title
+	_tutorial_text.text = text
+	_tutorial.visible = title != ""
 
 
 func set_ability(text: String) -> void:
@@ -352,6 +365,40 @@ func _build_combat(root: Control) -> void:
 	_ammo.offset_right = -16
 	_ammo.offset_top = -48
 	_ammo.offset_bottom = -20
+
+
+func _build_tutorial(root: Control) -> void:
+	_tutorial = PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.1, 0.08, 0.75)
+	style.border_color = Color(0.93, 0.5, 0.12)
+	style.border_width_left = 4
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(12)
+	_tutorial.add_theme_stylebox_override("panel", style)
+	root.add_child(_tutorial)
+	_tutorial.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_tutorial.offset_left = -380
+	_tutorial.offset_right = -16
+	_tutorial.offset_top = 76
+	_tutorial.offset_bottom = 180
+	var box := VBoxContainer.new()
+	_tutorial.add_child(box)
+	_tutorial_title = _make_label(17)
+	_tutorial_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_tutorial_title.add_theme_color_override("font_color", Color(1.0, 0.75, 0.4))
+	box.add_child(_tutorial_title)
+	_tutorial_text = _make_label(16)
+	_tutorial_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_tutorial_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tutorial_text.custom_minimum_size = Vector2(340, 0)
+	box.add_child(_tutorial_text)
+	var hint := _make_label(12)
+	hint.text = "F3 — скрыть обучение"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	hint.modulate.a = 0.6
+	box.add_child(hint)
+	_tutorial.visible = false
 
 
 func _build_stamina(root: Control) -> void:

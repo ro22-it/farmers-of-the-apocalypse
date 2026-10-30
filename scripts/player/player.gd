@@ -68,6 +68,7 @@ const THIRD_PERSON_FOLLOW := 6.0
 const GRAB_ROTATE_STEP := 20.0
 ## Удар товарища оружием — шутка: немного урона и кувырок
 const PRANK_DAMAGE := 5.0
+const STEP_LENGTH := 2.0
 ## Высота глаз сидя (в машине)
 const SEATED_EYE_HEIGHT := 1.0
 ## Дальше этого от прилавка купить нельзя
@@ -150,6 +151,10 @@ var _tumble_left := 0.0
 ## Вид от третьего лица в пикапе — по желанию (V), основной вид из кабины
 var third_person := false
 
+## Шаги: сколько осталось до следующего
+var _step_left := 0.0
+var _last_step_position := Vector3.ZERO
+
 ## Только для автотестов: без окна мышь не захватить, а без захвата клавиши не слушаются
 var test_controls := false
 
@@ -209,6 +214,10 @@ func _ready() -> void:
 	inventory.changed.connect(_on_inventory_changed)
 	_on_inventory_changed()
 	hud.panel_action.connect(_on_panel_action)
+	# Network — автозагрузка; через дерево, чтобы скрипт собирался и в автотестах
+	var network := get_node_or_null("/root/Network")
+	if network and network.tutorial_enabled:
+		add_child(Tutorial.new(self))
 	capture_mouse()
 
 
@@ -321,6 +330,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _process(delta: float) -> void:
+	_footsteps()
 	# Здоровье восстанавливает хост
 	if multiplayer.is_server() and not downed and health < MAX_HEALTH \
 			and Time.get_ticks_msec() - _last_hit_msec > REGEN_DELAY * 1000.0:
@@ -333,6 +343,19 @@ func _process(delta: float) -> void:
 			_update_truck_camera()
 
 
+## Шаги слышны всем: считаем пройденное по земле у каждой копии игрока
+func _footsteps() -> void:
+	var moved := Vector2(global_position.x - _last_step_position.x, global_position.z - _last_step_position.z).length()
+	var climbed := absf(global_position.y - _last_step_position.y)
+	_last_step_position = global_position
+	if seated or downed or _tumble != null or moved > 1.0 or climbed > 0.08:
+		return
+	_step_left -= moved
+	if _step_left <= 0.0:
+		_step_left = STEP_LENGTH
+		SoundBank.play_at(get_tree(), "step", global_position, -16.0 if is_multiplayer_authority() else -10.0)
+
+
 ## Только на хосте. Урон игроку от существ.
 func take_damage(amount: float, from_position: Vector3, tumble := false) -> void:
 	if downed or not multiplayer.is_server():
@@ -341,6 +364,7 @@ func take_damage(amount: float, from_position: Vector3, tumble := false) -> void
 		amount *= HERBALIST_DAMAGE_TAKEN
 	health = maxf(health - amount, 0.0)
 	_last_hit_msec = Time.get_ticks_msec()
+	SoundBank.everyone(get_tree(), "punch", global_position + Vector3.UP)
 	var away := global_position - from_position
 	away.y = 0.0
 	_hurt.rpc_id(get_multiplayer_authority(), away.normalized() * HURT_PUSH, tumble)
@@ -583,6 +607,7 @@ func _drop_selected() -> void:
 	if _ray.is_colliding():
 		distance = minf(distance, _camera.global_position.distance_to(_ray.get_collision_point()) - 0.3)
 	var drop_position := _camera.global_position + _look_direction() * maxf(distance, 0.1)
+	SoundBank.play_at(get_tree(), "drop", drop_position, -8.0)
 	_request_drop.rpc_id(1, slot.path, drop_position, rotation.y, velocity + _look_direction() * DROP_SPEED, slot.get("state", {}))
 
 
@@ -786,6 +811,7 @@ func _request_buy(id: String) -> void:
 	item.set_state(entry.state)
 	_items_root().add_child(item, true)
 	economy.announce.rpc("%s купил: %s (−%d)" % [player_name, entry.name, price])
+	SoundBank.everyone(get_tree(), "coins", counter.global_position + Vector3.UP)
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -1001,6 +1027,7 @@ func _grab_lost() -> void:
 func _give_item(scene: String, item_name: String, state: Dictionary) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
+	SoundBank.play_at(get_tree(), "pickup", _camera.global_position, -8.0)
 	if not inventory.add(scene, item_name, state):
 		hud.show_message("Инвентарь полон")
 		# Предмет не пропадает: хост кладёт его рядом
@@ -1046,6 +1073,7 @@ func _seated(path: NodePath, index: int) -> void:
 	# Смотрим туда же, куда пикап (у пикапа перед — +Z, у игрока — −Z)
 	rotation.y = _truck.global_rotation.y + PI
 	_head.rotation.x = 0.0
+	SoundBank.play_at(get_tree(), "car_door_close", global_position, -6.0)
 
 
 # --- Капкан ---
@@ -1518,6 +1546,7 @@ func _update_truck_camera() -> void:
 
 
 func _leave_truck() -> void:
+	SoundBank.play_at(get_tree(), "car_door_open", global_position, -6.0)
 	_camera.transform = Transform3D.IDENTITY
 	global_position = _truck.get_exit_position(_seat_index)
 	velocity = Vector3.ZERO

@@ -24,6 +24,7 @@
 [ext_resource type="Script" path="res://scripts/world/tower_light.gd" id="27_tower_light"]
 [ext_resource type="PackedScene" path="res://scenes/items/slingshot.tscn" id="28_slingshot"]
 [ext_resource type="Script" path="res://scripts/world/forest_fill.gd" id="29_forest"]
+[ext_resource type="Script" path="res://scripts/world/ambience.gd" id="30_ambience"]
 [ext_resource type="PackedScene" path="res://scenes/items/wheelbarrow.tscn" id="14_wheelbarrow"]
 [ext_resource type="PackedScene" path="res://scenes/farm/fence_segment.tscn" id="15_fence"]
 [ext_resource type="PackedScene" path="res://scenes/items/hammer.tscn" id="16_hammer"]
@@ -324,6 +325,9 @@ size = Vector3(0.18, 1.2, 0.18)
 material = SubResource("gate_wood")
 
 [node name="Farm" parent="." instance=ExtResource("2_farm")]
+
+[node name="Ambience" type="Node" parent="."]
+script = ExtResource("30_ambience")
 
 [node name="ForestFill" type="Node3D" parent="."]
 script = ExtResource("29_forest")
