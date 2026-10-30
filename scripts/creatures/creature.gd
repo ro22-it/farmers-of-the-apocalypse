@@ -16,12 +16,19 @@ const DETOUR_TIME := 1.2
 const FOREST_RADIUS := 38.0
 
 @export var display_name := "Существо"
+## Слабость — её видит охотник в подсказке
+@export var weakness := ""
 @export var max_hp := 3
 @export var speed := 3.2
 @export var flee_speed := 5.0
 
 var state: int = State.APPROACH
 var hp := 3
+## Подсвечено способностью охотника «Выследить» — видно всем. Синхронизируется.
+var tracked := false
+
+var _track_left := 0.0
+var _marker: Label3D
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 ## Куда убегать: место, откуда пришёл
@@ -40,6 +47,35 @@ func _ready() -> void:
 	add_to_group("creatures")
 	hp = max_hp
 	_home = global_position
+	_marker = Label3D.new()
+	_marker.text = "!"
+	_marker.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_marker.no_depth_test = true
+	_marker.fixed_size = true
+	_marker.pixel_size = 0.002
+	_marker.font_size = 48
+	_marker.outline_size = 12
+	_marker.modulate = Color(1.0, 0.3, 0.2)
+	_marker.position = Vector3(0.0, 1.3, 0.0)
+	add_child(_marker)
+
+
+## Метка над существом: видна всем, если выслежено, а охотнику — всегда вблизи
+func _process(delta: float) -> void:
+	if multiplayer.is_server() and _track_left > 0.0:
+		_track_left -= delta
+		if _track_left <= 0.0:
+			tracked = false
+	var local := get_tree().get_first_node_in_group("local_player") as Player
+	var hunter_sees := local != null and local.player_class == "hunter" \
+			and local.global_position.distance_to(global_position) <= PlayerClasses.HUNTER_SIGHT
+	_marker.visible = tracked or hunter_sees
+
+
+## Только на хосте: подсветить для всех на время
+func track(duration: float) -> void:
+	tracked = true
+	_track_left = duration
 
 
 ## Удар игрока. Только на хосте. Возвращает true, если существо повержено.

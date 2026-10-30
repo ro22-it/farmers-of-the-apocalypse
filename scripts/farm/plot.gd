@@ -47,6 +47,8 @@ var moisture := 0.0:
 
 var _dirty := true
 var _built_key := ""
+## «Созрело» над грядкой — видит только фермер
+var _ripe_label: Label3D
 
 @onready var _soil: MeshInstance3D = $Soil
 @onready var _plants: Node3D = $Plants
@@ -54,9 +56,20 @@ var _built_key := ""
 
 func _ready() -> void:
 	add_to_group("plots")
+	_ripe_label = Label3D.new()
+	_ripe_label.text = "Созрело"
+	_ripe_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_ripe_label.font_size = 48
+	_ripe_label.outline_size = 12
+	_ripe_label.modulate = Color(0.6, 1.0, 0.4)
+	_ripe_label.position = Vector3(0.0, 2.8, 0.0)
+	_ripe_label.visible = false
+	add_child(_ripe_label)
 
 
 func _process(_delta: float) -> void:
+	var local := get_tree().get_first_node_in_group("local_player") as Player
+	_ripe_label.visible = is_ripe() and local != null and local.player_class == "farmer"
 	if _dirty:
 		_dirty = false
 		_update_visuals()
@@ -121,7 +134,8 @@ func get_hint(item: PickupItem) -> String:
 	return text
 
 
-func interact(_player: Node3D, info: Dictionary) -> Dictionary:
+func interact(player: Node3D, info: Dictionary) -> Dictionary:
+	var player_class: String = player.get("player_class") if player.get("player_class") != null else ""
 	match info.get("tool", ""):
 		"shovel":
 			if state != State.UNTILLED:
@@ -143,23 +157,23 @@ func interact(_player: Node3D, info: Dictionary) -> Dictionary:
 		"watering_can":
 			if state == State.UNTILLED:
 				return {"message": "Сначала вскопайте лопатой"}
-			moisture = 1.0
+			moisture = maxf(moisture, PlayerClasses.water_amount(player_class))
 			return {"consume": 1}
 		"hand":
 			if state != State.PLANTED:
 				return {"message": "Здесь ничего не растёт"}
 			if not is_ripe():
 				return {"message": "Ещё не созрело: %d%%" % int(growth * 100.0)}
-			_spawn_produce()
+			_spawn_produce(PlayerClasses.harvest_bonus(player_class))
 			reset()
 			return {"message": ""}
 	return {}
 
 
-func _spawn_produce() -> void:
+func _spawn_produce(bonus: int) -> void:
 	var info := Crops.get_info(crop)
 	var scene: PackedScene = load(info.produce)
-	for i in info.amount:
+	for i in maxi(info.amount + bonus, 1):
 		var item: Node3D = scene.instantiate()
 		item.position = global_position + Vector3(randf_range(-0.4, 0.4), 0.6 + i * 0.5, randf_range(-0.5, 0.5))
 		_items_root().add_child(item, true)

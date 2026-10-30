@@ -16,6 +16,8 @@
 [ext_resource type="PackedScene" path="res://scenes/world/village.tscn" id="19_village"]
 [ext_resource type="Script" path="res://scripts/world/economy.gd" id="20_economy"]
 [ext_resource type="PackedScene" path="res://scenes/items/seed_bag.tscn" id="21_seeds"]
+[ext_resource type="PackedScene" path="res://scenes/animals/cow.tscn" id="22_cow"]
+[ext_resource type="PackedScene" path="res://scenes/animals/dog.tscn" id="23_dog"]
 [ext_resource type="PackedScene" path="res://scenes/items/wheelbarrow.tscn" id="14_wheelbarrow"]
 [ext_resource type="PackedScene" path="res://scenes/farm/fence_segment.tscn" id="15_fence"]
 [ext_resource type="PackedScene" path="res://scenes/items/hammer.tscn" id="16_hammer"]
@@ -367,6 +369,17 @@ replication_config = SubResource("economy_sync")
 
 [node name="Truck" parent="." instance=ExtResource("13_truck")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 17, 0.1, 0)
+
+[node name="Animals" type="Node3D" parent="."]
+
+[node name="Cow1" parent="Animals" instance=ExtResource("22_cow")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.05, 10)
+
+[node name="Cow2" parent="Animals" instance=ExtResource("22_cow")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 19, 0.05, 17)
+
+[node name="Dog" parent="Animals" instance=ExtResource("23_dog")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.05, -6.5)
 
 [node name="Items" type="Node3D" parent="."]
 

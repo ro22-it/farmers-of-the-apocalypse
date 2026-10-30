@@ -39,6 +39,14 @@ const FLASHLIGHT_SCENE := "res://scenes/items/flashlight.tscn"
 ## Луч фонаря: дальность и половина угла раскрытия
 const FLASHLIGHT_RANGE := 14.0
 const FLASHLIGHT_HALF_ANGLE := 22.0
+## След способности: радиус, цвет, сколько секунд тает
+const ABILITY_EFFECTS := {
+	"farmer": [5.0, Color(0.4, 0.9, 0.3, 0.3), 1.0],
+	"mechanic": [8.0, Color(1.0, 0.7, 0.2, 0.25), 1.0],
+	"hunter": [12.0, Color(1.0, 0.3, 0.2, 0.15), 1.0],
+	"herder": [6.0, Color(0.95, 0.85, 0.5, 0.2), 0.6],
+	"herbalist": [7.0, Color(0.75, 0.75, 0.75, 0.55), 4.0],
+}
 ## Высота глаз сидя (в машине)
 const SEATED_EYE_HEIGHT := 1.0
 ## Дальше этого от прилавка купить нельзя
@@ -51,6 +59,8 @@ const SHOP_REACH := 6.0
 @export var stamina_recover_threshold := 25.0
 
 var player_name := ""
+## Класс игрока (см. PlayerClasses). Задаётся при появлении у всех одинаково.
+var player_class := ""
 ## Что игрок держит в руке (путь к сцене) и включён ли предмет.
 ## Синхронизируются, чтобы другие видели предмет и свет фонаря.
 var held_scene := "":
@@ -74,6 +84,10 @@ var seated := false:
 		seated = value
 		if is_node_ready():
 			_apply_seated()
+
+## Перезарядка способности: у владельца — для подсказки, у хоста — настоящая
+var _ability_ready_msec := 0
+var _server_ability_ready_msec := 0
 
 ## Только для автотестов: без окна мышь не захватить, а без захвата клавиши не слушаются
 var test_controls := false
@@ -110,7 +124,11 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
 	add_to_group("players")
-	_name_tag.text = player_name
+	var class_name_text := PlayerClasses.display_name(player_class)
+	_name_tag.text = "%s\n%s" % [player_name, class_name_text] if class_name_text != "" else player_name
+	max_stamina = PlayerClasses.max_stamina(player_class)
+	stamina = max_stamina
+	_apply_class_look()
 	_refresh_hand()
 	_apply_seated()
 	if not is_multiplayer_authority():
@@ -161,6 +179,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_try_pickup()
 	elif event.is_action_pressed("drop"):
 		_drop_selected()
+	elif event.is_action_pressed("ability"):
+		_try_ability()
 	elif event.is_action_pressed("debug_skip_phase"):
 		_request_skip_phase.rpc_id(1)
 	elif event.is_action_pressed("slot_next"):
@@ -268,7 +288,7 @@ func _update_stamina(delta: float, input_dir: Vector2) -> float:
 		stamina = maxf(stamina - stamina_drain * delta, 0.0)
 		if stamina == 0.0:
 			_exhausted = true
-		return SPRINT_SPEED
+		return SPRINT_SPEED * PlayerClasses.sprint_multiplier(player_class)
 	stamina = minf(stamina + stamina_regen * delta, max_stamina)
 	if _exhausted and stamina >= stamina_recover_threshold:
 		_exhausted = false
@@ -349,7 +369,7 @@ func _on_primary() -> void:
 	var item := _get_held_item()
 	if target is Creature and item and item.damage > 0:
 		if _camera.global_position.distance_to(target.global_position) <= MELEE_RANGE:
-			_request_hit.rpc_id(1, target.get_path(), item.damage)
+			_request_hit.rpc_id(1, target.get_path(), PlayerClasses.weapon_damage(player_class, item.damage))
 		else:
 			hud.show_message("Слишком далеко — подойдите вплотную")
 		return
@@ -379,6 +399,9 @@ func _try_pickup() -> void:
 	var target := _get_target()
 	if target is Truck:
 		_request_seat.rpc_id(1, target.get_path())
+		return
+	if target is Cow:
+		_request_milk.rpc_id(1, target.get_path())
 		return
 	# E по объекту фермы — работа рукой: собрать урожай, взять семена
 	if target is Interactable:
@@ -419,6 +442,10 @@ func _update_hud() -> void:
 	var economy := get_tree().get_first_node_in_group("economy") as Economy
 	if economy:
 		hud.set_money(economy.money)
+	var info := PlayerClasses.get_info(player_class)
+	if not info.is_empty():
+		var left := (_ability_ready_msec - Time.get_ticks_msec()) / 1000.0
+		hud.set_ability("Q — %s: %s" % [info.ability, "готово" if left <= 0.0 else "через %d с" % ceili(left)])
 	var hint := ""
 	if _truck:
 		hint = "WASD — ехать   Пробел — тормоз   E — выйти" if _seat_index == Truck.DRIVER_SEAT else "E — выйти"
@@ -444,6 +471,13 @@ func _update_hud() -> void:
 				hint = "%s — ЛКМ: ударить" % target.display_name
 			else:
 				hint = "%s! Посветите фонарём или возьмите лопату" % target.display_name
+			# Охотник знает слабости существ
+			if player_class == "hunter" and target.weakness != "":
+				hint += "\nСлабость: %s" % target.weakness
+		elif target is Cow:
+			hint = "E — подоить" if target.milk_ready else "Корова: молоко будет после рассвета"
+			if player_class == "herder":
+				hint += "   Q — свистнуть"
 		else:
 			var item := _get_held_item()
 			if item:
@@ -536,7 +570,7 @@ func _request_hit(path: NodePath, amount: int) -> void:
 	var creature := get_node_or_null(path) as Creature
 	if creature == null or creature.global_position.distance_to(_camera.global_position) > MELEE_RANGE + 1.0:
 		return
-	if creature.take_hit(clampi(amount, 0, 3), global_position):
+	if creature.take_hit(clampi(amount, 0, 4), global_position):
 		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "%s повержен!" % creature.display_name})
 
 
@@ -552,14 +586,15 @@ func _request_buy(id: String) -> void:
 	if counter.global_position.distance_to(global_position) > SHOP_REACH:
 		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "Подойдите к прилавку"})
 		return
-	if not economy.try_spend(entry.price):
-		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "Не хватает монет: нужно %d" % entry.price})
+	var price := PlayerClasses.shop_price(player_class, entry)
+	if not economy.try_spend(price):
+		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "Не хватает монет: нужно %d" % price})
 		return
 	var item: PickupItem = load(entry.scene).instantiate()
 	item.position = counter.get_spawn_position()
 	item.set_state(entry.state)
 	_items_root().add_child(item, true)
-	economy.announce.rpc("%s купил: %s (−%d)" % [player_name, entry.name, entry.price])
+	economy.announce.rpc("%s купил: %s (−%d)" % [player_name, entry.name, price])
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -592,6 +627,64 @@ func _drive(throttle: float, steer: float, brake_amount: float) -> void:
 	var truck := get_tree().get_first_node_in_group("truck") as Truck
 	if truck and truck.seats[Truck.DRIVER_SEAT] == get_multiplayer_authority():
 		truck.set_input(throttle, steer, brake_amount)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_milk(path: NodePath) -> void:
+	if not _from_owner():
+		return
+	var cow := get_node_or_null(path) as Cow
+	if cow and _in_reach(cow):
+		_interact_result.rpc_id(get_multiplayer_authority(), {"message": cow.milk(self)})
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_ability() -> void:
+	if not _from_owner():
+		return
+	var info := PlayerClasses.get_info(player_class)
+	if info.is_empty() or Time.get_ticks_msec() < _server_ability_ready_msec:
+		return
+	var message := _perform_ability()
+	_server_ability_ready_msec = Time.get_ticks_msec() + int(info.cooldown * 1000.0)
+	_ability_used.rpc_id(get_multiplayer_authority(), info.cooldown, message)
+	_ability_effect.rpc(player_class, global_position)
+
+
+## Только на хосте: что делает способность класса. Возвращает сообщение игроку.
+func _perform_ability() -> String:
+	var count := 0
+	match player_class:
+		"farmer":
+			for plot: Plot in get_tree().get_nodes_in_group("plots"):
+				if plot.state == Plot.State.PLANTED and not plot.is_ripe() and _flat_distance(plot.global_position) <= PlayerClasses.FEED_RADIUS:
+					plot.growth = minf(plot.growth + PlayerClasses.FEED_GROWTH, 1.0)
+					count += 1
+			return "Подкормка: грядок %d" % count
+		"mechanic":
+			for segment: FenceSegment in get_tree().get_nodes_in_group("fence"):
+				if segment.hp < FenceSegment.MAX_HP and _flat_distance(segment.get_center()) <= PlayerClasses.REPAIR_RADIUS:
+					segment.hp = FenceSegment.MAX_HP
+					count += 1
+			return "Быстрый ремонт: пролётов %d" % count
+		"hunter":
+			for creature: Creature in get_tree().get_nodes_in_group("creatures"):
+				creature.track(PlayerClasses.TRACK_TIME)
+				count += 1
+			return "Выслежено существ: %d" % count
+		"herder":
+			for cow: Cow in get_tree().get_nodes_in_group("cows"):
+				if _flat_distance(cow.global_position) <= PlayerClasses.WHISTLE_RADIUS:
+					cow.follow(self, PlayerClasses.WHISTLE_TIME)
+					count += 1
+			return "Свист: за вами идут коровы (%d)" % count
+		"herbalist":
+			for creature: Creature in get_tree().get_nodes_in_group("creatures"):
+				if _flat_distance(creature.global_position) <= PlayerClasses.SMOKE_RADIUS:
+					creature.scare(global_position, PlayerClasses.SMOKE_SCARE_TIME)
+					count += 1
+			return "Дым: разбежалось существ %d" % count
+	return ""
 
 
 ## Отладка: перемотать к ближайшему закату или рассвету
@@ -653,7 +746,7 @@ func _interact_result(result: Dictionary) -> void:
 	if message != "":
 		hud.show_message(message)
 	if result.get("open_shop", false):
-		hud.open_shop(ShopCatalog.ITEMS)
+		hud.open_shop(ShopCatalog.ITEMS, player_class)
 		return
 	if result.get("remove_held", false):
 		inventory.take_selected()
@@ -680,6 +773,108 @@ func _seated(path: NodePath, index: int) -> void:
 	# Смотрим туда же, куда пикап (у пикапа перед — +Z, у игрока — −Z)
 	rotation.y = _truck.global_rotation.y + PI
 	_head.rotation.x = 0.0
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _ability_used(cooldown: float, message: String) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	_ability_ready_msec = Time.get_ticks_msec() + int(cooldown * 1000.0)
+	if message != "":
+		hud.show_message(message)
+
+
+## Видимый всем след способности: прозрачная сфера, которая расходится и тает
+@rpc("any_peer", "call_local", "reliable")
+func _ability_effect(kind: String, at: Vector3) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	var radius: float = ABILITY_EFFECTS.get(kind, [3.0, Color.WHITE, 1.0])[0]
+	var color: Color = ABILITY_EFFECTS.get(kind, [3.0, Color.WHITE, 1.0])[1]
+	var linger: float = ABILITY_EFFECTS.get(kind, [3.0, Color.WHITE, 1.0])[2]
+	var material := StandardMaterial3D.new()
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.albedo_color = color
+	var sphere := SphereMesh.new()
+	sphere.radius = 1.0
+	sphere.height = 2.0
+	var effect := MeshInstance3D.new()
+	effect.mesh = sphere
+	effect.material_override = material
+	effect.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	get_tree().current_scene.add_child(effect)
+	effect.global_position = at + Vector3.UP * 0.5
+	effect.scale = Vector3.ONE * 0.2
+	var tween := effect.create_tween()
+	tween.tween_property(effect, "scale", Vector3.ONE * radius, 0.6)
+	tween.tween_property(material, "albedo_color:a", 0.0, linger)
+	tween.tween_callback(effect.queue_free)
+
+
+# --- Класс ---
+
+func _try_ability() -> void:
+	if PlayerClasses.get_info(player_class).is_empty():
+		return
+	var left := (_ability_ready_msec - Time.get_ticks_msec()) / 1000.0
+	if left > 0.0:
+		hud.show_message("Ещё не готово: %d с" % ceili(left))
+		return
+	_request_ability.rpc_id(1)
+
+
+## Цвет одежды и шляпа по классу. Свою шляпу игрок не видит, только её тень.
+func _apply_class_look() -> void:
+	var info := PlayerClasses.get_info(player_class)
+	if info.is_empty():
+		return
+	var cloth := StandardMaterial3D.new()
+	cloth.albedo_color = info.color
+	_body.material_override = cloth
+	var hat := _build_hat(info.hat)
+	_head.add_child(hat)
+	if is_multiplayer_authority():
+		for part: MeshInstance3D in hat.get_children():
+			part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+
+
+func _build_hat(kind: String) -> Node3D:
+	var hat := Node3D.new()
+	hat.name = "Hat"
+	match kind:
+		"straw":
+			_hat_part(hat, Plot._cylinder(0.38, 0.38, 0.03), Color(0.9, 0.8, 0.45), Vector3(0, 0.15, 0))
+			_hat_part(hat, Plot._cylinder(0.16, 0.2, 0.16), Color(0.9, 0.8, 0.45), Vector3(0, 0.23, 0))
+		"hardhat":
+			_hat_part(hat, Plot._sphere(0.22, 0.26), Color(1.0, 0.75, 0.1), Vector3(0, 0.15, 0))
+			_hat_part(hat, Plot._cylinder(0.27, 0.27, 0.02), Color(1.0, 0.75, 0.1), Vector3(0, 0.12, 0))
+		"cap":
+			_hat_part(hat, Plot._cylinder(0.18, 0.19, 0.1), Color(0.2, 0.32, 0.2), Vector3(0, 0.17, 0))
+			var visor := BoxMesh.new()
+			visor.size = Vector3(0.22, 0.02, 0.16)
+			_hat_part(hat, visor, Color(0.2, 0.32, 0.2), Vector3(0, 0.13, -0.2))
+		"cowboy":
+			_hat_part(hat, Plot._cylinder(0.4, 0.4, 0.03), Color(0.45, 0.3, 0.18), Vector3(0, 0.15, 0))
+			_hat_part(hat, Plot._cylinder(0.14, 0.18, 0.2), Color(0.45, 0.3, 0.18), Vector3(0, 0.26, 0))
+		"hood":
+			_hat_part(hat, Plot._cone(0.25, 0.5), Color(0.3, 0.2, 0.42), Vector3(0, 0.25, 0.03))
+	return hat
+
+
+func _hat_part(hat: Node3D, mesh: Mesh, color: Color, at: Vector3) -> void:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	var part := MeshInstance3D.new()
+	part.mesh = mesh
+	part.material_override = material
+	part.position = at
+	hat.add_child(part)
+
+
+func _flat_distance(point: Vector3) -> float:
+	return Vector2(point.x - global_position.x, point.z - global_position.z).length()
 
 
 # --- Пикап ---

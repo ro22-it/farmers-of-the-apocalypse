@@ -7,7 +7,7 @@ extends Node
 signal session_started
 signal session_ended(reason: String)
 ## Только на хосте: игрок представился и его можно создавать в мире
-signal player_joined(id: int, player_name: String)
+signal player_joined(id: int, player_name: String, player_class: String)
 ## Только на хосте
 signal player_left(id: int)
 
@@ -17,6 +17,7 @@ const MAX_NAME_LENGTH := 20
 const SETTINGS_PATH := "user://settings.cfg"
 
 var player_name := "Фермер"
+var player_class := "farmer"
 var last_address := "127.0.0.1"
 ## На хосте: имена игроков в сессии, id -> имя
 var names: Dictionary = {}
@@ -38,7 +39,7 @@ func host(port := DEFAULT_PORT) -> Error:
 	multiplayer.multiplayer_peer = peer
 	names = {1: player_name}
 	session_started.emit()
-	player_joined.emit(1, player_name)
+	player_joined.emit(1, player_name, player_class)
 	return OK
 
 
@@ -70,18 +71,18 @@ func clean_name(raw: String) -> String:
 
 func _on_connected_to_server() -> void:
 	session_started.emit()
-	_register.rpc_id(1, player_name)
+	_register.rpc_id(1, player_name, player_class)
 
 
 ## Клиент сообщает хосту своё имя. Только после этого хост создаёт его персонажа:
 ## так у клиента к этому моменту уже точно загружена сцена.
 @rpc("any_peer", "reliable")
-func _register(new_name: String) -> void:
+func _register(new_name: String, new_class: String) -> void:
 	if not multiplayer.is_server():
 		return
 	var id := multiplayer.get_remote_sender_id()
 	names[id] = clean_name(new_name)
-	player_joined.emit(id, names[id])
+	player_joined.emit(id, names[id], new_class if new_class in PlayerClasses.ORDER else "farmer")
 
 
 func _on_peer_disconnected(id: int) -> void:
@@ -106,6 +107,7 @@ func _load_settings() -> void:
 	if config.load(SETTINGS_PATH) != OK:
 		return
 	player_name = config.get_value("player", "name", player_name)
+	player_class = config.get_value("player", "class", player_class)
 	last_address = config.get_value("network", "last_address", last_address)
 
 
@@ -114,5 +116,6 @@ func _load_settings() -> void:
 func save_settings() -> void:
 	var config := ConfigFile.new()
 	config.set_value("player", "name", player_name)
+	config.set_value("player", "class", player_class)
 	config.set_value("network", "last_address", last_address)
 	config.save(SETTINGS_PATH)

@@ -4,7 +4,8 @@ var main: Node
 var player: Player
 
 ## Одиночная игра: хост без друзей. Проверяет хватку, бросок, инвентарь, фонарь
-## цикл грядки, ночь (Грядочник, фонарь, забор), пикап, продажу, лавку и ступеньки.
+## цикл грядки, ночь (Грядочник, фонарь, забор), пикап, продажу, лавку, ступеньки
+## и классы. Общие проверки — без класса, потом каждый класс отдельно.
 var failures := 0
 
 
@@ -43,6 +44,7 @@ func aim_at(target: Vector3) -> void:
 
 func _run() -> void:
 	await frames(5)
+	root.get_node("Network").player_class = ""
 	main._start_host()
 	await frames(120)
 	player = main.get_node("Players/1")
@@ -251,7 +253,7 @@ func _run() -> void:
 	check(await wait_for(func(): return segment.is_broken(), 600), "и прогрызает пролёт")
 	check(await wait_for(func(): return is_instance_valid(chewer) and chewer.global_position.z < 23.0, 300), "и пролезает внутрь")
 	segment.interact(player, {"tool": "hammer"})
-	check(segment.hp == FenceSegment.MAX_HP and segment.collision_layer == FenceSegment.SOLID_LAYER, "молоток чинит пролёт")
+	check(segment.hp == 1 and segment.collision_layer == FenceSegment.SOLID_LAYER, "молоток подлатал сломанный пролёт, он снова держит")
 	if is_instance_valid(chewer):
 		chewer.queue_free()
 
@@ -337,6 +339,115 @@ func _run() -> void:
 	await frames(5)
 	check(economy.money == 5 and main.get_node("Items").get_child_count() == items_count + 1, "без денег не купить")
 	player.hud.close_shop()
+
+	# --- Классы ---
+	var reset_ability := func():
+		player._ability_ready_msec = 0
+		player._server_ability_ready_msec = 0
+	var items_node: Node = main.get_node("Items")
+
+	# Фермер: +1 урожай и подкормка
+	player.player_class = "farmer"
+	var farm_plot: Plot = main.get_node("Plots/Plot7")
+	farm_plot.state = Plot.State.PLANTED
+	farm_plot.crop = "carrot"
+	farm_plot.growth = 1.0
+	player.global_position = farm_plot.global_position + Vector3(0, 0.05, 2.3)
+	await frames(5)
+	aim_at(farm_plot.global_position + Vector3(0, 0.25, 0))
+	await frames(2)
+	var before_items := items_node.get_child_count()
+	player._try_pickup()
+	await frames(10)
+	check(items_node.get_child_count() == before_items + 3, "фермер собирает 3 моркови вместо 2")
+	farm_plot.state = Plot.State.PLANTED
+	farm_plot.crop = "corn"
+	farm_plot.growth = 0.5
+	reset_ability.call()
+	player._try_ability()
+	await frames(5)
+	check(absf(farm_plot.growth - 0.65) < 0.02, "подкормка фермера: +15%% роста (%.2f)" % farm_plot.growth)
+	check(PlayerClasses.weapon_damage("farmer", 2) == 1, "у фермера вилы бьют как лопата")
+
+	# Механик: чинит целиком, остальные — по 1
+	var fence_piece: FenceSegment = get_nodes_in_group("fence")[0]
+	fence_piece.hp = 1
+	player.player_class = ""
+	fence_piece.interact(player, {"tool": "hammer"})
+	check(fence_piece.hp == 2, "без класса молоток чинит на 1")
+	player.player_class = "mechanic"
+	fence_piece.interact(player, {"tool": "hammer"})
+	check(fence_piece.hp == FenceSegment.MAX_HP, "механик чинит пролёт целиком")
+	fence_piece.hp = 0
+	player.global_position = fence_piece.get_center() + Vector3(0, 0.05, 0)
+	await frames(3)
+	reset_ability.call()
+	player._try_ability()
+	await frames(5)
+	check(fence_piece.hp == FenceSegment.MAX_HP, "быстрый ремонт механика")
+	check(PlayerClasses.shop_price("mechanic", ShopCatalog.find("hammer")) == 11, "механику молоток за 11 вместо 15")
+
+	# Охотник: бьёт сильнее, выслеживает
+	player.player_class = "hunter"
+	var prey := director.spawn_gryadochnik(Vector3(0.0, 0.3, 16.0))
+	await frames(2)
+	reset_ability.call()
+	player._try_ability()
+	await frames(5)
+	check(prey.tracked, "охотник выследил существо")
+	player.inventory.select(0)
+	await frames(2)
+	for i in 2:
+		if not is_instance_valid(prey):
+			break
+		player.global_position = Vector3(prey.global_position.x, 0.05, prey.global_position.z + 1.2)
+		aim_at(prey.global_position + Vector3(0, 0.4, 0))
+		await frames(1)
+		player._on_primary()
+		await frames(5)
+	check(not is_instance_valid(prey), "охотник валит Грядочника с 2 ударов лопатой")
+
+	# Травник: дым и продажа дороже
+	player.player_class = "herbalist"
+	var victim := director.spawn_gryadochnik(player.global_position + Vector3(3.0, 0.3, 0.0))
+	await frames(2)
+	reset_ability.call()
+	player._try_ability()
+	await frames(5)
+	check(victim.state == Creature.State.SCARED, "дым травника пугает существо")
+	victim.queue_free()
+	player.global_position = sale_bin.global_position + Vector3(0, 0.05, 2.0)
+	await frames(5)
+	money = economy.money
+	var sold: Node3D = load("res://scenes/items/carrot.tscn").instantiate()
+	sold.position = sale_bin.global_position + Vector3(0, 1.5, 0)
+	items_node.add_child(sold, true)
+	check(await wait_for(func(): return economy.money == money + 7, 120), "рядом с травником морковь продана за 7 вместо 5")
+
+	# Скотник: свист и молоко
+	player.player_class = "herder"
+	var cow: Cow = main.get_node("Animals/Cow1")
+	player.global_position = cow.global_position + Vector3(12.0, 0.05, 0.0)
+	await frames(3)
+	var cow_distance := cow.global_position.distance_to(player.global_position)
+	reset_ability.call()
+	player._try_ability()
+	await frames(150)
+	check(cow.global_position.distance_to(player.global_position) < cow_distance - 4.0, "по свисту корова идёт к скотнику")
+	player.global_position = cow.global_position + Vector3(0, 0.05, 2.2)
+	await frames(3)
+	aim_at(cow.global_position + Vector3(0, 0.9, 0))
+	await frames(2)
+	before_items = items_node.get_child_count()
+	player._try_pickup()
+	await frames(10)
+	check(items_node.get_child_count() == before_items + 2 and not cow.milk_ready, "скотник надоил 2 бутылки")
+
+	# Собака лает на существо у дома
+	var dog: Node3D = main.get_node("Animals/Dog")
+	var intruder := director.spawn_gryadochnik(dog.global_position + Vector3(6.0, 0.3, 6.0))
+	check(await wait_for(func(): return str(player.hud._message.text).begins_with("Собака лает"), 180), "собака лает на существо")
+	intruder.queue_free()
 
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

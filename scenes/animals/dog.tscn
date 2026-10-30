@@ -1,0 +1,102 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/animals/dog.gd" id="1_dog"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_dog"]
+radius = 0.2
+height = 0.6
+
+[sub_resource type="StandardMaterial3D" id="fur"]
+albedo_color = Color(0.6, 0.42, 0.25, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="dark"]
+albedo_color = Color(0.2, 0.15, 0.1, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="body"]
+material = SubResource("fur")
+size = Vector3(0.28, 0.28, 0.65)
+
+[sub_resource type="BoxMesh" id="head"]
+material = SubResource("fur")
+size = Vector3(0.25, 0.25, 0.28)
+
+[sub_resource type="BoxMesh" id="snout"]
+material = SubResource("dark")
+size = Vector3(0.12, 0.1, 0.12)
+
+[sub_resource type="BoxMesh" id="leg"]
+material = SubResource("fur")
+size = Vector3(0.08, 0.25, 0.08)
+
+[sub_resource type="BoxMesh" id="ear"]
+material = SubResource("dark")
+size = Vector3(0.06, 0.12, 0.04)
+
+[sub_resource type="BoxMesh" id="tail"]
+material = SubResource("fur")
+size = Vector3(0.06, 0.06, 0.25)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_dog"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+
+[node name="Dog" type="CharacterBody3D"]
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("1_dog")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 0, 0.35, 0)
+shape = SubResource("CapsuleShape3D_dog")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+mesh = SubResource("body")
+
+[node name="Head" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -0.38)
+mesh = SubResource("head")
+
+[node name="Snout" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, -0.55)
+mesh = SubResource("snout")
+
+[node name="EarL" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, 0.76, -0.36)
+mesh = SubResource("ear")
+
+[node name="EarR" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, 0.76, -0.36)
+mesh = SubResource("ear")
+
+[node name="LegFL" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, 0.13, -0.22)
+mesh = SubResource("leg")
+
+[node name="LegFR" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, 0.13, -0.22)
+mesh = SubResource("leg")
+
+[node name="LegBL" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, 0.13, 0.22)
+mesh = SubResource("leg")
+
+[node name="LegBR" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.09, 0.13, 0.22)
+mesh = SubResource("leg")
+
+[node name="Tail" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0.42)
+mesh = SubResource("tail")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.05
+replication_config = SubResource("SceneReplicationConfig_dog")

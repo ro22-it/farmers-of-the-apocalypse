@@ -64,12 +64,16 @@ properties/2/replication_mode = 2
 properties/3/path = NodePath(".:carrying")
 properties/3/spawn = true
 properties/3/replication_mode = 2
+properties/4/path = NodePath(".:tracked")
+properties/4/spawn = true
+properties/4/replication_mode = 2
 
 [node name="Gryadochnik" type="CharacterBody3D"]
 collision_layer = 16
-collision_mask = 7
+collision_mask = 39
 script = ExtResource("1_creature")
 display_name = "Грядочник"
+weakness = "боится света фонаря, падает с 3 ударов"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)

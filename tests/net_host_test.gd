@@ -36,6 +36,7 @@ func wait_for(cond: Callable) -> bool:
 func _run() -> void:
 	await physics_frame
 	root.get_node("Network").player_name = "Хост"
+	root.get_node("Network").player_class = "farmer"
 	main._start_host()
 	var players: Node = main.get_node("Players")
 
@@ -45,6 +46,7 @@ func _run() -> void:
 		if p.name != "1":
 			remote = p
 	check(remote != null and remote.player_name == "Клиент", "имя клиента дошло")
+	check(remote.player_class == "hunter", "хост видит, что клиент — охотник")
 
 	check(await wait_for(func(): return remote.held_scene.ends_with("flashlight.tscn")), "видно фонарь в руке клиента")
 	check(await wait_for(func(): return remote.held_active), "видно, что клиент включил фонарь")

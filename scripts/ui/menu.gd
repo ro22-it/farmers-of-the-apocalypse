@@ -16,6 +16,8 @@ var _main_panel: Control
 var _pause_panel: Control
 var _name_edit: LineEdit
 var _address_edit: LineEdit
+var _class_option: OptionButton
+var _class_description: Label
 var _status: Label
 var _buttons: Array[Button] = []
 var _in_session := false
@@ -68,6 +70,11 @@ func _set_busy(busy: bool) -> void:
 		button.disabled = busy
 
 
+func _on_class_selected(index: int) -> void:
+	Network.player_class = PlayerClasses.ORDER[index]
+	_class_description.text = PlayerClasses.get_info(Network.player_class).description
+
+
 func _on_host() -> void:
 	Network.player_name = Network.clean_name(_name_edit.text)
 	Network.save_settings()
@@ -98,6 +105,21 @@ func _build_main() -> Control:
 	_name_edit = _make_edit(Network.player_name, "Фермер")
 	_name_edit.max_length = Network.MAX_NAME_LENGTH
 	box.add_child(_name_edit)
+
+	box.add_child(_make_label("Класс", 16, HORIZONTAL_ALIGNMENT_LEFT))
+	_class_option = OptionButton.new()
+	_class_option.add_theme_font_size_override("font_size", 18)
+	_class_option.custom_minimum_size = Vector2(0, 40)
+	for id in PlayerClasses.ORDER:
+		_class_option.add_item(PlayerClasses.display_name(id))
+	_class_option.select(maxi(PlayerClasses.ORDER.find(Network.player_class), 0))
+	_class_option.item_selected.connect(_on_class_selected)
+	box.add_child(_class_option)
+	_class_description = _make_label("", 14, HORIZONTAL_ALIGNMENT_LEFT)
+	_class_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_class_description.modulate.a = 0.85
+	box.add_child(_class_description)
+	_on_class_selected(_class_option.selected)
 
 	var host_button := _make_button("Создать игру", _on_host)
 	box.add_child(host_button)

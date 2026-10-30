@@ -81,9 +81,9 @@ func _on_session_ended(reason: String) -> void:
 	_menu.show_main(reason)
 
 
-func _on_player_joined(id: int, player_name: String) -> void:
+func _on_player_joined(id: int, player_name: String, player_class: String) -> void:
 	var spot := SPAWN_POINT + Vector3(SPAWN_STEP * _players.get_child_count(), 0.0, 0.0)
-	_player_spawner.spawn({"id": id, "name": player_name, "position": spot})
+	_player_spawner.spawn({"id": id, "name": player_name, "class": player_class, "position": spot})
 
 
 func _on_player_left(id: int) -> void:
@@ -97,6 +97,7 @@ func _create_player(data: Dictionary) -> Node:
 	var player: Player = PLAYER_SCENE.instantiate()
 	player.name = str(data.id)
 	player.player_name = data.name
+	player.player_class = data.get("class", "")
 	player.position = data.position
 	return player
 
@@ -112,6 +113,8 @@ func _reset_world(refill: bool) -> void:
 		_truck.reset()
 	get_tree().call_group("plots", "reset")
 	get_tree().call_group("fence", "reset")
+	if multiplayer.is_server():
+		get_tree().call_group("animals", "reset")
 	for item in _items.get_children():
 		_items.remove_child(item)
 		item.queue_free()
@@ -132,11 +135,13 @@ func _item_scene_paths() -> Array[String]:
 	return paths
 
 
-## Отладка без рук: --name=Имя, --host, --join=адрес, --screenshot=путь
+## Отладка без рук: --name=Имя, --class=farmer, --host, --join=адрес, --screenshot=путь
 func _handle_debug_args() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--name="):
 			Network.player_name = Network.clean_name(arg.trim_prefix("--name="))
+		elif arg.begins_with("--class="):
+			Network.player_class = arg.trim_prefix("--class=")
 	for arg in OS.get_cmdline_user_args():
 		if arg == "--host":
 			_start_host()

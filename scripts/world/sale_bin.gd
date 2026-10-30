@@ -38,6 +38,12 @@ func _on_body_entered(body: Node3D) -> void:
 
 
 func _sell(item_name: String, price: int) -> void:
+	var bonus := ""
+	for player: Player in get_tree().get_nodes_in_group("players"):
+		if player.player_class == "herbalist" and player.global_position.distance_to(global_position) <= PlayerClasses.HERBALIST_SALE_RADIUS:
+			price = int(round(price * PlayerClasses.HERBALIST_SALE_BONUS))
+			bonus = " (травник: +30%)"
+			break
 	var economy := get_tree().get_first_node_in_group("economy") as Economy
 	economy.add(price)
-	economy.announce.rpc("Продано: %s +%d" % [item_name, price])
+	economy.announce.rpc("Продано: %s +%d%s" % [item_name, price, bonus])

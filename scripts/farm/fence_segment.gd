@@ -46,13 +46,19 @@ func get_hint(item: PickupItem) -> String:
 	return "Забор %s — %s" % [state, "ЛКМ: починить" if has_hammer else "нужен молоток"]
 
 
-func interact(_player: Node3D, info: Dictionary) -> Dictionary:
+func interact(player: Node3D, info: Dictionary) -> Dictionary:
 	if info.get("tool", "") != "hammer":
 		return {}
 	if hp >= MAX_HP:
 		return {"message": "Забор цел"}
-	hp = MAX_HP
-	return {"message": "Забор починен"}
+	# Механик чинит сразу целиком, остальные — по одной прочности за удар
+	hp = MAX_HP if player.get("player_class") == "mechanic" else hp + 1
+	return {"message": "Забор починен" if hp >= MAX_HP else "Забор подлатан (%d/%d)" % [hp, MAX_HP]}
+
+
+## Середина пролёта (узел стоит в столбе, пролёт идёт по локальной оси X)
+func get_center() -> Vector3:
+	return global_position + global_basis.x * 1.5
 
 
 func _update_look() -> void:

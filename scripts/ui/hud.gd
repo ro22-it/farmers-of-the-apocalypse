@@ -12,11 +12,12 @@ const SLOT_BORDER := Color(1.0, 0.85, 0.4)
 const STAMINA_COLOR := Color(0.95, 0.85, 0.35)
 const EXHAUSTED_COLOR := Color(0.9, 0.3, 0.25)
 const MESSAGE_TIME := 2.5
-const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — присесть   Пробел — прыжок\nЛКМ — тащить / использовать   ПКМ — бросить   E — взять   G — выбросить\n1–4, колесо — слоты   Esc — пауза   F1 — скрыть подсказку"
+const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — присесть   Пробел — прыжок\nЛКМ — тащить / использовать   ПКМ — бросить   E — взять   G — выбросить\n1–4, колесо — слоты   Q — способность класса   Esc — пауза   F1 — скрыть подсказку   F2 — к закату или рассвету"
 
 var _hint: Label
 var _clock: Label
 var _money: Label
+var _ability: Label
 var _shop: Control
 var _shop_list: VBoxContainer
 var _shop_money: Label
@@ -84,6 +85,15 @@ func _ready() -> void:
 	_money.offset_top = 40
 	_money.offset_bottom = 66
 
+	_ability = _make_label(16)
+	_ability.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	root.add_child(_ability)
+	_ability.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_ability.offset_left = 16
+	_ability.offset_right = 420
+	_ability.offset_top = -40
+	_ability.offset_bottom = -16
+
 	_build_slots(root)
 	_build_stamina(root)
 	# Захваченный курсор стоит в центре экрана, прямо над прицелом.
@@ -120,7 +130,11 @@ func set_money(amount: int) -> void:
 	_shop_money.text = "У команды %d монет" % amount
 
 
-func open_shop(items: Array) -> void:
+func set_ability(text: String) -> void:
+	_ability.text = text
+
+
+func open_shop(items: Array, player_class: String) -> void:
 	for child in _shop_list.get_children():
 		child.queue_free()
 	for entry in items:
@@ -131,7 +145,7 @@ func open_shop(items: Array) -> void:
 		title.add_theme_font_size_override("font_size", 18)
 		row.add_child(title)
 		var button := Button.new()
-		button.text = "Купить за %d" % entry.price
+		button.text = "Купить за %d" % PlayerClasses.shop_price(player_class, entry)
 		button.custom_minimum_size = Vector2(170, 38)
 		button.add_theme_font_size_override("font_size", 16)
 		var id: String = entry.id

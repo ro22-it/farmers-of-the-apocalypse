@@ -46,6 +46,7 @@ func aim_at(target: Vector3) -> void:
 func _run() -> void:
 	await physics_frame
 	root.get_node("Network").player_name = "Клиент"
+	root.get_node("Network").player_class = "hunter"
 	main._start_join("127.0.0.1")
 	var players: Node = main.get_node("Players")
 	var items: Node = main.get_node("Items")
@@ -55,6 +56,8 @@ func _run() -> void:
 	player = players.get_node(my_name.call())
 	check(await wait_for(func(): return players.get_child_count() == 2), "виден хост")
 	check(players.get_node("1").player_name == "Хост", "имя хоста дошло")
+	check(players.get_node("1").player_class == "farmer", "клиент видит, что хост — фермер")
+	check(players.get_node("1").get_node("Head/Hat") != null, "у хоста на голове шляпа фермера")
 	var expected: int = main._placed_items.size()
 	check(await wait_for(func(): return items.get_child_count() == expected), "пришли все %d предметов от хоста" % expected)
 	var crate: Grabbable = items.get_node("Crate1")
@@ -122,6 +125,8 @@ func _run() -> void:
 		var start := creature.global_position
 		await frames(60)
 		check(creature.global_position.distance_to(start) > 0.5, "Грядочник у клиента движется")
+		player._try_ability()
+		check(await wait_for(func(): return creature.tracked), "«Выследить» охотника-клиента подсветил существо")
 
 	# Деньги общие: хост поставил 100
 	var economy: Economy = main.get_node("Economy")
