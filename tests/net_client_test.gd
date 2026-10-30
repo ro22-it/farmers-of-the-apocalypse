@@ -128,6 +128,25 @@ func _run() -> void:
 		player._try_ability()
 		check(await wait_for(func(): return creature.tracked), "«Выследить» охотника-клиента подсветил существо")
 
+		# Выстрел клиента: попадания считает хост
+		if not player.inventory.has_free_slot():
+			player.inventory.take_selected()
+		player.inventory.add("res://scenes/items/shotgun.tscn", "Двустволка", {"loaded": 2})
+		await frames(5)
+		var shot_ref: WeakRef = weakref(creature)
+		creature = null
+		for i in 2:
+			var target: Node3D = shot_ref.get_ref()
+			if target == null:
+				break
+			player.global_position = Vector3(target.global_position.x, 0.05, target.global_position.z + 3.0)
+			await frames(2)
+			aim_at(target.global_position + Vector3(0, 0.4, 0))
+			player._on_primary()
+			await frames(30)
+		check(shot_ref.get_ref() == null or shot_ref.get_ref().hp < shot_ref.get_ref().max_hp, "выстрел клиента ранил существо")
+		player.inventory.take_selected()
+
 	# Деньги общие: хост поставил 100
 	var economy: Economy = main.get_node("Economy")
 	check(await wait_for(func(): return economy.money == 100), "клиент видит общие деньги")
@@ -158,6 +177,11 @@ func _run() -> void:
 	check(player.global_position.distance_to(truck.get_seat_position(0)) < 0.5, "клиент сидит в едущем пикапе")
 	player._try_pickup()
 	await frames(10)
+
+	# Хост ранит клиента, а потом поднимает
+	check(await wait_for(func(): return player.health < 60.0 or player.downed), "клиент получил урон")
+	check(await wait_for(func(): return player.downed), "клиент без сознания")
+	check(await wait_for(func(): return not player.downed and player.health >= 29.0), "хост поднял клиента")
 
 	await frames(30)
 	root.get_node("Network").leave()

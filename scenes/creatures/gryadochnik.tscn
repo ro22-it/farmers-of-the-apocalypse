@@ -70,7 +70,7 @@ properties/4/replication_mode = 2
 
 [node name="Gryadochnik" type="CharacterBody3D"]
 collision_layer = 16
-collision_mask = 39
+collision_mask = 35
 script = ExtResource("1_creature")
 display_name = "Грядочник"
 weakness = "боится света фонаря, падает с 3 ударов"

@@ -22,6 +22,7 @@
 [ext_resource type="Script" path="res://scripts/world/upgrade_toggle.gd" id="25_toggle"]
 [ext_resource type="PackedScene" path="res://scenes/world/upgrade_board.tscn" id="26_board"]
 [ext_resource type="Script" path="res://scripts/world/tower_light.gd" id="27_tower_light"]
+[ext_resource type="PackedScene" path="res://scenes/items/slingshot.tscn" id="28_slingshot"]
 [ext_resource type="PackedScene" path="res://scenes/items/wheelbarrow.tscn" id="14_wheelbarrow"]
 [ext_resource type="PackedScene" path="res://scenes/farm/fence_segment.tscn" id="15_fence"]
 [ext_resource type="PackedScene" path="res://scenes/items/hammer.tscn" id="16_hammer"]
@@ -585,6 +586,9 @@ transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, -9.3, 0.98, -2.2)
 
 [node name="SeedBag" parent="Items" instance=ExtResource("21_seeds")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.9, 1.06, -2.8)
+
+[node name="Slingshot" parent="Items" instance=ExtResource("28_slingshot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 1.05, -2.15)
 
 [node name="Players" type="Node3D" parent="."]
 

@@ -32,6 +32,7 @@ func _ready() -> void:
 	for path in _item_scene_paths():
 		_item_spawner.add_spawnable_scene(path)
 	_creature_spawner.add_spawnable_scene(NightDirector.GRYADOCHNIK.resource_path)
+	_creature_spawner.add_spawnable_scene(NightDirector.TARAN.resource_path)
 
 	_menu.host_pressed.connect(_start_host)
 	_menu.join_pressed.connect(_start_join)

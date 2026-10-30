@@ -5,7 +5,7 @@ extends CharacterBody3D
 ## Решения принимает только хост. Остальным приходят положение и состояние
 ## через синхронизатор, а анимацию каждый играет у себя по состоянию.
 
-enum State { APPROACH, CHEW, EAT, FLEE, SCARED }
+enum State { APPROACH, CHEW, EAT, FLEE, SCARED, TRAPPED, WINDUP, CHARGE, TIRED }
 
 const KNOCKBACK_SPEED := 6.0
 const KNOCKBACK_TIME := 0.25
@@ -83,6 +83,10 @@ func track(duration: float) -> void:
 func take_hit(amount: int, from_position: Vector3, knockback := 1.0, scare_time := 2.0) -> bool:
 	if is_queued_for_deletion():
 		return false
+	# В капкане урон двойной, и существо никуда не денется
+	var trapped := state == State.TRAPPED
+	if trapped:
+		amount *= 2
 	hp -= amount
 	var away := global_position - from_position
 	away.y = 0.0
@@ -92,8 +96,29 @@ func take_hit(amount: int, from_position: Vector3, knockback := 1.0, scare_time 
 		_on_died()
 		queue_free()
 		return true
+	if trapped:
+		_knockback_time = 0.0
+		return false
 	scare(from_position, scare_time)
 	return false
+
+
+## Только на хосте: капкан держит существо
+func trap(duration: float) -> void:
+	state = State.TRAPPED
+	_state_time = duration
+
+
+func _update_trapped(delta: float) -> void:
+	_stand(delta)
+	_state_time -= delta
+	if _state_time <= 0.0:
+		state = _state_after_trap()
+
+
+## Куда возвращаться после капкана
+func _state_after_trap() -> int:
+	return State.APPROACH
 
 
 ## Убегать от точки столько-то секунд.

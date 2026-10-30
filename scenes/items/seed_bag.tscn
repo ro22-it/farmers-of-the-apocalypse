@@ -18,7 +18,7 @@ size = Vector3(0.21, 0.05, 0.09)
 
 [node name="SeedBag" type="RigidBody3D"]
 collision_layer = 4
-collision_mask = 55
+collision_mask = 7
 mass = 0.3
 script = ExtResource("1_bag")
 display_name = "Семена"

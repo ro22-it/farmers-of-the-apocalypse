@@ -53,6 +53,7 @@ func get_carry_factor() -> float:
 
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	PickupItem.keep_sane(state)
 	if holders.is_empty():
 		return
 	holders = holders.filter(func(h): return is_instance_valid(h) and h.is_inside_tree())

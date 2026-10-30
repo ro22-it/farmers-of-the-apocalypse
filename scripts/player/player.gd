@@ -47,6 +47,16 @@ const ABILITY_EFFECTS := {
 	"herder": [6.0, Color(0.95, 0.85, 0.5, 0.2), 0.6],
 	"herbalist": [7.0, Color(0.75, 0.75, 0.75, 0.55), 4.0],
 }
+## Здоровье: восстанавливается само, если какое-то время не получать урон
+const MAX_HEALTH := 100.0
+const REGEN_DELAY := 8.0
+const REGEN_RATE := 3.0
+const REVIVE_HEALTH := 30.0
+const HERBALIST_REVIVE_HEALTH := 60.0
+const HERBALIST_DAMAGE_TAKEN := 1.25
+const HURT_PUSH := 7.0
+const DOWNED_EYE_HEIGHT := 0.35
+const BASE_FOV := 80.0
 ## Высота глаз сидя (в машине)
 const SEATED_EYE_HEIGHT := 1.0
 ## Дальше этого от прилавка купить нельзя
@@ -61,8 +71,15 @@ const SHOP_REACH := 6.0
 var player_name := ""
 ## Класс игрока (см. PlayerClasses). Задаётся при появлении у всех одинаково.
 var player_class := ""
-## Опыт и взятые навыки. Меняет только хост, синхронизируются для всех:
-## хосту они нужны для бонусов, остальным — для подсказок.
+## Здоровье, «без сознания», запас патронов, опыт и навыки. Меняет только хост,
+## синхронизируются для всех через ServerSync.
+var health := MAX_HEALTH
+var downed := false:
+	set(value):
+		downed = value
+		if is_node_ready():
+			_apply_downed()
+var ammo := 0
 var xp := 0:
 	set(value):
 		xp = value
@@ -102,6 +119,18 @@ var seated := false:
 ## Перезарядка способности: у владельца — для подсказки, у хоста — настоящая
 var _ability_ready_msec := 0
 var _server_ability_ready_msec := 0
+
+## Только на хосте: когда последний раз получал урон
+var _last_hit_msec := 0
+## Стрельба (у владельца): прицел, темп, перезарядка, отдача
+var _aiming := false
+var _next_shot_msec := 0
+var _reload_done_msec := 0
+var _reload_slot := -1
+var _hand_kick := 0.0
+var _shake := 0.0
+## Только на хосте: не чаще, чем позволяет оружие
+var _server_next_shot_msec := 0
 
 ## Только для автотестов: без окна мышь не захватить, а без захвата клавиши не слушаются
 var test_controls := false
@@ -147,6 +176,7 @@ func _ready() -> void:
 	_apply_class_look()
 	_refresh_hand()
 	_apply_seated()
+	_apply_downed()
 	if not is_multiplayer_authority():
 		_camera.current = false
 		hud.hide()
@@ -178,6 +208,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			capture_mouse()
 			get_viewport().set_input_as_handled()
 		return
+	# Без сознания можно только оглядываться
+	if downed and not event is InputEventMouseMotion:
+		return
 
 	if event is InputEventMouseMotion:
 		if Time.get_ticks_msec() < _ignore_mouse_until:
@@ -190,7 +223,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_released("primary"):
 		release_grab()
 	elif event.is_action_pressed("throw"):
-		release_grab(true)
+		if _grabbed:
+			release_grab(true)
+		elif _get_held_item() is Gun:
+			_aiming = true
+	elif event.is_action_released("throw"):
+		_aiming = false
+	elif event.is_action_pressed("reload"):
+		_try_reload()
 	elif event.is_action_pressed("pickup"):
 		_try_pickup()
 	elif event.is_action_pressed("drop"):
@@ -215,7 +255,7 @@ func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
 	# Пока открыта пауза или меню, персонаж стоит
-	var controls := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or test_controls
+	var controls := (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or test_controls) and not downed
 	if _truck:
 		_ride(controls)
 		_update_hud()
@@ -245,6 +285,49 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_push_bodies(delta)
 	_update_hud()
+
+
+func _process(delta: float) -> void:
+	# Здоровье восстанавливает хост
+	if multiplayer.is_server() and not downed and health < MAX_HEALTH \
+			and Time.get_ticks_msec() - _last_hit_msec > REGEN_DELAY * 1000.0:
+		health = minf(health + REGEN_RATE * delta, MAX_HEALTH)
+	if is_multiplayer_authority():
+		_update_weapon_feel(delta)
+
+
+## Только на хосте. Урон игроку от существ.
+func take_damage(amount: float, from_position: Vector3) -> void:
+	if downed or not multiplayer.is_server():
+		return
+	if player_class == "herbalist":
+		amount *= HERBALIST_DAMAGE_TAKEN
+	health = maxf(health - amount, 0.0)
+	_last_hit_msec = Time.get_ticks_msec()
+	var away := global_position - from_position
+	away.y = 0.0
+	_hurt.rpc_id(get_multiplayer_authority(), away.normalized() * HURT_PUSH)
+	if health > 0.0:
+		return
+	downed = true
+	_server_release_grab(false)
+	var economy := get_tree().get_first_node_in_group("economy") as Economy
+	if economy == null:
+		return
+	var all_down := true
+	for player: Player in get_tree().get_nodes_in_group("players"):
+		all_down = all_down and player.downed
+	if all_down:
+		economy.announce.rpc("Все без сознания… Держитесь до рассвета")
+	else:
+		economy.announce.rpc("%s без сознания! Подойдите и нажмите E" % player_name)
+
+
+## Только на хосте: поднять на ноги
+func revive(amount: float) -> void:
+	downed = false
+	health = amount
+	_last_hit_msec = Time.get_ticks_msec()
 
 
 ## При захвате курсор переносится в центр окна, и система присылает один большой
@@ -314,6 +397,8 @@ func _update_stamina(delta: float, input_dir: Vector2) -> float:
 
 
 func _update_crouch(delta: float, controls: bool) -> void:
+	if downed:
+		return
 	var wants_crouch := controls and Input.is_action_pressed("crouch")
 	# Под низким потолком встать не получится
 	if not wants_crouch and _crouching and _blocked_above():
@@ -380,6 +465,11 @@ func _push_bodies(delta: float) -> void:
 
 
 func _on_primary() -> void:
+	# С оружием в руке ЛКМ — всегда выстрел
+	var held := _get_held_item()
+	if held is Gun:
+		_try_shoot(held)
+		return
 	var target := _get_target()
 	if target is Grabbable:
 		_start_grab(target)
@@ -390,6 +480,9 @@ func _on_primary() -> void:
 			_request_hit.rpc_id(1, target.get_path(), item.damage)
 		else:
 			hud.show_message("Слишком далеко — подойдите вплотную")
+		return
+	if item and item.tool == "trap":
+		_try_place_trap()
 		return
 	if target is Interactable and item:
 		var info := item.get_interaction(self, target)
@@ -421,13 +514,16 @@ func _try_pickup() -> void:
 	if target is Cow:
 		_request_milk.rpc_id(1, target.get_path())
 		return
+	if target is Player and target.downed:
+		_request_revive.rpc_id(1, target.get_path())
+		return
 	# E по объекту фермы — работа рукой: собрать урожай, взять семена
 	if target is Interactable:
 		_request_interact.rpc_id(1, target.get_path(), {"tool": "hand"})
 		return
 	if not target is PickupItem:
 		return
-	if not inventory.has_free_slot():
+	if target.ammo_amount == 0 and not inventory.has_free_slot():
 		hud.show_message("Инвентарь полон")
 		return
 	_request_pickup.rpc_id(1, target.get_path())
@@ -460,6 +556,14 @@ func _update_hud() -> void:
 	var economy := get_tree().get_first_node_in_group("economy") as Economy
 	if economy:
 		hud.set_money(economy.money)
+	hud.set_health(health / MAX_HEALTH, downed)
+	var gun := _get_held_item() as Gun
+	if gun and gun.needs_ammo():
+		hud.set_ammo("%s: %d/%d   запас патронов: %d" % [gun.display_name, gun.loaded, gun.get_info().magazine, ammo])
+	elif gun:
+		hud.set_ammo(gun.display_name)
+	else:
+		hud.set_ammo("")
 	var info := PlayerClasses.get_info(player_class)
 	if not info.is_empty():
 		var left := (_ability_ready_msec - Time.get_ticks_msec()) / 1000.0
@@ -498,6 +602,8 @@ func _update_hud() -> void:
 			# Охотник знает слабости существ
 			if player_class == "hunter" and target.weakness != "":
 				hint += "\nСлабость: %s" % target.weakness
+		elif target is Player and target.downed:
+			hint = "E — поднять: %s" % target.player_name
 		elif target is Cow:
 			hint = "E — подоить" if target.milk_ready else "Корова: молоко будет после рассвета"
 			if player_class == "herder":
@@ -548,6 +654,12 @@ func _request_pickup(path: NodePath) -> void:
 	var item := get_node_or_null(path) as PickupItem
 	# Двое схватили один предмет одновременно — достаётся первому
 	if item == null or item.is_queued_for_deletion() or not _in_reach(item):
+		return
+	# Коробка патронов уходит в запас, а не в инвентарь
+	if item.ammo_amount > 0:
+		ammo += item.ammo_amount
+		item.queue_free()
+		_interact_result.rpc_id(get_multiplayer_authority(), {"message": "+%d патронов (всего %d)" % [item.ammo_amount, ammo]})
 		return
 	var scene := item.scene_file_path
 	var item_name := item.get_display_name()
@@ -675,6 +787,19 @@ func _drive(throttle: float, steer: float, brake_amount: float) -> void:
 	var truck := get_tree().get_first_node_in_group("truck") as Truck
 	if truck and truck.seats[Truck.DRIVER_SEAT] == get_multiplayer_authority():
 		truck.set_input(throttle, steer, brake_amount)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_revive(path: NodePath) -> void:
+	if not _from_owner() or downed:
+		return
+	var other := get_node_or_null(path) as Player
+	if other == null or not other.downed or other.global_position.distance_to(global_position) > MAX_REACH:
+		return
+	other.revive(HERBALIST_REVIVE_HEALTH if player_class == "herbalist" else REVIVE_HEALTH)
+	var economy := get_tree().get_first_node_in_group("economy") as Economy
+	if economy:
+		economy.announce.rpc("%s поднял: %s" % [player_name, other.player_name])
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -853,6 +978,210 @@ func _seated(path: NodePath, index: int) -> void:
 	# Смотрим туда же, куда пикап (у пикапа перед — +Z, у игрока — −Z)
 	rotation.y = _truck.global_rotation.y + PI
 	_head.rotation.x = 0.0
+
+
+# --- Капкан ---
+
+const TRAP_SET_SCENE := "res://scenes/items/trap_set.tscn"
+
+
+func _try_place_trap() -> void:
+	_ray.force_raycast_update()
+	if not _ray.is_colliding() or _ray.get_collision_normal().y < 0.7:
+		hud.show_message("Наведите на землю рядом")
+		return
+	_request_place_trap.rpc_id(1, _ray.get_collision_point())
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_place_trap(point: Vector3) -> void:
+	if not _from_owner() or point.distance_to(global_position) > MAX_REACH or held_scene != "res://scenes/items/trap.tscn":
+		return
+	var trap: Node3D = load(TRAP_SET_SCENE).instantiate()
+	trap.position = point
+	_items_root().add_child(trap, true)
+	_interact_result.rpc_id(get_multiplayer_authority(), {"remove_held": true, "message": "Капкан поставлен"})
+
+
+# --- Стрельба ---
+
+func _try_shoot(gun: Gun) -> void:
+	var now := Time.get_ticks_msec()
+	if now < _next_shot_msec or now < _reload_done_msec:
+		return
+	var info := gun.get_info()
+	if gun.needs_ammo() and gun.loaded <= 0:
+		SoundBank.play_at(get_tree(), "click", _camera.global_position, -6.0)
+		hud.show_message("Пусто — R: перезарядить" if ammo > 0 else "Нет патронов — купите в лавке")
+		_next_shot_msec = now + 300
+		return
+	if gun.needs_ammo():
+		gun.loaded -= 1
+		inventory.update_selected(gun.get_state(), gun.get_display_name())
+	_next_shot_msec = now + int(info.cooldown * 1000.0)
+	var spread := (Weapons.AIM_SPREAD if _aiming else 1.0) * PlayerClasses.spread_multiplier(self)
+	_request_shoot.rpc_id(1, gun.weapon, _camera.global_position, _look_direction(), spread)
+	# Отдача: ствол уводит вверх и чуть вбок, ружьё откатывается, камеру трясёт
+	var recoil := deg_to_rad(info.recoil) * (0.6 if _aiming else 1.0)
+	_head.rotation.x = clampf(_head.rotation.x + recoil, deg_to_rad(-89.0), deg_to_rad(89.0))
+	rotate_y(randf_range(-recoil, recoil) * 0.3)
+	_hand_kick = 1.0
+	_shake = recoil * 3.0
+
+
+func _try_reload() -> void:
+	var gun := _get_held_item() as Gun
+	if gun == null or not gun.needs_ammo():
+		return
+	var need: int = gun.get_info().magazine - gun.loaded
+	var now := Time.get_ticks_msec()
+	if need <= 0 or now < _reload_done_msec:
+		return
+	if ammo <= 0:
+		hud.show_message("Нет патронов — купите в лавке")
+		return
+	var reload_time: float = gun.get_info().reload
+	_reload_done_msec = now + int(reload_time * 1000.0)
+	_reload_slot = inventory.selected
+	SoundBank.play_at(get_tree(), "reload", _camera.global_position, -4.0)
+	await get_tree().create_timer(reload_time).timeout
+	if is_inside_tree():
+		_request_ammo.rpc_id(1, need)
+
+
+## Отдача, прицел и тряска — только у владельца, каждый кадр
+func _update_weapon_feel(delta: float) -> void:
+	var item := _get_held_item()
+	var aiming := _aiming and item is Gun and not _grabbed
+	_camera.fov = lerpf(_camera.fov, Weapons.AIM_FOV if aiming else BASE_FOV, minf(10.0 * delta, 1.0))
+	_hand_kick = move_toward(_hand_kick, 0.0, delta * 6.0)
+	_shake = move_toward(_shake, 0.0, delta * 0.6)
+	_camera.h_offset = randf_range(-_shake, _shake) * 0.05
+	_camera.v_offset = randf_range(-_shake, _shake) * 0.05
+	if item == null:
+		return
+	var base := item.hand_position
+	if aiming:
+		base = Vector3(0.0, -0.13, -0.4)
+	var reloading := Time.get_ticks_msec() < _reload_done_msec
+	item.position = item.position.lerp(base + Vector3(0.0, -0.1 if reloading else 0.0, _hand_kick * 0.1), minf(20.0 * delta, 1.0))
+	item.rotation_degrees = item.hand_rotation_degrees + Vector3(_hand_kick * 10.0 + (-30.0 if reloading else 0.0), 0.0, 0.0)
+
+
+func _muzzle_position() -> Vector3:
+	var gun := _get_held_item() as Gun
+	return gun.muzzle.global_position if gun else _camera.global_position
+
+
+static func _spread(direction: Vector3, angle: float) -> Vector3:
+	if angle <= 0.0:
+		return direction
+	var side := direction.cross(Vector3.UP)
+	if side.length() < 0.01:
+		side = Vector3.RIGHT
+	side = side.normalized()
+	var up := side.cross(direction).normalized()
+	var radius := sqrt(randf()) * tan(angle)
+	var turn := randf() * TAU
+	return (direction + (side * cos(turn) + up * sin(turn)) * radius).normalized()
+
+
+## Только на хосте: выстрел. Попадания считает хост, эффекты видят все.
+@rpc("any_peer", "call_local", "reliable")
+func _request_shoot(weapon: String, origin: Vector3, direction: Vector3, spread: float) -> void:
+	if not _from_owner() or downed:
+		return
+	var info := Weapons.get_info(weapon)
+	var now := Time.get_ticks_msec()
+	if info.is_empty() or now < _server_next_shot_msec:
+		return
+	_server_next_shot_msec = now + int(info.cooldown * 800.0)
+	if origin.distance_to(_camera.global_position) > 2.0:
+		origin = _camera.global_position
+	direction = direction.normalized()
+	spread = clampf(spread, 0.2, 1.0)
+	var space := get_world_3d().direct_space_state
+	# Урон класса — только у однозарядного выстрела, иначе дробь стала бы слишком сильной
+	var per_hit: int = info.damage if info.pellets > 1 else PlayerClasses.weapon_damage(self, info.damage)
+	var damage_by := {}
+	var hits := []
+	for i in info.pellets:
+		var ray := _spread(direction, deg_to_rad(info.spread) * spread)
+		var query := PhysicsRayQueryParameters3D.create(origin, origin + ray * info.range, Weapons.HIT_MASK)
+		query.exclude = [get_rid()]
+		var hit := space.intersect_ray(query)
+		if hit.is_empty():
+			hits.append([origin + ray * info.range, 0])
+			continue
+		var kind := 1
+		if hit.collider is Creature:
+			damage_by[hit.collider] = damage_by.get(hit.collider, 0) + per_hit
+			kind = 2
+		elif hit.collider is RigidBody3D:
+			hit.collider.apply_impulse(ray * info.impulse, hit.position - hit.collider.global_position)
+		hits.append([hit.position, kind])
+	for creature: Creature in damage_by:
+		if not is_instance_valid(creature):
+			continue
+		if player_class == "hunter":
+			add_xp(PlayerClasses.XP_HIT)
+		if creature.take_hit(damage_by[creature], origin, info.knockback, 3.0):
+			if player_class == "hunter":
+				add_xp(PlayerClasses.XP_KILL)
+			_interact_result.rpc_id(get_multiplayer_authority(), {"message": "%s повержен!" % creature.display_name})
+	_shot_effect.rpc(weapon, hits)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _shot_effect(weapon: String, hits: Array) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	var info := Weapons.get_info(weapon)
+	var muzzle := _muzzle_position()
+	Effects.muzzle_flash(get_tree(), muzzle)
+	SoundBank.play_at(get_tree(), info.sound, muzzle)
+	for hit in hits:
+		Effects.tracer(get_tree(), muzzle, hit[0], info.tracer)
+		if hit[1] == 2:
+			Effects.impact(get_tree(), hit[0], Color(0.75, 0.25, 0.15, 0.8))
+		elif hit[1] == 1:
+			Effects.impact(get_tree(), hit[0], Color(0.6, 0.55, 0.45, 0.7))
+
+
+## Только на хосте: выдать патроны из запаса на перезарядку
+@rpc("any_peer", "call_local", "reliable")
+func _request_ammo(need: int) -> void:
+	if not _from_owner():
+		return
+	var given := mini(clampi(need, 0, 10), ammo)
+	ammo -= given
+	_ammo_given.rpc_id(get_multiplayer_authority(), given)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _ammo_given(amount: int) -> void:
+	if multiplayer.get_remote_sender_id() != 1 or _reload_slot < 0:
+		return
+	var slot: Dictionary = inventory.slots[_reload_slot]
+	if slot.is_empty():
+		return
+	var state: Dictionary = slot.get("state", {}).duplicate()
+	state.loaded = state.get("loaded", 0) + amount
+	slot.state = state
+	if _reload_slot == inventory.selected:
+		var gun := _get_held_item() as Gun
+		if gun:
+			gun.set_state(state)
+			inventory.update_selected(state, gun.get_display_name())
+
+
+## Удар по владельцу: отбросить и показать красную вспышку
+@rpc("any_peer", "call_local", "reliable")
+func _hurt(push: Vector3) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	velocity += push + Vector3.UP * 3.0
+	hud.flash_damage()
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -1059,6 +1388,16 @@ func _leave_truck() -> void:
 	_seat_index = -1
 	seated = false
 	_request_unseat.rpc_id(1)
+
+
+## Без сознания: тело лежит, глаза у земли
+func _apply_downed() -> void:
+	_body.rotation.x = deg_to_rad(90.0) if downed else 0.0
+	if downed:
+		_body.position.y = 0.35
+		_head.position.y = DOWNED_EYE_HEIGHT
+		if is_multiplayer_authority():
+			release_grab()
 
 
 ## Сидя: не сталкиваемся ни с чем, глаза ниже, тело короче

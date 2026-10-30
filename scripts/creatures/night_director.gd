@@ -5,6 +5,9 @@ extends Node
 ## Работает только на хосте. Пока существо одно — Грядочник.
 
 const GRYADOCHNIK := preload("res://scenes/creatures/gryadochnik.tscn")
+const TARAN := preload("res://scenes/creatures/taran.tscn")
+## Тараны выходят с этой ночи: 1, потом ещё по одному каждые две ночи
+const TARAN_FIRST_NIGHT := 3
 ## Опушка леса: деревья начинаются примерно с 32 м от центра
 const SPAWN_RADIUS := 36.0
 ## За сколько секунд от начала ночи выходят все существа
@@ -16,8 +19,8 @@ const SPAWN_ANGLE_TO := 200.0
 @export var day_night_path: NodePath
 @export var creatures_path: NodePath
 
-## Секунды ночи, когда выйдет следующее существо
-var _queue: Array[float] = []
+## Кто и когда выйдет этой ночью: [секунда ночи, сцена], по возрастанию времени
+var _queue: Array = []
 
 @onready var _day_night: DayNight = get_node(day_night_path)
 @onready var _creatures: Node3D = get_node(creatures_path)
@@ -30,9 +33,9 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if not multiplayer.is_server() or _queue.is_empty() or not _day_night.is_night():
 		return
-	if _day_night.night_time() >= _queue[0]:
-		_queue.pop_front()
-		spawn_gryadochnik(_random_edge_point())
+	if _day_night.night_time() >= _queue[0][0]:
+		var scene: PackedScene = _queue.pop_front()[1]
+		spawn(scene, _random_edge_point())
 
 
 func reset() -> void:
@@ -43,7 +46,15 @@ func reset() -> void:
 
 
 func spawn_gryadochnik(at: Vector3) -> Gryadochnik:
-	var creature: Gryadochnik = GRYADOCHNIK.instantiate()
+	return spawn(GRYADOCHNIK, at)
+
+
+func spawn_taran(at: Vector3) -> Taran:
+	return spawn(TARAN, at)
+
+
+func spawn(scene: PackedScene, at: Vector3) -> Creature:
+	var creature: Creature = scene.instantiate()
 	creature.position = at
 	_creatures.add_child(creature, true)
 	return creature
@@ -55,11 +66,17 @@ func _on_phase_changed(is_night: bool, day: int) -> void:
 	_queue.clear()
 	if is_night:
 		for i in day + 1:
-			_queue.append(randf_range(5.0, SPAWN_WINDOW))
-		_queue.sort()
+			_queue.append([randf_range(5.0, SPAWN_WINDOW), GRYADOCHNIK])
+		if day >= TARAN_FIRST_NIGHT:
+			for i in 1 + (day - TARAN_FIRST_NIGHT) / 2:
+				_queue.append([randf_range(30.0, SPAWN_WINDOW), TARAN])
+		_queue.sort_custom(func(a, b): return a[0] < b[0])
 	else:
 		for creature: Creature in _creatures.get_children():
 			creature.dawn()
+		for player: Player in get_tree().get_nodes_in_group("players"):
+			if player.downed:
+				player.revive(Player.REVIVE_HEALTH)
 
 
 func _random_edge_point() -> Vector3:

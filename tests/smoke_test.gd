@@ -5,7 +5,7 @@ var player: Player
 
 ## Одиночная игра: хост без друзей. Проверяет хватку, бросок, инвентарь, фонарь
 ## цикл грядки, ночь (Грядочник, фонарь, забор), пикап, продажу, лавку, ступеньки
-## классы, опыт, навыки и улучшения фермы. Общие проверки — без класса, потом классы.
+## классы, опыт, навыки, улучшения фермы и бой (8а). Общие проверки — без класса, потом классы.
 var failures := 0
 
 
@@ -427,7 +427,8 @@ func _run() -> void:
 	# Скотник: свист и молоко
 	player.player_class = "herder"
 	var cow: Cow = main.get_node("Animals/Cow1")
-	player.global_position = cow.global_position + Vector3(12.0, 0.05, 0.0)
+	main.get_node("Animals/Cow2").global_position = Vector3(20.0, 0.05, 20.0)
+	player.global_position = cow.global_position + Vector3(-12.0, 0.05, 0.0)
 	await frames(3)
 	var cow_distance := cow.global_position.distance_to(player.global_position)
 	reset_ability.call()
@@ -439,9 +440,10 @@ func _run() -> void:
 	aim_at(cow.global_position + Vector3(0, 0.9, 0))
 	await frames(2)
 	before_items = items_node.get_child_count()
+	var milked := player._get_target() as Cow
 	player._try_pickup()
 	await frames(10)
-	check(items_node.get_child_count() == before_items + 2 and not cow.milk_ready, "скотник надоил 2 бутылки")
+	check(milked != null and items_node.get_child_count() == before_items + 2 and not milked.milk_ready, "скотник надоил 2 бутылки")
 
 	# Собака лает на существо у дома
 	var dog: Node3D = main.get_node("Animals/Dog")
@@ -533,6 +535,155 @@ func _run() -> void:
 	var climbed := await wait_for(func(): return player.global_position.y > 3.8, 240)
 	Input.action_release("move_forward")
 	check(climbed, "игрок поднялся на вышку по лестнице (y=%.1f)" % player.global_position.y)
+
+	# --- 8а: бой ---
+	player.player_class = ""
+	player.skills = PackedStringArray()
+	director.reset()
+	day_night.cycle_time = 100.0
+	await frames(3)
+	player.global_position = Vector3(-4.5, 0.05, 16.0)
+	player.rotation.y = 0.0
+	player.get_node("Head").rotation.x = 0.0
+	await frames(5)
+	player.take_damage(40.0, player.global_position + Vector3(1, 0, 0))
+	check(is_equal_approx(player.health, 60.0), "урон 40 — осталось 60 здоровья")
+	player.take_damage(100.0, player.global_position + Vector3(1, 0, 0))
+	check(player.downed and player.health == 0.0, "при 0 — без сознания")
+	await frames(120)
+	var lying_at := player.global_position
+	Input.action_press("move_forward")
+	await frames(30)
+	Input.action_release("move_forward")
+	check(Vector2(player.global_position.x - lying_at.x, player.global_position.z - lying_at.z).length() < 0.1, "без сознания не двигается")
+	day_night.cycle_time = DayNight.CYCLE - 0.3
+	await frames(30)
+	check(not player.downed and is_equal_approx(player.health, Player.REVIVE_HEALTH), "на рассвете встал с 30 здоровья")
+	player._last_hit_msec = -100000
+	await frames(60)
+	check(player.health > Player.REVIVE_HEALTH, "здоровье само восстанавливается")
+	day_night.cycle_time = 100.0
+	await frames(2)
+
+	# Двустволка вблизи
+	player.inventory.select(3)
+	player.inventory.take_selected()
+	player.inventory.add("res://scenes/items/shotgun.tscn", "Двустволка", {"loaded": 2})
+	await frames(3)
+	var shotgun := player._get_held_item() as Gun
+	check(shotgun != null and shotgun.weapon == "shotgun", "двустволка в руке")
+	player.global_position = Vector3(-4.5, 0.05, 16.0)
+	await frames(5)
+	var close_target := director.spawn_gryadochnik(player.global_position + Vector3(0, 0.3, -5.0))
+	close_target.trap(10.0)
+	await frames(2)
+	aim_at(close_target.global_position + Vector3(0, 0.4, 0))
+	var target_ref: WeakRef = weakref(close_target)
+	close_target = null
+	player._on_primary()
+	await frames(5)
+	check(target_ref.get_ref() == null, "выстрел из двустволки свалил Грядочника")
+	check(shotgun.loaded == 1, "в стволе остался 1 патрон")
+	player._next_shot_msec = 0
+	player._server_next_shot_msec = 0
+	var crate_target: Node3D = main.get_node("Items/Pumpkin3")
+	player.global_position = crate_target.global_position + Vector3(0, -0.3, 3.0)
+	await frames(5)
+	var crate_before := crate_target.global_position
+	aim_at(crate_target.global_position)
+	player._on_primary()
+	await frames(30)
+	check(crate_target.global_position.distance_to(crate_before) > 0.5, "выстрел отбрасывает тыкву (%.1f м)" % crate_target.global_position.distance_to(crate_before))
+	check(shotgun.loaded == 0, "двустволка пуста")
+	player._next_shot_msec = 0
+	player._on_primary()
+	check(shotgun.loaded == 0, "без патронов не стреляет")
+	player.ammo = 6
+	player._try_reload()
+	await frames(150)
+	check(shotgun.loaded == 2 and player.ammo == 4, "перезарядка: 2 в стволах, 4 в запасе")
+
+	# Коробка патронов — сразу в запас
+	var box: Node3D = load("res://scenes/items/ammo_box.tscn").instantiate()
+	box.position = player.global_position + Vector3(0, 0.3, -1.5)
+	items_node.add_child(box, true)
+	await frames(30)
+	aim_at(box.global_position)
+	await frames(2)
+	player._try_pickup()
+	await frames(5)
+	check(player.ammo == 10, "коробка патронов добавила 6 в запас")
+
+	# Винтовка на 20 м
+	player.inventory.take_selected()
+	player.inventory.add("res://scenes/items/rifle.tscn", "Винтовка", {"loaded": 5})
+	await frames(3)
+	player.global_position = Vector3(-4.5, 0.05, 16.0)
+	await frames(3)
+	var far_target := director.spawn_gryadochnik(player.global_position + Vector3(0, 0.3, -20.0))
+	far_target.trap(10.0)
+	await frames(2)
+	aim_at(far_target.global_position + Vector3(0, 0.4, 0))
+	var far_ref: WeakRef = weakref(far_target)
+	far_target = null
+	player._server_next_shot_msec = 0
+	player._on_primary()
+	await frames(5)
+	check(far_ref.get_ref() == null, "винтовка достаёт на 20 м")
+
+	# Капкан на пути Тарана
+	player.inventory.take_selected()
+	player.inventory.add("res://scenes/items/trap.tscn", "Капкан")
+	await frames(3)
+	player.global_position = Vector3(-4.0, 0.05, 16.0)
+	player.rotation.y = 0.0
+	player.get_node("Head").rotation.x = deg_to_rad(-45)
+	await frames(5)
+	player._on_primary()
+	await frames(5)
+	var placed: Trap = null
+	for node in items_node.get_children():
+		if node is Trap:
+			placed = node
+	check(placed != null and player.inventory.get_selected().is_empty(), "капкан поставлен на землю")
+	var taran := director.spawn_taran(Vector3(placed.global_position.x, 0.3, placed.global_position.z - 8.0))
+	check(await wait_for(func(): return taran.state == Creature.State.TRAPPED, 300), "Таран бросился и попал в капкан")
+	player.inventory.add("res://scenes/items/rifle.tscn", "Винтовка", {"loaded": 5})
+	await frames(3)
+	var taran_ref: WeakRef = weakref(taran)
+	taran = null
+	for i in 3:
+		if taran_ref.get_ref() == null:
+			break
+		aim_at(taran_ref.get_ref().global_position + Vector3(0, 1.3, 0))
+		player._server_next_shot_msec = 0
+		player._next_shot_msec = 0
+		player._on_primary()
+		await frames(5)
+	check(taran_ref.get_ref() == null, "в капкане Таран падает с двух выстрелов винтовки")
+
+	# Таран бьёт игрока
+	player.global_position = Vector3(5.0, 0.05, 16.0)
+	player._last_hit_msec = Time.get_ticks_msec()
+	await frames(3)
+	var health_before := player.health
+	var charger := director.spawn_taran(player.global_position + Vector3(0, 0.3, -9.0))
+	check(await wait_for(func(): return player.health <= health_before - 25.0 or player.downed, 300), "разбег Тарана — минус 30 здоровья")
+	charger.queue_free()
+
+	# Таран ломает забор с одного удара
+	player.global_position = Vector3(-15.0, 0.05, -15.0)
+	await frames(3)
+	var breaker := director.spawn_taran(Vector3(0.0, 0.3, 30.0))
+	breaker._goal = Vector3(0.0, 0.0, 10.0)
+	var any_broken := func():
+		for piece: FenceSegment in get_nodes_in_group("fence"):
+			if piece.is_broken():
+				return true
+		return false
+	check(await wait_for(any_broken, 600), "Таран проломил забор")
+	breaker.queue_free()
+	player.revive(Player.MAX_HEALTH)
 
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)

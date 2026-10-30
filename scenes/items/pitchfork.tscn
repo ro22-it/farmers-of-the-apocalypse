@@ -36,7 +36,7 @@ rings = 1
 
 [node name="Pitchfork" type="RigidBody3D"]
 collision_layer = 4
-collision_mask = 55
+collision_mask = 7
 mass = 2.0
 script = ExtResource("1_item")
 display_name = "Вилы"

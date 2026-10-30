@@ -31,7 +31,7 @@ rings = 1
 
 [node name="MilkBottle" type="RigidBody3D"]
 collision_layer = 4
-collision_mask = 55
+collision_mask = 7
 mass = 1.0
 script = ExtResource("1_item")
 display_name = "Молоко"

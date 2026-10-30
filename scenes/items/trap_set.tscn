@@ -1,0 +1,70 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/farm/trap.gd" id="1_trap"]
+
+[sub_resource type="BoxShape3D" id="shape"]
+size = Vector3(0.6, 0.25, 0.6)
+
+[sub_resource type="CylinderShape3D" id="trigger"]
+height = 0.6
+radius = 0.6
+
+[sub_resource type="StandardMaterial3D" id="iron"]
+albedo_color = Color(0.3, 0.3, 0.32, 1)
+roughness = 1.0
+metallic = 0.7
+roughness = 0.5
+[sub_resource type="BoxMesh" id="base"]
+material = SubResource("iron")
+size = Vector3(0.5, 0.04, 0.5)
+
+[sub_resource type="BoxMesh" id="jaw"]
+material = SubResource("iron")
+size = Vector3(0.03, 0.2, 0.5)
+
+[sub_resource type="SceneReplicationConfig" id="sync"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 0
+properties/1/path = NodePath(".:armed")
+properties/1/spawn = true
+properties/1/replication_mode = 2
+
+[node name="TrapSet" type="StaticBody3D"]
+collision_layer = 8
+collision_mask = 0
+script = ExtResource("1_trap")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
+shape = SubResource("shape")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
+mesh = SubResource("base")
+
+[node name="JawLeft" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.02, 0.04, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="JawLeft"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+mesh = SubResource("jaw")
+
+[node name="JawRight" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, 0.04, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="JawRight"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+mesh = SubResource("jaw")
+
+[node name="Trigger" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 16
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Trigger"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+shape = SubResource("trigger")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("sync")

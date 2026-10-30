@@ -15,12 +15,18 @@ const ITEMS_DIR := "res://scenes/items/"
 @export var damage := 0
 ## Сколько монет дают в скупке. 0 — не покупают.
 @export var sell_price := 0
+## Коробка патронов: при подборе уходит в запас патронов, а не в инвентарь
+@export var ammo_amount := 0
 ## Подсказка, когда предмет в руке
 @export var use_hint := ""
 ## Сообщение по ЛКМ, пока у предмета нет своего действия
 @export var use_message := ""
 @export var hand_position := Vector3(0.35, -0.3, -0.6)
 @export var hand_rotation_degrees := Vector3.ZERO
+
+
+func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	PickupItem.keep_sane(state)
 
 
 func _ready() -> void:
@@ -85,3 +91,17 @@ func is_active() -> bool:
 
 func set_active(_value: bool) -> void:
 	pass
+
+## Страховка физики: ничего не летает быстрее этого, а выпавшее за мир возвращается
+const MAX_ITEM_SPEED := 30.0
+const FALL_LIMIT := -30.0
+const RESCUE_POINT := Vector3(0.0, 3.0, 0.0)
+
+
+static func keep_sane(state: PhysicsDirectBodyState3D) -> void:
+	if state.linear_velocity.length() > MAX_ITEM_SPEED:
+		state.linear_velocity = state.linear_velocity.limit_length(MAX_ITEM_SPEED)
+	if state.transform.origin.y < FALL_LIMIT:
+		state.transform.origin = RESCUE_POINT
+		state.linear_velocity = Vector3.ZERO
+		state.angular_velocity = Vector3.ZERO

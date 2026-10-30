@@ -1,0 +1,49 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/pickup_item.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+
+[sub_resource type="BoxShape3D" id="shape"]
+size = Vector3(0.45, 0.12, 0.45)
+
+[sub_resource type="StandardMaterial3D" id="iron"]
+albedo_color = Color(0.3, 0.3, 0.32, 1)
+roughness = 1.0
+metallic = 0.7
+roughness = 0.5
+[sub_resource type="BoxMesh" id="base"]
+material = SubResource("iron")
+size = Vector3(0.4, 0.04, 0.4)
+
+[sub_resource type="BoxMesh" id="jaw"]
+material = SubResource("iron")
+size = Vector3(0.4, 0.12, 0.03)
+
+[node name="Trap" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 3.0
+script = ExtResource("1_item")
+display_name = "Капкан"
+tool = "trap"
+use_hint = "ЛКМ по земле рядом — поставить"
+use_message = "Наведите на землю рядом"
+hand_position = Vector3(0.3, -0.3, -0.55)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("shape")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+mesh = SubResource("base")
+
+[node name="JawA" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0.18)
+mesh = SubResource("jaw")
+
+[node name="JawB" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, -0.18)
+mesh = SubResource("jaw")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")

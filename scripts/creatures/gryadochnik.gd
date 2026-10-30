@@ -47,6 +47,8 @@ func _physics_process(delta: float) -> void:
 			_start_chew(_walk_to(_home, flee_speed, delta))
 			if _far_from_farm() or global_position.distance_to(_home) < 1.5:
 				queue_free()
+		State.TRAPPED:
+			_update_trapped(delta)
 		State.SCARED:
 			_start_chew(_walk_away_from(_scare_from, flee_speed, delta))
 			_state_time -= delta
@@ -143,6 +145,10 @@ func _check_light() -> void:
 		if light.scares(chest):
 			scare(light.global_position, SCARE_TIME)
 			return
+
+
+func _state_after_trap() -> int:
+	return State.FLEE if carrying != "" else State.APPROACH
 
 
 func _on_died() -> void:

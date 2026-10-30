@@ -14,6 +14,11 @@ const ITEMS := [
 	{"id": "watering_can", "name": "Лейка", "price": 20, "scene": "res://scenes/items/watering_can.tscn", "state": {}},
 	{"id": "flashlight", "name": "Фонарь", "price": 25, "scene": "res://scenes/items/flashlight.tscn", "state": {}},
 	{"id": "pitchfork", "name": "Вилы (урон 2)", "price": 30, "scene": "res://scenes/items/pitchfork.tscn", "state": {}},
+	{"id": "trap", "name": "Капкан", "price": 25, "scene": "res://scenes/items/trap.tscn", "state": {}},
+	{"id": "slingshot", "name": "Рогатка", "price": 15, "scene": "res://scenes/items/slingshot.tscn", "state": {}},
+	{"id": "shotgun", "name": "Двустволка", "price": 60, "scene": "res://scenes/items/shotgun.tscn", "state": {}},
+	{"id": "rifle", "name": "Винтовка", "price": 90, "scene": "res://scenes/items/rifle.tscn", "state": {}},
+	{"id": "ammo", "name": "Патроны ×6", "price": 12, "scene": "res://scenes/items/ammo_box.tscn", "state": {}},
 ]
 
 

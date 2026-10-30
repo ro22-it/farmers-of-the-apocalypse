@@ -241,11 +241,21 @@ static func water_amount(player: Node) -> float:
 	return 1.0
 
 
-## Механику инструменты дешевле, семена — по обычной цене
+## Огнестрел и снаряжение охотника, инструменты механика
+const HUNTER_GEAR := ["slingshot", "shotgun", "rifle", "ammo"]
+const MECHANIC_GEAR := ["shovel", "hammer", "watering_can", "flashlight", "pitchfork", "trap"]
+
+
+## Механику инструменты дешевле, охотнику — оружие и патроны
 static func shop_price(player_class: String, entry: Dictionary) -> int:
-	if player_class == "mechanic" and not str(entry.id).begins_with("seeds"):
+	if (player_class == "mechanic" and entry.id in MECHANIC_GEAR) or (player_class == "hunter" and entry.id in HUNTER_GEAR):
 		return int(round(entry.price * 0.75))
 	return entry.price
+
+
+## Охотник стреляет кучнее
+static func spread_multiplier(player: Node) -> float:
+	return 0.5 if class_of(player) == "hunter" else 1.0
 
 
 static func milk_amount(player: Node) -> int:

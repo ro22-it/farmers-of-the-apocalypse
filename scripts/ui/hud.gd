@@ -12,12 +12,17 @@ const SLOT_BORDER := Color(1.0, 0.85, 0.4)
 const STAMINA_COLOR := Color(0.95, 0.85, 0.35)
 const EXHAUSTED_COLOR := Color(0.9, 0.3, 0.25)
 const MESSAGE_TIME := 2.5
-const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — присесть   Пробел — прыжок\nЛКМ — тащить / использовать   ПКМ — бросить   E — взять   G — выбросить\n1–4, колесо — слоты   Q — способность   K — навыки   Esc — пауза   F1 — скрыть подсказку   F2 — к закату или рассвету"
+const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — присесть   Пробел — прыжок\nЛКМ — тащить / использовать   ПКМ — бросить   E — взять   G — выбросить\n1–4, колесо — слоты   ПКМ с оружием — прицел   R — перезарядка   Q — способность   K — навыки   Esc — пауза   F1 — скрыть подсказку   F2 — к закату или рассвету"
 
 var _hint: Label
 var _clock: Label
 var _money: Label
 var _ability: Label
+var _health: ProgressBar
+var _health_fill: StyleBoxFlat
+var _ammo: Label
+var _damage_flash: ColorRect
+var _downed_text: Label
 var _panel: Control
 var _panel_title: Label
 var _panel_subtitle: Label
@@ -99,6 +104,7 @@ func _ready() -> void:
 
 	_build_slots(root)
 	_build_stamina(root)
+	_build_combat(root)
 	# Захваченный курсор стоит в центре экрана, прямо над прицелом.
 	# Если интерфейс ловит мышь, движения не доходят до камеры игрока.
 	_ignore_mouse(root)
@@ -107,6 +113,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _damage_flash.color.a > 0.0 and not _downed_text.visible:
+		_damage_flash.color.a = maxf(_damage_flash.color.a - delta * 0.8, 0.0)
 	if _message_left > 0.0:
 		_message_left -= delta
 		_message.modulate.a = clampf(_message_left, 0.0, 1.0)
@@ -138,6 +146,23 @@ func set_money(amount: int) -> void:
 
 func _money_line() -> String:
 	return "У команды %d монет" % _money_amount
+
+
+func set_health(ratio: float, is_downed: bool) -> void:
+	_health.value = ratio * 100.0
+	_health_fill.bg_color = Color(0.85, 0.2, 0.2) if ratio < 0.35 else Color(0.85, 0.35, 0.3)
+	_downed_text.visible = is_downed
+	if is_downed:
+		_damage_flash.color.a = maxf(_damage_flash.color.a, 0.35)
+
+
+func set_ammo(text: String) -> void:
+	_ammo.text = text
+
+
+## Красная вспышка по краям экрана при ударе
+func flash_damage() -> void:
+	_damage_flash.color.a = 0.45
 
 
 func set_ability(text: String) -> void:
@@ -283,6 +308,50 @@ func _build_slots(root: Control) -> void:
 		row.add_child(panel)
 		_slot_panels.append(panel)
 		_slot_labels.append(label)
+
+
+func _build_combat(root: Control) -> void:
+	_damage_flash = ColorRect.new()
+	_damage_flash.color = Color(0.7, 0.0, 0.0, 0.0)
+	root.add_child(_damage_flash)
+	root.move_child(_damage_flash, 0)
+	_damage_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	_downed_text = _make_label(30)
+	_downed_text.text = "Вы без сознания\nждите, пока товарищ поднимет (E), или рассвета"
+	_downed_text.add_theme_color_override("font_color", Color(1.0, 0.75, 0.7))
+	root.add_child(_downed_text)
+	_downed_text.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_downed_text.offset_left = -400
+	_downed_text.offset_right = 400
+	_downed_text.offset_top = 160
+	_downed_text.visible = false
+
+	_health = ProgressBar.new()
+	_health.show_percentage = false
+	var background := StyleBoxFlat.new()
+	background.bg_color = Color(0.0, 0.0, 0.0, 0.5)
+	background.set_corner_radius_all(3)
+	_health_fill = StyleBoxFlat.new()
+	_health_fill.bg_color = Color(0.85, 0.35, 0.3)
+	_health_fill.set_corner_radius_all(3)
+	_health.add_theme_stylebox_override("background", background)
+	_health.add_theme_stylebox_override("fill", _health_fill)
+	root.add_child(_health)
+	_health.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_health.offset_left = 16
+	_health.offset_right = 236
+	_health.offset_top = -82
+	_health.offset_bottom = -70
+
+	_ammo = _make_label(17)
+	_ammo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	root.add_child(_ammo)
+	_ammo.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_ammo.offset_left = -520
+	_ammo.offset_right = -16
+	_ammo.offset_top = -48
+	_ammo.offset_bottom = -20
 
 
 func _build_stamina(root: Control) -> void:

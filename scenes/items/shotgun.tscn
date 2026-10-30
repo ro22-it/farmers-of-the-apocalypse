@@ -1,0 +1,58 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/gun.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+
+[sub_resource type="BoxShape3D" id="shape"]
+size = Vector3(0.12, 0.15, 1.05)
+
+[sub_resource type="StandardMaterial3D" id="wood"]
+albedo_color = Color(0.45, 0.3, 0.17, 1)
+
+[sub_resource type="StandardMaterial3D" id="metal"]
+albedo_color = Color(0.22, 0.22, 0.25, 1)
+metallic = 0.8
+roughness = 0.35
+[sub_resource type="BoxMesh" id="stock"]
+material = SubResource("wood")
+size = Vector3(0.08, 0.12, 0.45)
+
+[sub_resource type="CylinderMesh" id="barrel"]
+material = SubResource("metal")
+top_radius = 0.022
+bottom_radius = 0.022
+height = 0.6
+radial_segments = 8
+rings = 1
+
+[node name="Shotgun" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 3.5
+script = ExtResource("1_item")
+display_name = "Двустволка"
+weapon = "shotgun"
+loaded = 2
+hand_position = Vector3(0.25, -0.22, -0.45)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("shape")
+
+[node name="Stock" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.03, 0.15)
+mesh = SubResource("stock")
+
+[node name="BarrelL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.025, 0, -0.35)
+mesh = SubResource("barrel")
+
+[node name="BarrelR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.025, 0, -0.35)
+mesh = SubResource("barrel")
+
+[node name="Muzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.66)
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")
