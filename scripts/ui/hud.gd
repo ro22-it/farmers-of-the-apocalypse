@@ -206,6 +206,10 @@ func open_panel(kind: String, title: String, subtitle: String, rows: Array) -> v
 		text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		text.add_theme_font_size_override("font_size", 16)
 		line.add_child(text)
+		# Строка без кнопки — просто текст (итоги забега)
+		if row.get("button", "") == "":
+			_panel_list.add_child(line)
+			continue
 		var button := Button.new()
 		button.text = row.button
 		button.disabled = row.get("disabled", false)

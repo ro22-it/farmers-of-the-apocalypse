@@ -24,6 +24,9 @@ func reset() -> void:
 ## Только на хосте
 func add(amount: int) -> void:
 	money += amount
+	var run := get_tree().get_first_node_in_group("run_director") as RunDirector
+	if run:
+		run.on_earned(amount)
 
 
 ## Только на хосте. Возвращает false, если денег не хватает.

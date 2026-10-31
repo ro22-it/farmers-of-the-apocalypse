@@ -26,6 +26,7 @@ var _buttons: Array[Button] = []
 var _in_session := false
 var _settings_panel: SettingsPanel
 var _continue_button: Button
+var _records: Label
 
 
 func _ready() -> void:
@@ -59,6 +60,7 @@ func show_main(status: String) -> void:
 	_main_panel.show()
 	_set_busy(false)
 	_status.text = status
+	_records.text = RunDirector.meta_line(RunDirector.load_meta())
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
@@ -140,6 +142,10 @@ func _build_main() -> Control:
 	title.add_theme_color_override("font_color", ACCENT)
 	box.add_child(title)
 	box.add_child(_make_label("кооп на 2–4 игроков", 16))
+	_records = _make_label("", 13)
+	_records.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_records.modulate.a = 0.75
+	box.add_child(_records)
 
 	box.add_child(_make_label("Имя", 16, HORIZONTAL_ALIGNMENT_LEFT))
 	_name_edit = _make_edit(Network.player_name, "Фермер")

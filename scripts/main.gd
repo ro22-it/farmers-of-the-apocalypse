@@ -24,9 +24,13 @@ var _placed_items: Array[Dictionary] = []
 @onready var _truck: Truck = $Truck
 @onready var _farm_upgrades: FarmUpgrades = $FarmUpgrades
 @onready var _save: SaveSystem = $SaveSystem
+var _run: RunDirector
 
 
 func _ready() -> void:
+	_run = RunDirector.new()
+	_run.name = "RunDirector"
+	add_child(_run)
 	_player_spawner.spawn_function = _create_player
 	for item in _items.get_children():
 		_placed_items.append({"name": item.name, "scene": item.scene_file_path, "transform": item.transform})
@@ -78,7 +82,8 @@ func _start_join(address: String) -> void:
 
 
 func _leave() -> void:
-	if multiplayer.is_server():
+	# Законченный забег не сохраняем — его сохранение уже удалено
+	if multiplayer.is_server() and not _run.over:
 		_save.save()
 	Network.leave()
 	_on_session_ended("")
@@ -145,6 +150,7 @@ func _create_player(data: Dictionary) -> Node:
 ## Предметы убирает, а с refill — ставит заново по расстановке из редактора
 ## (это делает только хост или игра без сети). Клиенту состояние потом пришлёт хост.
 func _reset_world(refill: bool) -> void:
+	_run.reset()
 	_day_night.reset()
 	_night_director.reset()
 	_economy.reset()

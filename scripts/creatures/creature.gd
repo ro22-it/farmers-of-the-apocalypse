@@ -108,6 +108,9 @@ func take_hit(amount: int, from_position: Vector3, knockback := 1.0, scare_time 
 	_knockback_time = KNOCKBACK_TIME
 	if hp <= 0:
 		SoundBank.everyone(get_tree(), "creature_death", global_position, -4.0)
+		var run := get_tree().get_first_node_in_group("run_director") as RunDirector
+		if run:
+			run.on_kill()
 		_on_died()
 		_leave_corpse(_knockback)
 		queue_free()

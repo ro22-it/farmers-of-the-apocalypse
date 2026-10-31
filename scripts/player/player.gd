@@ -390,7 +390,7 @@ func take_damage(amount: float, from_position: Vector3, tumble := false) -> void
 	for player: Player in get_tree().get_nodes_in_group("players"):
 		all_down = all_down and player.downed
 	if all_down:
-		economy.announce.rpc("Все без сознания… Держитесь до рассвета")
+		economy.announce.rpc("Все без сознания!")
 	else:
 		economy.announce.rpc("%s без сознания! Подойдите и нажмите E" % player_name)
 
@@ -1482,8 +1482,16 @@ func _vigor_multiplier() -> float:
 
 # --- Окна: лавка, улучшения, навыки ---
 
+## Экран итогов забега (вызывает RunDirector у всех)
+func show_end_screen(title: String, subtitle: String, rows: Array) -> void:
+	hud.open_panel("end", title, subtitle, rows)
+
+
 func _on_panel_action(kind: String, id: String) -> void:
 	match kind:
+		"end":
+			hud.close_panel()
+			get_tree().current_scene.call("_leave")
 		"shop":
 			_request_buy.rpc_id(1, id)
 		"upgrade":

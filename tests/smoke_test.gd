@@ -931,5 +931,19 @@ func _run() -> void:
 	check(not is_instance_valid(lord) or lord.is_queued_for_deletion(), "Хозяин леса повержен")
 	check(economy.money == lord_money + ForestLord.REWARD, "за Хозяина леса ферме %d монет" % ForestLord.REWARD)
 
+	# --- Цель забега: поражение и победа ---
+	var run: RunDirector = main.get_node("RunDirector")
+	run.reset()
+	player.take_damage(1000.0, player.global_position + Vector3.FORWARD)
+	check(await wait_for(func(): return run.over, 300), "все без сознания — ферма сгорела")
+	check(player.hud.panel_kind() == "end", "показан экран итогов")
+	player.hud.close_panel()
+	player.revive(Player.MAX_HEALTH)
+	run.reset()
+	day_night.running = true
+	day_night.phase_changed.emit(false, RunDirector.WIN_NIGHTS + 1)
+	await frames(3)
+	check(run.over and player.hud.panel_kind() == "end", "после %d-й ночи — победа" % RunDirector.WIN_NIGHTS)
+
 	print("ИТОГ: %s" % ("всё прошло" if failures == 0 else "провалов: %d" % failures))
 	quit(failures)
