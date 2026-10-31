@@ -1,0 +1,96 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/world/workbench.gd" id="1_bench"]
+
+[sub_resource type="BoxShape3D" id="shape"]
+size = Vector3(1.8, 0.95, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="wood"]
+albedo_color = Color(0.5, 0.34, 0.2, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="metal"]
+albedo_color = Color(0.3, 0.32, 0.35, 1)
+metallic = 0.7
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="top"]
+material = SubResource("wood")
+size = Vector3(1.8, 0.08, 0.8)
+
+[sub_resource type="BoxMesh" id="leg"]
+material = SubResource("wood")
+size = Vector3(0.1, 0.9, 0.1)
+
+[sub_resource type="BoxMesh" id="shelf"]
+material = SubResource("wood")
+size = Vector3(1.6, 0.04, 0.6)
+
+[sub_resource type="BoxMesh" id="vise"]
+material = SubResource("metal")
+size = Vector3(0.22, 0.18, 0.3)
+
+[sub_resource type="CylinderMesh" id="pot"]
+material = SubResource("metal")
+top_radius = 0.14
+bottom_radius = 0.12
+height = 0.16
+
+[sub_resource type="CylinderMesh" id="tire"]
+top_radius = 0.22
+bottom_radius = 0.22
+height = 0.1
+
+[node name="Workbench" type="StaticBody3D"]
+script = ExtResource("1_bench")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.475, 0)
+shape = SubResource("shape")
+
+[node name="Top" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("top")
+
+[node name="Leg1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.82, 0.45, -0.32)
+mesh = SubResource("leg")
+
+[node name="Leg2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.82, 0.45, -0.32)
+mesh = SubResource("leg")
+
+[node name="Leg3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.82, 0.45, 0.32)
+mesh = SubResource("leg")
+
+[node name="Leg4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.82, 0.45, 0.32)
+mesh = SubResource("leg")
+
+[node name="Shelf" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+mesh = SubResource("shelf")
+
+[node name="Vise" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 1.03, 0.25)
+mesh = SubResource("vise")
+
+[node name="Pot" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 0.35, 0)
+mesh = SubResource("pot")
+
+[node name="Tire" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.32, -0.05)
+mesh = SubResource("tire")
+
+[node name="Sign" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+billboard = 1
+font_size = 40
+outline_size = 10
+text = "Верстак"
+visibility_range_end = 25.0
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)

@@ -26,6 +26,8 @@ var _last_position := Vector3.ZERO
 var _velocity := Vector3.ZERO
 var _action_left := 0.0
 var _idle_override := ""
+var _shadow_only := false
+var _armor_nodes: Array[Node] = []
 
 
 ## class_id — класс игрока; player — его узел (null в предпросмотре)
@@ -48,9 +50,67 @@ func setup(class_id: String, player: Node3D = null) -> void:
 
 ## Своё тело игрок не видит, только тень от него. В виде от 3 лица — видит.
 func set_shadow_only(value: bool) -> void:
+	_shadow_only = value
 	var mode := GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY if value else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	for mesh: MeshInstance3D in find_children("*", "MeshInstance3D", true, false):
 		mesh.cast_shadow = mode
+
+
+## Броня на персонаже: смешные кастрюли и вёдра на костях модели.
+## armor — {слот: {look, ...}} как у Player.armor.
+func set_armor(armor: Dictionary) -> void:
+	for node in _armor_nodes:
+		node.queue_free()
+	_armor_nodes.clear()
+	var skeleton := find_children("*", "Skeleton3D", true, false)
+	if skeleton.is_empty():
+		return
+	for slot: String in armor:
+		var look: String = armor[slot].get("look", "")
+		match look:
+			"pot":
+				_attach(skeleton[0], "Head", _cylinder(0.17, 0.17, 0.16), Color(0.55, 0.57, 0.6), Vector3(0, 0.27, 0), 0.6)
+			"helmet":
+				var dome := SphereMesh.new()
+				dome.radius = 0.19
+				dome.height = 0.2
+				dome.is_hemisphere = true
+				_attach(skeleton[0], "Head", dome, Color(0.95, 0.7, 0.1), Vector3(0, 0.22, 0), 0.1)
+			"bucket":
+				_attach(skeleton[0], "Chest", _cylinder(0.22, 0.2, 0.32), Color(0.5, 0.52, 0.55), Vector3(0, 0.05, 0), 0.6)
+			"jacket":
+				_attach(skeleton[0], "Chest", _cylinder(0.24, 0.22, 0.45), Color(0.35, 0.42, 0.22), Vector3(0, 0.0, 0), 0.0)
+			"tires":
+				for bone in ["LowerLeg.L", "LowerLeg.R"]:
+					_attach(skeleton[0], bone, _cylinder(0.09, 0.09, 0.12), Color(0.12, 0.12, 0.12), Vector3(0, 0.05, 0), 0.0)
+	set_shadow_only(_shadow_only)
+
+
+func _attach(skeleton: Skeleton3D, bone: String, mesh: Mesh, color: Color, offset: Vector3, metal: float) -> void:
+	if skeleton.find_bone(bone) < 0:
+		return
+	var attachment := BoneAttachment3D.new()
+	attachment.bone_name = bone
+	skeleton.add_child(attachment)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.metallic = metal
+	material.roughness = 0.5
+	var part := MeshInstance3D.new()
+	part.mesh = mesh
+	part.material_override = material
+	part.position = offset
+	attachment.add_child(part)
+	_armor_nodes.append(attachment)
+
+
+static func _cylinder(top: float, bottom: float, height: float) -> CylinderMesh:
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = top
+	mesh.bottom_radius = bottom
+	mesh.height = height
+	mesh.radial_segments = 12
+	return mesh
 
 
 ## Разовое действие поверх ходьбы: удар, выстрел, взмах рукой

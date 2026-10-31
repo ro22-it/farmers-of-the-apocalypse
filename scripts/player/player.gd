@@ -49,6 +49,8 @@ const ABILITY_EFFECTS := {
 }
 ## Здоровье: восстанавливается само, если какое-то время не получать урон
 const MAX_HEALTH := 100.0
+## Сколько здоровья возвращает дым травника всем рядом
+const HERBALIST_SMOKE_HEAL := 25.0
 const REGEN_DELAY := 8.0
 const REGEN_RATE := 3.0
 const REVIVE_HEALTH := 30.0
@@ -153,6 +155,14 @@ var _tumble_left := 0.0
 
 ## Вид от третьего лица в пикапе — по желанию (V), основной вид из кабины
 var third_person := false
+## Надетая броня: {слот: {name, protection, durability, look}}. Меняет хост.
+var armor := {}:
+	set(value):
+		armor = value
+		if _model:
+			_model.set_armor(armor)
+## Больше этой доли урона броня не снимает
+const MAX_ARMOR := 0.7
 ## Кто тащит игрока в лес (Кукурузник). Решает хост, следует сам владелец.
 var _dragged_by: Node3D = null
 
@@ -373,6 +383,8 @@ func take_damage(amount: float, from_position: Vector3, tumble := false) -> void
 		return
 	if player_class == "herbalist":
 		amount *= HERBALIST_DAMAGE_TAKEN
+	amount *= 1.0 - armor_protection()
+	_wear_out_armor()
 	health = maxf(health - amount, 0.0)
 	_last_hit_msec = Time.get_ticks_msec()
 	SoundBank.everyone(get_tree(), "punch", global_position + Vector3.UP)
@@ -813,7 +825,8 @@ func _request_buy(id: String) -> void:
 	if not _from_owner():
 		return
 	var entry := ShopCatalog.find(id)
-	var counter := get_tree().get_first_node_in_group("shop_counter") as ShopCounter
+	# Покупка ложится на прилавок лавки или на верстак
+	var counter = get_tree().get_first_node_in_group("workbench" if entry.get("workbench", false) else "shop_counter")
 	var economy := get_tree().get_first_node_in_group("economy") as Economy
 	if entry.is_empty() or counter == null or economy == null:
 		return
@@ -950,12 +963,18 @@ func _perform_ability() -> String:
 					creature.scare(global_position, PlayerClasses.smoke_scare_time(self))
 					count += 1
 			add_xp(PlayerClasses.XP_SMOKE * count)
+			# Целебный дым: союзники рядом (и сам травник) лечатся
+			var healed := 0
+			for ally: Player in get_tree().get_nodes_in_group("players"):
+				if not ally.downed and _flat_distance(ally.global_position) <= PlayerClasses.smoke_radius(self):
+					ally.health = minf(ally.health + HERBALIST_SMOKE_HEAL, MAX_HEALTH)
+					healed += 1
 			# Бодрящий отвар: союзникам рядом — вся выносливость
 			if PlayerClasses.has(self, "herbalist_a3"):
 				for ally: Player in get_tree().get_nodes_in_group("players"):
 					if _flat_distance(ally.global_position) <= PlayerClasses.smoke_radius(self):
 						ally._restore_stamina.rpc_id(ally.get_multiplayer_authority())
-			return "Дым: разбежалось существ %d" % count
+			return "Дым: разбежалось существ %d, подлечено %d" % [count, healed]
 	return ""
 
 
@@ -1078,6 +1097,9 @@ func _interact_result(result: Dictionary) -> void:
 		hud.show_message(message)
 	if result.get("open_shop", false):
 		hud.open_shop(ShopCatalog.ITEMS, player_class)
+		return
+	if result.get("open_workbench", false):
+		hud.open_shop(ShopCatalog.WORKBENCH, player_class, "workbench", "Верстак")
 		return
 	if result.get("open_upgrades", false):
 		_open_upgrades()
@@ -1260,6 +1282,51 @@ func _request_shoot(weapon: String, origin: Vector3, direction: Vector3, spread:
 				add_xp(PlayerClasses.XP_KILL)
 			_interact_result.rpc_id(get_multiplayer_authority(), {"message": "%s повержен!" % creature.display_name})
 	_shot_effect.rpc(weapon, hits)
+
+
+func armor_protection() -> float:
+	var total := 0.0
+	for part: Dictionary in armor.values():
+		total += part.protection
+	return minf(total, MAX_ARMOR)
+
+
+## Владелец: надеть броню из руки. Вещь уходит из инвентаря сразу,
+## хост проверяет, что это и правда броня, и надевает.
+func wear_armor(item: ArmorItem) -> void:
+	var path := held_scene
+	inventory.take_selected()
+	_request_wear.rpc_id(1, path)
+	hud.show_message("Надето: %s (защита %d%%)" % [item.display_name, roundi(item.protection * 100.0)])
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_wear(path: String) -> void:
+	if not _from_owner() or not path.begins_with(PickupItem.ITEMS_DIR):
+		return
+	var item := load(path).instantiate() as ArmorItem
+	if item == null:
+		return
+	var parts := armor.duplicate()
+	parts[item.slot] = {"name": item.display_name, "protection": item.protection, "durability": item.durability, "look": item.look}
+	item.free()
+	armor = parts
+	SoundBank.everyone(get_tree(), "metal_drop", global_position + Vector3.UP)
+
+
+## Хост: каждый удар портит всё надетое, сломанное снимается
+func _wear_out_armor() -> void:
+	if armor.is_empty():
+		return
+	var parts := {}
+	for slot: String in armor:
+		var part: Dictionary = armor[slot].duplicate()
+		part.durability -= 1
+		if part.durability > 0:
+			parts[slot] = part
+		else:
+			_interact_result.rpc_id(get_multiplayer_authority(), {"message": "Сломалось: %s" % part.name})
+	armor = parts
 
 
 ## Хост: Кукурузник схватил (path) или отпустил (пустой путь)
@@ -1471,6 +1538,7 @@ func _apply_class_look() -> void:
 	_body.add_child(_model)
 	_model.position.y = -STAND_HEIGHT / 2.0
 	_model.setup(player_class, self)
+	_model.set_armor(armor)
 	_body.mesh = null
 
 
@@ -1494,7 +1562,7 @@ func _on_panel_action(kind: String, id: String) -> void:
 		"end":
 			hud.close_panel()
 			get_tree().current_scene.call("_leave")
-		"shop":
+		"shop", "workbench":
 			_request_buy.rpc_id(1, id)
 		"upgrade":
 			_request_upgrade.rpc_id(1, id)

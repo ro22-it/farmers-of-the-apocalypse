@@ -46,7 +46,7 @@ const DATA := {
 		"hat": "hood",
 		"ability": "Дым",
 		"cooldown": 40.0,
-		"description": "Рядом со скупкой всё продаётся на 30% дороже.\nQ — Дым: существа рядом в ужасе убегают.\nСлабость: хрупкий, меньше выносливости.",
+		"description": "Рядом со скупкой всё продаётся на 30% дороже.\nQ — Дым: существа рядом в ужасе убегают, союзники лечатся.\nСлабость: хрупкий, меньше выносливости.",
 	},
 }
 
@@ -242,12 +242,14 @@ static func water_amount(player: Node) -> float:
 
 
 ## Огнестрел и снаряжение охотника, инструменты механика
-const HUNTER_GEAR := ["slingshot", "shotgun", "rifle", "ammo"]
+const HUNTER_GEAR := ["slingshot", "shotgun", "rifle", "ammo", "armor_jacket"]
 const MECHANIC_GEAR := ["shovel", "hammer", "watering_can", "flashlight", "pitchfork", "trap"]
 
 
 ## Механику инструменты дешевле, охотнику — оружие и патроны
 static func shop_price(player_class: String, entry: Dictionary) -> int:
+	if player_class == "mechanic" and entry.get("workbench", false):
+		return maxi(int(round(entry.price * 0.5)), 1)
 	if (player_class == "mechanic" and entry.id in MECHANIC_GEAR) or (player_class == "hunter" and entry.id in HUNTER_GEAR):
 		return int(round(entry.price * 0.75))
 	return entry.price

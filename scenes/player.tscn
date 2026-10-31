@@ -66,6 +66,9 @@ properties/3/replication_mode = 2
 properties/4/path = NodePath(".:ammo")
 properties/4/spawn = true
 properties/4/replication_mode = 2
+properties/5/path = NodePath(".:armor")
+properties/5/spawn = true
+properties/5/replication_mode = 2
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2

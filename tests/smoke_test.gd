@@ -666,8 +666,9 @@ func _run() -> void:
 		if node is Trap:
 			placed = node
 	check(placed != null and player.inventory.get_selected().is_empty(), "капкан поставлен на землю")
-	var taran := director.spawn_taran(Vector3(placed.global_position.x, 0.3, placed.global_position.z - 8.0))
-	check(await wait_for(func(): return taran.state == Creature.State.TRAPPED, 300), "Таран бросился и попал в капкан")
+	var taran := director.spawn_taran(Vector3(placed.global_position.x, 0.3, placed.global_position.z - 6.0))
+	var trapped_ok := await wait_for(func(): return taran.state == Creature.State.TRAPPED, 300)
+	check(trapped_ok, "Таран бросился и попал в капкан (состояние %d, Таран %s, капкан %s, игрок %s)" % [taran.state, taran.global_position, placed.global_position, player.global_position])
 	player.inventory.add("res://scenes/items/rifle.tscn", "Винтовка", {"loaded": 5})
 	await frames(3)
 	var taran_ref: WeakRef = weakref(taran)
@@ -930,6 +931,34 @@ func _run() -> void:
 	await frames(3)
 	check(not is_instance_valid(lord) or lord.is_queued_for_deletion(), "Хозяин леса повержен")
 	check(economy.money == lord_money + ForestLord.REWARD, "за Хозяина леса ферме %d монет" % ForestLord.REWARD)
+
+	# --- Верстак и броня ---
+	if player._tumble:
+		player._end_tumble()
+	player.revive(Player.MAX_HEALTH)
+	player.health = Player.MAX_HEALTH
+	var bench: Workbench = main.get_node("Workbench")
+	player.global_position = bench.global_position + Vector3(0, 0.05, 1.5)
+	await frames(5)
+	economy.money = 100
+	player._request_buy.rpc_id(1, "armor_pot")
+	await frames(5)
+	var pot_found := false
+	for node in main.get_node("Items").get_children():
+		pot_found = pot_found or (node is ArmorItem and node.global_position.distance_to(bench.global_position) < 2.0)
+	check(pot_found and economy.money == 100 - 12, "на верстаке собран шлем из кастрюли")
+	player._request_wear.rpc_id(1, "res://scenes/items/armor_pot.tscn")
+	await frames(3)
+	check(player.armor.has("head"), "шлем надет")
+	player.take_damage(20.0, player.global_position + Vector3.FORWARD)
+	await frames(3)
+	check(is_equal_approx(player.health, 100.0 - 20.0 * 0.88), "шлем снял 12%% урона (здоровье %.1f)" % player.health)
+	check(player.armor.head.durability == 5, "шлем износился на 1")
+	check(not FarmUpgrades.find("searchlights").is_empty() and main.get_node_or_null("UpgradeSearchlights") != null, "прожекторы есть в улучшениях")
+	if player._tumble:
+		player._end_tumble()
+	player.armor = {}
+	player.health = Player.MAX_HEALTH
 
 	# --- Погода: полнолуние по расписанию, ливень поливает грядки ---
 	check(Weather.pick(7) == "full_moon" and Weather.pick(1) == "clear", "полнолуние на 7-ю ночь, первая ночь ясная")

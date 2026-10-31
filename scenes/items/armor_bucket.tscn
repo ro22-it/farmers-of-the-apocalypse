@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/armor_item.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
+
+[sub_resource type="CylinderShape3D" id="shape"]
+radius = 0.2
+height = 0.3
+
+[sub_resource type="StandardMaterial3D" id="mat"]
+albedo_color = Color(0.5, 0.52, 0.55, 1)
+metallic = 0.6
+roughness = 0.6
+
+[sub_resource type="CylinderMesh" id="mesh"]
+material = SubResource("mat")
+top_radius = 0.2
+bottom_radius = 0.2
+height = 0.3
+radial_segments = 12
+
+[node name="armor_bucket" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 1.0
+script = ExtResource("1_item")
+display_name = "Нагрудник из ведра"
+sell_price = 0
+hand_position = Vector3(0.3, -0.3, -0.6)
+slot = "body"
+protection = 0.2
+durability = 8
+look = "bucket"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")

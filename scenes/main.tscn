@@ -22,6 +22,7 @@
 [ext_resource type="Script" path="res://scripts/world/upgrade_toggle.gd" id="25_toggle"]
 [ext_resource type="PackedScene" path="res://scenes/world/upgrade_board.tscn" id="26_board"]
 [ext_resource type="Script" path="res://scripts/world/tower_light.gd" id="27_tower_light"]
+[ext_resource type="PackedScene" path="res://scenes/world/workbench.tscn" id="32_workbench"]
 [ext_resource type="PackedScene" path="res://scenes/items/slingshot.tscn" id="28_slingshot"]
 [ext_resource type="Script" path="res://scripts/world/forest_fill.gd" id="29_forest"]
 [ext_resource type="Script" path="res://scripts/world/ambience.gd" id="30_ambience"]
@@ -552,6 +553,85 @@ script = ExtResource("27_tower_light")
 light_color = Color(1, 0.85, 0.55, 1)
 light_energy = 3.5
 omni_range = 16.0
+
+[node name="UpgradeSearchlights" type="Node3D" parent="."]
+script = ExtResource("25_toggle")
+upgrade_id = "searchlights"
+
+[node name="Post0" type="CSGBox3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 1.6, -12)
+use_collision = true
+size = Vector3(0.25, 3.2, 0.25)
+material = SubResource("tower_wood")
+
+[node name="Lamp0" type="CSGBox3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 3.3, -12)
+size = Vector3(0.5, 0.35, 0.5)
+material = SubResource("tower_wood")
+
+[node name="Light0" type="OmniLight3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 3.0, -12)
+script = ExtResource("27_tower_light")
+light_color = Color(0.95, 0.95, 1, 1)
+light_energy = 3.0
+omni_range = 14.0
+
+[node name="Post1" type="CSGBox3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 1.6, -12)
+use_collision = true
+size = Vector3(0.25, 3.2, 0.25)
+material = SubResource("tower_wood")
+
+[node name="Lamp1" type="CSGBox3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 3.3, -12)
+size = Vector3(0.5, 0.35, 0.5)
+material = SubResource("tower_wood")
+
+[node name="Light1" type="OmniLight3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 3.0, -12)
+script = ExtResource("27_tower_light")
+light_color = Color(0.95, 0.95, 1, 1)
+light_energy = 3.0
+omni_range = 14.0
+
+[node name="Post2" type="CSGBox3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 1.6, 21)
+use_collision = true
+size = Vector3(0.25, 3.2, 0.25)
+material = SubResource("tower_wood")
+
+[node name="Lamp2" type="CSGBox3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 3.3, 21)
+size = Vector3(0.5, 0.35, 0.5)
+material = SubResource("tower_wood")
+
+[node name="Light2" type="OmniLight3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 3.0, 21)
+script = ExtResource("27_tower_light")
+light_color = Color(0.95, 0.95, 1, 1)
+light_energy = 3.0
+omni_range = 14.0
+
+[node name="Post3" type="CSGBox3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 1.6, 21)
+use_collision = true
+size = Vector3(0.25, 3.2, 0.25)
+material = SubResource("tower_wood")
+
+[node name="Lamp3" type="CSGBox3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 3.3, 21)
+size = Vector3(0.5, 0.35, 0.5)
+material = SubResource("tower_wood")
+
+[node name="Light3" type="OmniLight3D" parent="UpgradeSearchlights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 3.0, 21)
+script = ExtResource("27_tower_light")
+light_color = Color(0.95, 0.95, 1, 1)
+light_energy = 3.0
+omni_range = 14.0
+
+[node name="Workbench" parent="." instance=ExtResource("32_workbench")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -9.5)
 
 [node name="Items" type="Node3D" parent="."]
 

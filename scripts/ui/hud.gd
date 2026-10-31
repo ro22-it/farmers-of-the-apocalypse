@@ -237,11 +237,12 @@ func panel_kind() -> String:
 	return _panel_kind
 
 
-func open_shop(items: Array, player_class: String) -> void:
+func open_shop(items: Array, player_class: String, kind := "shop", title := "Лавка старого торговца") -> void:
 	var rows := []
+	var verb := "Собрать за %d" if kind == "workbench" else "Купить за %d"
 	for entry in items:
-		rows.append({"text": entry.name, "button": "Купить за %d" % PlayerClasses.shop_price(player_class, entry), "id": entry.id})
-	open_panel("shop", "Лавка старого торговца", _money_line(), rows)
+		rows.append({"text": entry.name, "button": verb % PlayerClasses.shop_price(player_class, entry), "id": entry.id})
+	open_panel(kind, title, _money_line(), rows)
 
 
 func set_clock(text: String) -> void:

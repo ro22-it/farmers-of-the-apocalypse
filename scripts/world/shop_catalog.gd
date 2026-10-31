@@ -19,11 +19,20 @@ const ITEMS := [
 	{"id": "shotgun", "name": "Двустволка", "price": 60, "scene": "res://scenes/items/shotgun.tscn", "state": {}},
 	{"id": "rifle", "name": "Винтовка", "price": 90, "scene": "res://scenes/items/rifle.tscn", "state": {}},
 	{"id": "ammo", "name": "Патроны ×6", "price": 12, "scene": "res://scenes/items/ammo_box.tscn", "state": {}},
+	{"id": "armor_helmet", "name": "Каска (голова, защита 20%)", "price": 45, "scene": "res://scenes/items/armor_helmet.tscn", "state": {}},
+	{"id": "armor_jacket", "name": "Охотничья куртка (тело, защита 30%)", "price": 60, "scene": "res://scenes/items/armor_jacket.tscn", "state": {}},
+]
+
+## Верстак: самодельная броня из хлама
+const WORKBENCH := [
+	{"id": "armor_pot", "name": "Шлем из кастрюли (голова, 12%)", "price": 12, "scene": "res://scenes/items/armor_pot.tscn", "state": {}, "workbench": true},
+	{"id": "armor_bucket", "name": "Нагрудник из ведра (тело, 20%)", "price": 18, "scene": "res://scenes/items/armor_bucket.tscn", "state": {}, "workbench": true},
+	{"id": "armor_tires", "name": "Наколенники из покрышек (ноги, 10%)", "price": 12, "scene": "res://scenes/items/armor_tires.tscn", "state": {}, "workbench": true},
 ]
 
 
 static func find(id: String) -> Dictionary:
-	for entry in ITEMS:
+	for entry in ITEMS + WORKBENCH:
 		if entry.id == id:
 			return entry
 	return {}

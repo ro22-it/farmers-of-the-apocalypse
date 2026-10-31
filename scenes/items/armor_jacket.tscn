@@ -1,0 +1,43 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/armor_item.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
+
+[sub_resource type="BoxShape3D" id="shape"]
+size = Vector3(0.42, 0.4, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="mat"]
+albedo_color = Color(0.35, 0.42, 0.22, 1)
+metallic = 0.0
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="mesh"]
+material = SubResource("mat")
+size = Vector3(0.42, 0.4, 0.15)
+
+[node name="armor_jacket" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 1.0
+script = ExtResource("1_item")
+display_name = "Охотничья куртка"
+sell_price = 0
+hand_position = Vector3(0.3, -0.3, -0.6)
+slot = "body"
+protection = 0.3
+durability = 16
+look = "jacket"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("mesh")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")
