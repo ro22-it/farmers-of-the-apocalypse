@@ -20,6 +20,17 @@ const DATA := {
 		"cooldown": 1.0, "magazine": 5, "reload": 2.5, "recoil": 4.0, "impulse": 8.0,
 		"knockback": 1.5, "sound": "rifle", "tracer": Color(1.0, 0.95, 0.7),
 	},
+	# Самодельное с верстака: без патронов, но со своими причудами
+	"nailgun": {
+		"name": "Гвоздемёт", "damage": 1, "pellets": 1, "spread": 3.0, "range": 22.0,
+		"cooldown": 0.28, "magazine": 0, "reload": 0.0, "recoil": 1.2, "impulse": 1.5,
+		"knockback": 0.4, "sound": "metal_hit", "tracer": Color(0.75, 0.78, 0.82),
+	},
+	"corn_cannon": {
+		"name": "Кукурузная пушка", "damage": 3, "pellets": 1, "spread": 2.0, "range": 30.0,
+		"cooldown": 1.6, "magazine": 0, "reload": 0.0, "recoil": 9.0, "impulse": 14.0,
+		"knockback": 4.0, "sound": "thud", "tracer": Color(1.0, 0.85, 0.2),
+	},
 }
 
 ## Во что попадают пули: мир, предметы, существа, животные

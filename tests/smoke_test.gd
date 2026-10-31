@@ -960,6 +960,26 @@ func _run() -> void:
 	player.armor = {}
 	player.health = Player.MAX_HEALTH
 
+	# --- Самодельное оружие: гвоздемёт без патронов ---
+	player.global_position = Vector3(-14.0, 0.05, 20.0)
+	player.inventory.take_selected()
+	player.inventory.add("res://scenes/items/nailgun.tscn", "Гвоздемёт")
+	await frames(5)
+	var nail_target := director.spawn_gryadochnik(player.global_position + Vector3(0, 0.3, -5.0))
+	nail_target.trap(10.0)
+	var nail_ref: WeakRef = weakref(nail_target)
+	nail_target = null
+	for i in 6:
+		if nail_ref.get_ref() == null:
+			break
+		aim_at(nail_ref.get_ref().global_position + Vector3(0, 0.4, 0))
+		player._server_next_shot_msec = 0
+		player._next_shot_msec = 0
+		player._on_primary()
+		await frames(5)
+	check(nail_ref.get_ref() == null, "гвоздемёт стреляет без патронов и валит Грядочника")
+	player.inventory.take_selected()
+
 	# --- Сенсорное управление: джойстик ведёт, палец справа поворачивает ---
 	var touch := TouchControls.new()
 	main.add_child(touch)

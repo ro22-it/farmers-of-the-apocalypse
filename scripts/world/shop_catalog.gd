@@ -28,6 +28,8 @@ const WORKBENCH := [
 	{"id": "armor_pot", "name": "Шлем из кастрюли (голова, 12%)", "price": 12, "scene": "res://scenes/items/armor_pot.tscn", "state": {}, "workbench": true},
 	{"id": "armor_bucket", "name": "Нагрудник из ведра (тело, 20%)", "price": 18, "scene": "res://scenes/items/armor_bucket.tscn", "state": {}, "workbench": true},
 	{"id": "armor_tires", "name": "Наколенники из покрышек (ноги, 10%)", "price": 12, "scene": "res://scenes/items/armor_tires.tscn", "state": {}, "workbench": true},
+	{"id": "nailgun", "name": "Гвоздемёт (быстрый, без патронов)", "price": 35, "scene": "res://scenes/items/nailgun.tscn", "state": {}, "workbench": true},
+	{"id": "corn_cannon", "name": "Кукурузная пушка (урон 3, отбрасывает)", "price": 45, "scene": "res://scenes/items/corn_cannon.tscn", "state": {}, "workbench": true},
 ]
 
 

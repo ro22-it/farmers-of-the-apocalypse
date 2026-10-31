@@ -1,0 +1,99 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/gun.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
+
+[sub_resource type="BoxShape3D" id="shape"]
+size = Vector3(0.14, 0.22, 0.55)
+
+[sub_resource type="StandardMaterial3D" id="m0"]
+albedo_color = Color(0.4, 0.42, 0.45, 1)
+metallic = 0.7
+roughness = 0.6
+
+[sub_resource type="CylinderMesh" id="p0"]
+material = SubResource("m0")
+top_radius = 0.07
+bottom_radius = 0.07
+height = 0.55
+radial_segments = 10
+
+[sub_resource type="StandardMaterial3D" id="m1"]
+albedo_color = Color(0.45, 0.3, 0.17, 1)
+metallic = 0.0
+roughness = 0.6
+
+[sub_resource type="CylinderMesh" id="p1"]
+material = SubResource("m1")
+top_radius = 0.075
+bottom_radius = 0.075
+height = 0.06
+radial_segments = 10
+
+[sub_resource type="BoxMesh" id="p2"]
+material = SubResource("m1")
+size = Vector3(0.05, 0.14, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="m2"]
+albedo_color = Color(0.95, 0.8, 0.25, 1)
+metallic = 0.0
+roughness = 0.6
+
+[sub_resource type="CylinderMesh" id="p3"]
+material = SubResource("m2")
+top_radius = 0.035
+bottom_radius = 0.035
+height = 0.12
+radial_segments = 10
+
+[sub_resource type="StandardMaterial3D" id="m3"]
+albedo_color = Color(0.35, 0.55, 0.2, 1)
+metallic = 0.0
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="p4"]
+material = SubResource("m3")
+size = Vector3(0.04, 0.02, 0.18)
+
+[node name="corn_cannon" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 2.5
+script = ExtResource("1_item")
+display_name = "Кукурузная пушка"
+weapon = "corn_cannon"
+hand_position = Vector3(0.27, -0.24, -0.55)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("shape")
+
+[node name="Part0" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.03, -0.1)
+mesh = SubResource("p0")
+
+[node name="Part1" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.03, 0.16)
+mesh = SubResource("p1")
+
+[node name="Part2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.08, 0.05)
+mesh = SubResource("p2")
+
+[node name="Part3" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.03, -0.36)
+mesh = SubResource("p3")
+
+[node name="Part4" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.05)
+mesh = SubResource("p4")
+
+[node name="Muzzle" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, -0.42)
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")
