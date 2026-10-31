@@ -1397,7 +1397,7 @@ func _request_wear(path: String, state := {}) -> void:
 # --- Секретное меню (F4): работает только с паролем, проверяет тот, кто запустил игру ---
 
 ## SHA-256 пароля: в открытом коде виден только хеш, сам пароль — нет
-const CHEAT_HASH := "32adcacdf3ad173d6ec917953f2e1b4c4f6e2bb9151ffe7708fa06861983d30c"
+const CHEAT_HASH := "17dc3303cd10e0824497a0874a4b86275e63c943e3fefba5f5760959dd525fc2"
 const CHEAT_CREATURES := {"Грядочник": "gryadochnik", "Таран": "taran", "Рой": "roj", "Пугальщик": "pugalshik", "Кукурузник": "kukuruznik", "Хозяин леса": "forest_lord"}
 const CHEAT_ITEMS := ["crate", "shotgun", "rifle", "ammo_box", "nailgun", "corn_cannon", "trap", "flashlight", "armor_helmet", "armor_jacket", "shovel", "watering_can"]
 
