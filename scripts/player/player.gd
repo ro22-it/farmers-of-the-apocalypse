@@ -706,7 +706,7 @@ func _on_inventory_changed() -> void:
 	held_active = false
 	hud.update_inventory(inventory)
 	# Хост сохраняет инвентарь, но знает его только со слов владельца
-	_report_inventory.rpc_id(1, inventory.slots)
+	_report_inventory.rpc_id(1, inventory.slots + inventory.backpack)
 
 
 func _update_hud() -> void:
@@ -1086,8 +1086,11 @@ func _report_inventory(slots: Array) -> void:
 func _restore_inventory(slots: Array) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
+	# Сначала пояс, за ним рюкзак (старые сохранения — только пояс)
 	for i in mini(slots.size(), Inventory.SIZE):
 		inventory.slots[i] = slots[i]
+	for i in mini(slots.size() - Inventory.SIZE, Inventory.BACKPACK_SIZE):
+		inventory.backpack[i] = slots[Inventory.SIZE + i]
 	inventory.changed.emit()
 
 

@@ -827,6 +827,9 @@ func _run() -> void:
 				n += 1
 		return n
 	var saved_items: int = count_items.call()
+	player.inventory.backpack[0] = {"path": "res://scenes/items/flashlight.tscn", "name": "Фонарь", "state": {}, "count": 1}
+	player.inventory.changed.emit()
+	await frames(3)
 	check(saver.save(), "игра сохранена")
 	# Портим мир и прогресс
 	main._reset_world(true)
@@ -834,6 +837,8 @@ func _run() -> void:
 	player.skills = PackedStringArray()
 	for i in Inventory.SIZE:
 		player.inventory.slots[i] = {}
+	for i in Inventory.BACKPACK_SIZE:
+		player.inventory.backpack[i] = {}
 	player.inventory.changed.emit()
 	await frames(5)
 	check(economy.money == Economy.START_MONEY and save_plot.state == Plot.State.UNTILLED, "мир сброшен")
@@ -851,6 +856,7 @@ func _run() -> void:
 	for slot: Dictionary in player.inventory.slots:
 		has_hammer = has_hammer or str(slot.get("path", "")).ends_with("hammer.tscn")
 	check(has_hammer, "вернулся инвентарь игрока")
+	check(player.inventory.backpack[0].get("path", "").ends_with("flashlight.tscn"), "вернулся рюкзак игрока")
 	saver.delete_save()
 	check(not FileAccess.file_exists(SaveSystem.TEST_SAVE), "тестовое сохранение удалено")
 
