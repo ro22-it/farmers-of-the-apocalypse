@@ -124,6 +124,19 @@ static func load_meta() -> Dictionary:
 	return meta
 
 
+## Классы, которые открываются забегами: класс -> до какой ночи дожить
+const CLASS_UNLOCKS := {"herder": 4, "herbalist": 8}
+
+
+## Открыт ли класс на этом компьютере
+static func class_unlocked(class_id: String, meta: Dictionary) -> bool:
+	return meta.best_night >= CLASS_UNLOCKS.get(class_id, 0)
+
+
+static func unlock_hint(class_id: String) -> String:
+	return "Откроется, когда доживёте до %d-й ночи" % CLASS_UNLOCKS.get(class_id, 0)
+
+
 static func meta_line(meta: Dictionary) -> String:
 	if meta.runs == 0:
 		return "Первый забег. Цель — дожить до рассвета после %d-й ночи." % WIN_NIGHTS

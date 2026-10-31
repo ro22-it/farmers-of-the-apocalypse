@@ -60,7 +60,17 @@ func show_main(status: String) -> void:
 	_main_panel.show()
 	_set_busy(false)
 	_status.text = status
-	_records.text = RunDirector.meta_line(RunDirector.load_meta())
+	var meta := RunDirector.load_meta()
+	_records.text = RunDirector.meta_line(meta)
+	var locked := []
+	for id in RunDirector.CLASS_UNLOCKS:
+		if not RunDirector.class_unlocked(id, meta):
+			locked.append("%s — ночь %d" % [PlayerClasses.display_name(id), RunDirector.CLASS_UNLOCKS[id]])
+	if not locked.is_empty():
+		_records.text += "\nЗакрыты: " + ", ".join(locked)
+	if _class_option:
+		_fill_classes()
+		_on_class_selected(_class_option.selected)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
@@ -100,6 +110,20 @@ func _resume() -> void:
 func _set_busy(busy: bool) -> void:
 	for button in _buttons:
 		button.disabled = busy
+
+
+## Список классов: закрытые помечены замком и выбрать их нельзя
+func _fill_classes() -> void:
+	var meta := RunDirector.load_meta()
+	_class_option.clear()
+	for id in PlayerClasses.ORDER:
+		var unlocked := RunDirector.class_unlocked(id, meta)
+		_class_option.add_item(PlayerClasses.display_name(id) + ("" if unlocked else " 🔒"))
+		_class_option.set_item_disabled(_class_option.item_count - 1, not unlocked)
+	var current := PlayerClasses.ORDER.find(Network.player_class)
+	if current < 0 or not RunDirector.class_unlocked(Network.player_class, meta):
+		current = 0
+	_class_option.select(current)
 
 
 func _on_class_selected(index: int) -> void:
@@ -160,9 +184,7 @@ func _build_main() -> Control:
 	_class_option = OptionButton.new()
 	_class_option.add_theme_font_size_override("font_size", 18)
 	_class_option.custom_minimum_size = Vector2(0, 40)
-	for id in PlayerClasses.ORDER:
-		_class_option.add_item(PlayerClasses.display_name(id))
-	_class_option.select(maxi(PlayerClasses.ORDER.find(Network.player_class), 0))
+	_fill_classes()
 	_class_option.item_selected.connect(_on_class_selected)
 	box.add_child(_class_option)
 	_class_description = _make_label("", 14, HORIZONTAL_ALIGNMENT_LEFT)
