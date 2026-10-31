@@ -355,7 +355,8 @@
 
 ### Публикация (сделано, 31.10.2026)
 - Публичный репозиторий: https://github.com/artur39123/farmers-of-the-apocalypse, README со скриншотами.
-- Релиз v0.1: сборки macOS (universal, без подписи Apple) и Windows x86_64. Android — позже, вместе с сенсорным управлением.
+- Релиз v0.1: сборки macOS (universal, без подписи Apple) и Windows x86_64.
+- Релиз v0.2: плюс Android APK (arm64, рендер Mobile на телефоне). Ключ подписи — ~/.android/farmers-release.keystore, пароль в ~/.android/farmers-release-password.txt (не в репозитории). Сборка APK: переменные GODOT_ANDROID_KEYSTORE_RELEASE_PATH/USER/PASSWORD, затем `--export-release "Android"`.
 - Сборка: `godot --headless --path . --export-release "macOS" build/FarmersOfTheApocalypse-macOS.zip` и `--export-release "Windows" build/windows/FarmersOfTheApocalypse.exe`.
 
 ## Открытые вопросы
