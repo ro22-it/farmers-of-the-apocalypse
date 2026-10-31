@@ -707,7 +707,9 @@ func _update_hud() -> void:
 			hint = target.get_hint(_get_held_item())
 		elif target is Truck:
 			var truck: Truck = target
-			if truck.free_seats_count() == 0:
+			if truck.is_flipped():
+				hint = "E — перевернуть пикап"
+			elif truck.free_seats_count() == 0:
 				hint = "Пикап: мест нет"
 			else:
 				hint = "E — сесть %s" % Truck.SEAT_NAMES[truck.seats.find(0)]
@@ -884,6 +886,9 @@ func _request_seat(path: NodePath) -> void:
 		return
 	var truck := get_node_or_null(path) as Truck
 	if truck == null or truck.global_position.distance_to(global_position) > MAX_REACH + 2.0:
+		return
+	if truck.is_flipped():
+		truck.flip_upright()
 		return
 	var index := truck.take_seat(get_multiplayer_authority())
 	if index == -1:

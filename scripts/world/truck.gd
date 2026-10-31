@@ -44,6 +44,10 @@ var _steer_input := 0.0
 var _brake_input := 0.0
 var _input_age := INF
 var _start_transform: Transform3D
+## Сколько секунд пикап лежит перевёрнутым
+var _flipped_time := 0.0
+const FLIP_UP_DOT := 0.35
+const AUTO_FLIP_TIME := 3.0
 var _driven := 0.0
 var _last_position := Vector3.ZERO
 ## Кого и когда сбили: чтобы не бить одного игрока каждый кадр
@@ -91,6 +95,7 @@ func _process(delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	if not multiplayer.is_server():
 		return
+	_check_flipped(delta)
 	_input_age += delta
 	if _input_age > INPUT_TIMEOUT or seats[DRIVER_SEAT] == 0:
 		_throttle = 0.0
@@ -219,6 +224,34 @@ func free_seats_count() -> int:
 
 
 ## Только на хосте: вернуть пикап к воротам, всех высадить
+## Лежит на боку или на крыше
+func is_flipped() -> bool:
+	return global_basis.y.y < FLIP_UP_DOT
+
+
+## Хост: поставить на колёса там же, носом туда же
+func flip_upright() -> void:
+	var forward := global_basis.z
+	forward.y = 0.0
+	if forward.length() < 0.1:
+		forward = Vector3.FORWARD
+	global_transform = Transform3D(Basis.looking_at(-forward.normalized(), Vector3.UP), global_position + Vector3.UP * 1.2)
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	_flipped_time = 0.0
+	SoundBank.everyone(get_tree(), "thud", global_position)
+
+
+## Перевёрнутый и почти стоящий пикап сам встаёт на колёса через пару секунд
+func _check_flipped(delta: float) -> void:
+	if is_flipped() and linear_velocity.length() < 1.5:
+		_flipped_time += delta
+		if _flipped_time >= AUTO_FLIP_TIME:
+			flip_upright()
+	else:
+		_flipped_time = 0.0
+
+
 func reset() -> void:
 	motor_upgraded = false
 	seats = [0, 0, 0, 0]

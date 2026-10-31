@@ -45,6 +45,8 @@ func aim_at(target: Vector3) -> void:
 func _run() -> void:
 	await frames(5)
 	root.get_node("Network").player_class = ""
+	# Обучение в тесте всегда включено, что бы ни стояло в настройках игрока
+	root.get_node("Network").tutorial_enabled = true
 	main._start_host()
 	await frames(120)
 	player = main.get_node("Players/1")
@@ -979,6 +981,11 @@ func _run() -> void:
 		await frames(5)
 	check(nail_ref.get_ref() == null, "гвоздемёт стреляет без патронов и валит Грядочника")
 	player.inventory.take_selected()
+
+	# --- Перевёрнутый пикап встаёт сам ---
+	var flip_truck: Truck = main.get_node("Truck")
+	flip_truck.global_transform = Transform3D(Basis(Vector3.FORWARD, PI), flip_truck.global_position + Vector3.UP * 1.5)
+	check(await wait_for(func(): return not flip_truck.is_flipped(), 400), "перевёрнутый пикап сам встал на колёса")
 
 	# --- Сенсорное управление: джойстик ведёт, палец справа поворачивает ---
 	var touch := TouchControls.new()
