@@ -31,6 +31,8 @@ func _ready() -> void:
 	_run = RunDirector.new()
 	_run.name = "RunDirector"
 	add_child(_run)
+	if TouchControls.wanted():
+		add_child(TouchControls.new())
 	_player_spawner.spawn_function = _create_player
 	for item in _items.get_children():
 		_placed_items.append({"name": item.name, "scene": item.scene_file_path, "transform": item.transform})

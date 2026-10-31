@@ -131,6 +131,10 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+func hide_controls_help() -> void:
+	_controls.visible = false
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("toggle_help"):
 		_controls.visible = not _controls.visible

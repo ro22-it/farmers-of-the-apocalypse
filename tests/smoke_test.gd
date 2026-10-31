@@ -960,6 +960,39 @@ func _run() -> void:
 	player.armor = {}
 	player.health = Player.MAX_HEALTH
 
+	# --- Сенсорное управление: джойстик ведёт, палец справа поворачивает ---
+	var touch := TouchControls.new()
+	main.add_child(touch)
+	player.global_position = Vector3(-14.0, 0.05, 20.0)
+	player.rotation.y = 0.0
+	await frames(3)
+	var screen: Vector2 = touch._size()
+	# Касания подаём прямо в обработчики, в координатах холста: без окна
+	# пересчёт из координат экрана в автотестах не совпадает с телефонным
+	# Даём приземлиться после прошлых проверок
+	await frames(45)
+	var stick_at := Vector2(screen.x * 0.15, screen.y * 0.7)
+	touch._touch_down(0, stick_at)
+	touch._touch_move(0, stick_at + Vector2(0, -TouchControls.JOYSTICK_RADIUS), Vector2(0, -TouchControls.JOYSTICK_RADIUS))
+	var touch_start := player.global_position
+	await frames(40)
+	check(player.global_position.z < touch_start.z - 1.0, "джойстик ведёт игрока вперёд")
+	touch._touch_up(0)
+	var look_at := Vector2(screen.x * 0.6, screen.y * 0.4)
+	touch._touch_down(1, look_at)
+	touch._touch_move(1, look_at + Vector2(120, 0), Vector2(120, 0))
+	await frames(2)
+	check(absf(player.rotation.y) > 0.2, "палец справа поворачивает камеру")
+	touch._touch_up(1)
+	var jump_button := 0
+	touch._touch_down(2, touch._button_center(jump_button))
+	await frames(3)
+	check(player.velocity.y > 0.5, "кнопка «Прыжок» подбрасывает игрока")
+	touch._touch_up(2)
+	touch.queue_free()
+	player.touch_mode = false
+	await frames(2)
+
 	# --- Погода: полнолуние по расписанию, ливень поливает грядки ---
 	check(Weather.pick(7) == "full_moon" and Weather.pick(1) == "clear", "полнолуние на 7-ю ночь, первая ночь ясная")
 	day_night.cycle_time = DayNight.DAY_LENGTH + 10.0

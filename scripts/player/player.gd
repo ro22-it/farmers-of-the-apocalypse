@@ -155,6 +155,9 @@ var _tumble_left := 0.0
 
 ## Вид от третьего лица в пикапе — по желанию (V), основной вид из кабины
 var third_person := false
+## Играем пальцами (телефон): включает TouchControls
+var touch_mode := false
+const TOUCH_LOOK_FACTOR := 1.6
 ## Надетая броня: {слот: {name, protection, durability, look}}. Меняет хост.
 var armor := {}:
 	set(value):
@@ -246,7 +249,10 @@ func _exit_tree() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+	# На телефоне касания приходят и как клики мыши — их не считаем ударами
+	if touch_mode and event is InputEventMouseButton:
+		return
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED and not touch_mode:
 		if event is InputEventMouseButton and event.pressed:
 			capture_mouse()
 			get_viewport().set_input_as_handled()
@@ -256,12 +262,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventMouseMotion:
-		if Time.get_ticks_msec() < _ignore_mouse_until:
+		if Time.get_ticks_msec() < _ignore_mouse_until or touch_mode:
 			return
-		var sensitivity: float = MOUSE_SENSITIVITY * _setting("mouse_sensitivity", 1.0)
-		rotate_y(-event.relative.x * sensitivity)
-		_head.rotate_x(-event.relative.y * sensitivity * (-1.0 if _setting("invert_y", false) else 1.0))
-		_head.rotation.x = clampf(_head.rotation.x, deg_to_rad(-89.0), deg_to_rad(89.0))
+		_look(event.relative)
 	elif event.is_action_pressed("primary"):
 		_on_primary()
 	elif event.is_action_released("primary"):
@@ -310,7 +313,7 @@ func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
 	# Пока открыта пауза или меню, персонаж стоит
-	var controls := (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or test_controls) and not downed
+	var controls := (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or test_controls or touch_mode) and not downed
 	if _tumble:
 		_update_tumble(delta)
 		_update_hud()
@@ -416,7 +419,22 @@ func revive(amount: float) -> void:
 
 ## При захвате курсор переносится в центр окна, и система присылает один большой
 ## рывок мыши. Игнорируем движение в первые мгновения, чтобы камера не дёргалась.
+## Поворот камеры: мышь или палец по правой половине экрана
+func _look(relative: Vector2) -> void:
+	var sensitivity: float = MOUSE_SENSITIVITY * _setting("mouse_sensitivity", 1.0)
+	rotate_y(-relative.x * sensitivity)
+	_head.rotate_x(-relative.y * sensitivity * (-1.0 if _setting("invert_y", false) else 1.0))
+	_head.rotation.x = clampf(_head.rotation.x, deg_to_rad(-89.0), deg_to_rad(89.0))
+
+
+## Сенсорное управление (TouchControls): обзор пальцем
+func touch_look(relative: Vector2) -> void:
+	_look(relative * TOUCH_LOOK_FACTOR)
+
+
 func capture_mouse() -> void:
+	if touch_mode:
+		return
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_ignore_mouse_until = Time.get_ticks_msec() + MOUSE_CAPTURE_GRACE_MS
 

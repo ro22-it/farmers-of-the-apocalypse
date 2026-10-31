@@ -88,6 +88,10 @@ func _on_settings_closed() -> void:
 		_main_panel.show()
 
 
+func is_paused() -> bool:
+	return _pause_panel.visible
+
+
 func _resume() -> void:
 	_pause_panel.hide()
 	get_tree().call_group("local_player", "capture_mouse")
