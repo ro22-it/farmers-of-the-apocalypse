@@ -164,6 +164,8 @@ var armor := {}:
 		armor = value
 		if _model:
 			_model.set_armor(armor)
+		if is_node_ready() and is_multiplayer_authority() and hud.panel_kind() == "equipment":
+			_open_equipment()
 ## Больше этой доли урона броня не снимает
 const MAX_ARMOR := 0.7
 ## Кто тащит игрока в лес (Кукурузник). Решает хост, следует сам владелец.
@@ -243,8 +245,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if multiplayer.is_server():
 		_server_release_grab(false)
-		var truck := get_tree().get_first_node_in_group("truck") as Truck
-		if truck:
+		for truck: Truck in get_tree().get_nodes_in_group("vehicles"):
 			truck.free_seat(get_multiplayer_authority())
 
 
@@ -284,11 +285,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("pickup"):
 		_try_pickup()
 	elif event.is_action_pressed("drop"):
-		_drop_selected()
+		# G по верстаку, столу или бочке с пустыми руками — поднять/поставить
+		var target := _get_target()
+		if _carrying or (inventory.get_selected().is_empty() and target is Interactable and target.movable):
+			_request_carry.rpc_id(1, NodePath() if _carrying else target.get_path())
+			_carrying = not _carrying
+		else:
+			_drop_selected()
 	elif event.is_action_pressed("ability"):
 		_try_ability()
 	elif event.is_action_pressed("skills"):
 		_open_skills()
+	elif event.is_action_pressed("equipment"):
+		_open_equipment()
+	elif event.is_action_pressed("cheat_menu"):
+		_open_cheats()
 	elif event.is_action_pressed("camera_toggle") and _truck:
 		third_person = not third_person
 	elif event.is_action_pressed("debug_skip_phase"):
@@ -355,6 +366,8 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_footsteps()
+	if multiplayer.is_server() and is_instance_valid(_server_carried):
+		_move_carried()
 	# Здоровье восстанавливает хост
 	if multiplayer.is_server() and not downed and health < MAX_HEALTH \
 			and Time.get_ticks_msec() - _last_hit_msec > REGEN_DELAY * 1000.0:
@@ -386,6 +399,7 @@ func take_damage(amount: float, from_position: Vector3, tumble := false) -> void
 		return
 	if player_class == "herbalist":
 		amount *= HERBALIST_DAMAGE_TAKEN
+	amount *= RunDirector.difficulty(get_tree(), RunDirector.DIFFICULTY_DAMAGE)
 	amount *= 1.0 - armor_protection()
 	_wear_out_armor()
 	health = maxf(health - amount, 0.0)
@@ -487,7 +501,23 @@ func release_grab(throw := false) -> void:
 # --- Действия владельца ---
 
 ## Возвращает скорость с учётом бега и тратит или восстанавливает выносливость.
+## Энергетик: до этого момента бег не тратит выносливость
+var _energy_until_msec := 0
+const ENERGY_TIME := 60.0
+
+
+## Владелец: выпить энергетик из руки
+func drink_energy() -> void:
+	inventory.take_one()
+	_energy_until_msec = Time.get_ticks_msec() + int(ENERGY_TIME * 1000.0)
+	stamina = max_stamina
+	_exhausted = false
+	hud.show_message("Энергетик! Минуту бегаете без устали")
+
+
 func _update_stamina(delta: float, input_dir: Vector2) -> float:
+	if Time.get_ticks_msec() < _energy_until_msec:
+		stamina = max_stamina
 	var wants_sprint := Input.is_action_pressed("sprint") and input_dir.y < -0.1 and not _crouching
 	if wants_sprint and not _exhausted:
 		stamina = maxf(stamina - stamina_drain * delta, 0.0)
@@ -542,6 +572,9 @@ func _step_up(delta: float) -> void:
 		return
 	if landing.get_normal().y < cos(floor_max_angle):
 		return
+	# На катящиеся предметы не шагаем: они уезжают из-под ног
+	if landing.get_collider() is RigidBody3D:
+		return
 	var height := STEP_HEIGHT - landing.get_travel().length()
 	if height <= 0.01:
 		return
@@ -559,6 +592,9 @@ func _push_bodies(delta: float) -> void:
 		var collision := get_slide_collision(i)
 		var body := collision.get_collider() as RigidBody3D
 		if body == null or body == _grabbed:
+			continue
+		# Стоим на предмете — не толкаем его из-под себя, иначе он выстреливает вверх
+		if collision.get_normal().y > 0.4:
 			continue
 		var push_dir := -collision.get_normal()
 		push_dir.y = 0.0
@@ -636,16 +672,23 @@ func _try_pickup() -> void:
 	if target is Interactable:
 		_request_interact.rpc_id(1, target.get_path(), {"tool": "hand"})
 		return
+	# Тыкву можно и тащить (ЛКМ), и положить в слот (E)
+	if target is Grabbable and target.pocketable:
+		if not inventory.can_take(target.scene_file_path):
+			hud.show_message("Инвентарь полон")
+			return
+		_request_pickup.rpc_id(1, target.get_path())
+		return
 	if not target is PickupItem:
 		return
-	if target.ammo_amount == 0 and not inventory.has_free_slot():
+	if target.ammo_amount == 0 and not inventory.can_take(target.scene_file_path):
 		hud.show_message("Инвентарь полон")
 		return
 	_request_pickup.rpc_id(1, target.get_path())
 
 
 func _drop_selected() -> void:
-	var slot := inventory.take_selected()
+	var slot := inventory.take_one()
 	if slot.is_empty():
 		return
 	# Не роняем предмет сквозь стену, если она ближе обычного
@@ -700,11 +743,13 @@ func _update_hud() -> void:
 	else:
 		var target := _get_target()
 		if target is Grabbable:
-			hint = "ЛКМ — тащить: %s" % target.display_name
+			hint = "ЛКМ — тащить: %s" % target.display_name + ("   E — в слот" if target.pocketable else "")
 		elif target is PickupItem:
 			hint = "E — взять: %s" % target.get_display_name()
 		elif target is Interactable:
 			hint = target.get_hint(_get_held_item())
+			if target.movable and inventory.get_selected().is_empty():
+				hint = (hint + "   " if hint != "" else "") + "G — перенести"
 		elif target is Truck:
 			var truck: Truck = target
 			if truck.is_flipped():
@@ -771,6 +816,13 @@ func _request_push(path: NodePath, impulse: Vector3, offset: Vector3) -> void:
 func _request_pickup(path: NodePath) -> void:
 	if not _from_owner():
 		return
+	var pocket := get_node_or_null(path) as Grabbable
+	if pocket and pocket.pocketable and pocket.holder_count == 0 and not pocket.is_queued_for_deletion() and _in_reach(pocket):
+		var pocket_scene := pocket.scene_file_path
+		var pocket_name := pocket.display_name
+		pocket.queue_free()
+		_give_item.rpc_id(get_multiplayer_authority(), pocket_scene, pocket_name, {})
+		return
 	var item := get_node_or_null(path) as PickupItem
 	# Двое схватили один предмет одновременно — достаётся первому
 	if item == null or item.is_queued_for_deletion() or not _in_reach(item):
@@ -794,10 +846,11 @@ func _request_drop(scene: String, drop_position: Vector3, yaw: float, drop_veloc
 		return
 	if drop_position.distance_to(global_position) > MAX_REACH:
 		drop_position = _camera.global_position
-	var item: PickupItem = load(scene).instantiate()
+	var item: RigidBody3D = load(scene).instantiate()
 	item.position = drop_position
 	item.rotation = Vector3(0.0, yaw, 0.0)
-	item.set_state(state)
+	if item is PickupItem:
+		item.set_state(state)
 	_items_root().add_child(item, true)
 	item.linear_velocity = drop_velocity.limit_length(THROW_SPEED)
 
@@ -901,8 +954,7 @@ func _request_seat(path: NodePath) -> void:
 func _request_unseat() -> void:
 	if not _from_owner():
 		return
-	var truck := get_tree().get_first_node_in_group("truck") as Truck
-	if truck:
+	for truck: Truck in get_tree().get_nodes_in_group("vehicles"):
 		truck.free_seat(get_multiplayer_authority())
 
 
@@ -910,9 +962,9 @@ func _request_unseat() -> void:
 func _drive(throttle: float, steer: float, brake_amount: float) -> void:
 	if not _from_owner():
 		return
-	var truck := get_tree().get_first_node_in_group("truck") as Truck
-	if truck and truck.seats[Truck.DRIVER_SEAT] == get_multiplayer_authority():
-		truck.set_input(throttle, steer, brake_amount)
+	for truck: Truck in get_tree().get_nodes_in_group("vehicles"):
+		if truck.seats[Truck.DRIVER_SEAT] == get_multiplayer_authority():
+			truck.set_input(throttle, steer, brake_amount)
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -1128,7 +1180,7 @@ func _interact_result(result: Dictionary) -> void:
 		_open_upgrades()
 		return
 	if result.get("remove_held", false):
-		inventory.take_selected()
+		inventory.take_one()
 		return
 	if not result.has("consume") and not result.has("refill"):
 		return
@@ -1318,23 +1370,159 @@ func armor_protection() -> float:
 ## хост проверяет, что это и правда броня, и надевает.
 func wear_armor(item: ArmorItem) -> void:
 	var path := held_scene
+	var state: Dictionary = inventory.get_selected().get("state", {})
 	inventory.take_selected()
-	_request_wear.rpc_id(1, path)
+	_request_wear.rpc_id(1, path, state)
 	hud.show_message("Надето: %s (защита %d%%)" % [item.display_name, roundi(item.protection * 100.0)])
 
 
 @rpc("any_peer", "call_local", "reliable")
-func _request_wear(path: String) -> void:
+func _request_wear(path: String, state := {}) -> void:
 	if not _from_owner() or not path.begins_with(PickupItem.ITEMS_DIR):
 		return
 	var item := load(path).instantiate() as ArmorItem
 	if item == null:
 		return
+	item.set_state(state)
 	var parts := armor.duplicate()
-	parts[item.slot] = {"name": item.display_name, "protection": item.protection, "durability": item.durability, "look": item.look}
+	# Надетое раньше на это место падает рядом, а не пропадает
+	if parts.has(item.slot):
+		_drop_armor_part(parts[item.slot])
+	parts[item.slot] = {"name": item.display_name, "protection": item.protection, "durability": item.durability, "look": item.look, "path": path}
 	item.free()
 	armor = parts
 	SoundBank.everyone(get_tree(), "metal_drop", global_position + Vector3.UP)
+
+
+# --- Секретное меню (F4): работает только с паролем, проверяет тот, кто запустил игру ---
+
+## SHA-256 пароля: в открытом коде виден только хеш, сам пароль — нет
+const CHEAT_HASH := "32adcacdf3ad173d6ec917953f2e1b4c4f6e2bb9151ffe7708fa06861983d30c"
+const CHEAT_CREATURES := {"Грядочник": "gryadochnik", "Таран": "taran", "Рой": "roj", "Пугальщик": "pugalshik", "Кукурузник": "kukuruznik", "Хозяин леса": "forest_lord"}
+const CHEAT_ITEMS := ["crate", "shotgun", "rifle", "ammo_box", "nailgun", "corn_cannon", "trap", "flashlight", "armor_helmet", "armor_jacket", "shovel", "watering_can"]
+
+var _cheat_password := ""
+
+
+func _open_cheats() -> void:
+	if _cheat_password == "":
+		_ask_cheat_password()
+		return
+	var rows := [
+		{"header": true, "text": "Мир"},
+		{"text": "Вернуть пикап и трактор на стоянку", "button": "Вернуть", "id": "vehicles"},
+		{"text": "Монеты", "button": "+1000", "id": "money"},
+		{"text": "К закату или рассвету", "button": "Перемотать", "id": "skip"},
+		{"text": "Вылечить меня", "button": "Вылечить", "id": "heal"},
+		{"text": "Убрать всех тварей", "button": "Убрать", "id": "clear"},
+		{"header": true, "text": "Призвать тварь перед собой"},
+	]
+	for creature in CHEAT_CREATURES:
+		rows.append({"text": creature, "button": "Призвать", "id": "c:" + creature})
+	rows.append({"header": true, "text": "Создать предмет перед собой"})
+	for item in CHEAT_ITEMS:
+		var path: String = PickupItem.ITEMS_DIR + item + ".tscn"
+		rows.append({"text": Economy.name_of(path), "button": "Создать", "id": "i:" + item})
+	hud.open_panel("cheat", "Секретное меню", "Видно только вам", rows)
+
+
+func _ask_cheat_password() -> void:
+	var dialog := AcceptDialog.new()
+	dialog.title = "Пароль"
+	var field := LineEdit.new()
+	field.secret = true
+	field.custom_minimum_size = Vector2(320, 0)
+	dialog.add_child(field)
+	dialog.register_text_enter(field)
+	dialog.confirmed.connect(func():
+		var text := field.text.strip_edges()
+		dialog.queue_free()
+		if text.sha256_text() == CHEAT_HASH:
+			_cheat_password = text
+			_open_cheats()
+		else:
+			hud.show_message("Неверно")
+			capture_mouse())
+	dialog.canceled.connect(func():
+		dialog.queue_free()
+		capture_mouse())
+	hud.add_child(dialog)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	dialog.popup_centered()
+	field.grab_focus()
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_cheat(id: String, password: String) -> void:
+	if not _from_owner() or password.sha256_text() != CHEAT_HASH:
+		return
+	var ahead := global_position + (-global_basis.z) * 4.0 + Vector3.UP * 0.5
+	match id:
+		"vehicles":
+			for vehicle: Truck in get_tree().get_nodes_in_group("vehicles"):
+				vehicle.reset()
+		"money":
+			(get_tree().get_first_node_in_group("economy") as Economy).add(1000)
+		"skip":
+			(get_tree().get_first_node_in_group("day_night") as DayNight).skip_to_next_phase()
+		"heal":
+			revive(MAX_HEALTH)
+			health = MAX_HEALTH
+		"clear":
+			for creature in get_tree().get_nodes_in_group("creatures"):
+				creature.queue_free()
+		_:
+			if id.begins_with("c:") and CHEAT_CREATURES.has(id.substr(2)):
+				var director := get_tree().get_first_node_in_group("night_director") as NightDirector
+				director.spawn(load("res://scenes/creatures/%s.tscn" % CHEAT_CREATURES[id.substr(2)]), ahead)
+			elif id.begins_with("i:") and id.substr(2) in CHEAT_ITEMS:
+				var item: Node3D = load(PickupItem.ITEMS_DIR + id.substr(2) + ".tscn").instantiate()
+				item.position = ahead
+				_items_root().add_child(item, true)
+
+
+## Окно инвентаря (I): пояс, рюкзак и снаряжение
+func _open_equipment() -> void:
+	var rows := [{"header": true, "text": "Пояс (выбран слот %d)" % (inventory.selected + 1)}]
+	for i in Inventory.SIZE:
+		var slot := inventory.slots[i]
+		rows.append({"text": "%d. %s" % [i + 1, Inventory.label(slot) if not slot.is_empty() else "—"], "button": "В рюкзак" if not slot.is_empty() else "", "id": "h:%d" % i})
+	rows.append({"header": true, "text": "Рюкзак"})
+	for i in Inventory.BACKPACK_SIZE:
+		var slot := inventory.backpack[i]
+		if not slot.is_empty():
+			rows.append({"text": Inventory.label(slot), "button": "В руку", "id": "b:%d" % i})
+	if inventory.backpack.count({}) == Inventory.BACKPACK_SIZE:
+		rows.append({"text": "пусто", "button": ""})
+	rows.append({"header": true, "text": "Снаряжение"})
+	for slot: String in ["head", "body", "legs"]:
+		if armor.has(slot):
+			var part: Dictionary = armor[slot]
+			rows.append({"text": "%s: %s (защита %d%%, прочность %d)" % [ArmorItem.SLOT_NAMES[slot], part.name, roundi(part.protection * 100.0), part.durability], "button": "Снять", "id": "e:" + slot})
+		else:
+			rows.append({"text": "%s: ничего" % ArmorItem.SLOT_NAMES[slot], "button": ""})
+	hud.open_panel("equipment", "Инвентарь", "Снятая броня падает рядом — её может подобрать и надеть кто угодно", rows)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_unwear(slot: String) -> void:
+	if not _from_owner() or not armor.has(slot):
+		return
+	var parts := armor.duplicate()
+	_drop_armor_part(parts[slot])
+	parts.erase(slot)
+	armor = parts
+
+
+## Хост: положить снятую вещь перед игроком
+func _drop_armor_part(part: Dictionary) -> void:
+	var path: String = part.get("path", "")
+	if not path.begins_with(PickupItem.ITEMS_DIR):
+		return
+	var item: PickupItem = load(path).instantiate()
+	item.position = global_position + (-global_basis.z) * 1.0 + Vector3.UP * 1.0
+	item.set_state({"durability": part.durability})
+	_items_root().add_child(item, true)
 
 
 ## Хост: каждый удар портит всё надетое, сломанное снимается
@@ -1350,6 +1538,45 @@ func _wear_out_armor() -> void:
 		else:
 			_interact_result.rpc_id(get_multiplayer_authority(), {"message": "Сломалось: %s" % part.name})
 	armor = parts
+
+
+## Переносимый объект (верстак, стол, бочка): что несёт игрок
+var _carrying := false
+var _server_carried: Interactable = null
+const CARRY_DISTANCE := 2.2
+
+
+## Хост: поднять объект (путь) или поставить (пустой путь)
+@rpc("any_peer", "call_local", "reliable")
+func _request_carry(path: NodePath) -> void:
+	if not _from_owner():
+		return
+	if path.is_empty():
+		if is_instance_valid(_server_carried):
+			_move_carried(true)
+		_server_carried = null
+		return
+	var target := get_node_or_null(path) as Interactable
+	if target == null or not target.movable or not _in_reach(target):
+		return
+	for other: Player in get_tree().get_nodes_in_group("players"):
+		if other._server_carried == target:
+			return
+	_server_carried = target
+
+
+## Хост: объект едет перед игроком; при установке опускается на землю
+func _move_carried(place := false) -> void:
+	var forward := -global_basis.z
+	var spot := global_position + forward * CARRY_DISTANCE
+	var height := 0.4
+	if place:
+		var query := PhysicsRayQueryParameters3D.create(spot + Vector3.UP * 3.0, spot + Vector3.DOWN * 5.0, 1, [_server_carried.get_rid()])
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		spot.y = hit.position.y if not hit.is_empty() else global_position.y
+		height = 0.0
+	spot.y += height
+	_server_carried.set_place.rpc(Transform3D(Basis(Vector3.UP, rotation.y), spot))
 
 
 ## Хост: Кукурузник схватил (path) или отпустил (пустой путь)
@@ -1587,6 +1814,17 @@ func _on_panel_action(kind: String, id: String) -> void:
 			get_tree().current_scene.call("_leave")
 		"shop", "workbench":
 			_request_buy.rpc_id(1, id)
+		"equipment":
+			if id.begins_with("e:"):
+				_request_unwear.rpc_id(1, id.substr(2))
+			elif id.begins_with("h:"):
+				inventory.to_backpack(int(id.substr(2)))
+				_open_equipment()
+			elif id.begins_with("b:"):
+				inventory.from_backpack(int(id.substr(2)))
+				_open_equipment()
+		"cheat":
+			_request_cheat.rpc_id(1, id, _cheat_password)
 		"upgrade":
 			_request_upgrade.rpc_id(1, id)
 		"skill":
@@ -1598,6 +1836,8 @@ func _refresh_panel() -> void:
 	match hud.panel_kind():
 		"skill":
 			_open_skills()
+		"equipment":
+			_open_equipment()
 		"upgrade":
 			_open_upgrades()
 
@@ -1703,6 +1943,10 @@ func _apply_downed() -> void:
 ## Сидя: не сталкиваемся ни с чем, глаза ниже, тело короче
 func _apply_seated() -> void:
 	_collision.disabled = seated
+	# За рулём и в кузове — без полоски слотов и предмета в руке
+	if is_multiplayer_authority():
+		hud.set_slots_visible(not seated)
+	_hand.visible = not seated
 	if seated:
 		# Ноги уходят под сиденье, тело не сплющиваем
 		_body.scale.y = 1.0
@@ -1726,13 +1970,31 @@ func _refresh_hand() -> void:
 		child.queue_free()
 	if held_scene == "" or not held_scene.begins_with(PickupItem.ITEMS_DIR):
 		return
-	var view: PickupItem = load(held_scene).instantiate()
+	var instance: Node = load(held_scene).instantiate()
+	# Тыква в руке — просто модель, без физики
+	if not instance is PickupItem:
+		_hand.add_child(_pocket_view(instance))
+		return
+	var view: PickupItem = instance
 	view.make_held_view()
 	# Запас знает только владелец: остальным он не нужен
 	if is_multiplayer_authority():
 		view.set_state(inventory.get_selected().get("state", {}))
 	_hand.add_child(view)
 	view.set_active(held_active)
+
+
+## Модель для руки из предмета без своей «ручной» версии (тыква)
+func _pocket_view(instance: Node) -> Node3D:
+	var view := Node3D.new()
+	for mesh: MeshInstance3D in instance.find_children("*", "MeshInstance3D", true, false):
+		var copy: MeshInstance3D = mesh.duplicate()
+		copy.transform = mesh.transform
+		view.add_child(copy)
+	instance.free()
+	view.position = Vector3(0.3, -0.35, -0.6)
+	view.scale = Vector3.ONE * 0.6
+	return view
 
 
 func _get_target() -> Object:

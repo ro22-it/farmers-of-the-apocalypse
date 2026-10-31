@@ -107,7 +107,7 @@ func _summon() -> void:
 	SoundBank.everyone(get_tree(), "growl", global_position)
 	for i in SUMMON_COUNT:
 		var offset := Vector3(randf_range(-2.5, 2.5), 0.3, randf_range(-2.5, 2.5))
-		director.spawn(NightDirector.ROJ, global_position + offset)
+		director.spawn(load("res://scenes/creatures/roj.tscn"), global_position + offset)
 
 
 ## Махину не отбросить и не испугать

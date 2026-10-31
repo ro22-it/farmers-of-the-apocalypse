@@ -11,13 +11,13 @@ size = Vector3(2, 0.5, 4.3)
 size = Vector3(1.76, 1.1, 1.17)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bed_side"]
-size = Vector3(0.12, 0.42, 1.73)
+size = Vector3(0.12, 1.0, 1.73)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hood"]
 size = Vector3(2, 0.42, 1.44)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bed_back"]
-size = Vector3(2, 0.42, 0.12)
+size = Vector3(2, 1.0, 0.12)
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_truck"]
 properties/0/path = NodePath("NetSmooth:target_position")
@@ -32,9 +32,9 @@ properties/2/replication_mode = 2
 
 [node name="Truck" type="VehicleBody3D"]
 collision_mask = 55
-mass = 800.0
+mass = 1300.0
 center_of_mass_mode = 1
-center_of_mass = Vector3(0, 0.1, 0)
+center_of_mass = Vector3(0, -0.25, 0)
 script = ExtResource("1_truck")
 
 [node name="BodyShape" type="CollisionShape3D" parent="."]
@@ -50,15 +50,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.97, 1.45)
 shape = SubResource("BoxShape3D_hood")
 
 [node name="BedLeftShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98, 0.97, -1.3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.98, 1.26, -1.3)
 shape = SubResource("BoxShape3D_bed_side")
 
 [node name="BedRightShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.98, 0.97, -1.3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.98, 1.26, -1.3)
 shape = SubResource("BoxShape3D_bed_side")
 
 [node name="BedBackShape" type="CollisionShape3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.97, -2.12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.26, -2.12)
 shape = SubResource("BoxShape3D_bed_back")
 
 [node name="Model" parent="." instance=ExtResource("2_model")]

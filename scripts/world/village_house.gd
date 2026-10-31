@@ -85,8 +85,10 @@ func _wall(kind: String, at: Vector3, angle: float, with_door: bool) -> void:
 	if with_door:
 		_piece("Door_1_Round", at, angle)
 	elif kind.begins_with("Window"):
-		_piece("Window_Wide_Round1", at, angle)
-		_piece("WindowShutters_Wide_Round_%s" % ("Open" if shutters_open else "Closed"), at, angle)
+		# Чуть наружу от стены: иначе рама и стена в одной плоскости и мерцают
+		var out := Vector3(sin(angle), 0.0, cos(angle))
+		_piece("Window_Wide_Round1", at + out * 0.03, angle)
+		_piece("WindowShutters_Wide_Round_%s" % ("Open" if shutters_open else "Closed"), at + out * 0.06, angle)
 
 
 func _piece(piece: String, at: Vector3, angle: float) -> Node3D:

@@ -35,6 +35,7 @@ linear_damp = 0.3
 angular_damp = 2.0
 script = ExtResource("1_grab")
 display_name = "Тыква"
+pocketable = true
 sell_price = 25
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]

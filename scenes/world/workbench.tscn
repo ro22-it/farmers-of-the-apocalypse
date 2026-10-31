@@ -43,6 +43,7 @@ height = 0.1
 
 [node name="Workbench" type="StaticBody3D"]
 script = ExtResource("1_bench")
+movable = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.475, 0)
@@ -86,7 +87,7 @@ mesh = SubResource("tire")
 
 [node name="Sign" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
-billboard = 1
+billboard = 2
 font_size = 40
 outline_size = 10
 text = "Верстак"

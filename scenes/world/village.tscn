@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://assets/village/Prop_Wagon.gltf" id="6_wagon"]
 [ext_resource type="PackedScene" path="res://assets/village/Prop_Crate.gltf" id="7_crate"]
 [ext_resource type="Script" path="res://scripts/animals/animal_model.gd" id="8_animal"]
+[ext_resource type="Script" path="res://scripts/world/walker_npc.gd" id="9_walker"]
 [ext_resource type="PackedScene" path="res://scenes/world/shop_counter.tscn" id="2_counter"]
 [ext_resource type="PackedScene" path="res://scenes/world/sale_bin.tscn" id="3_bin"]
 
@@ -101,7 +102,7 @@ material = SubResource("mat_wood")
 
 [node name="SignText" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112, 1.9, 4.3)
-billboard = 1
+billboard = 2
 font_size = 48
 outline_size = 12
 text = "Деревня"
@@ -127,7 +128,7 @@ script = ExtResource("5_merchant")
 
 [node name="Sign" type="Label3D" parent="Shop"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.7, 3.6)
-billboard = 1
+billboard = 2
 font_size = 64
 outline_size = 12
 text = "Лавка"
@@ -457,3 +458,44 @@ transform = Transform3D(0.94, 0, 0.34, 0, 1, 0, -0.34, 0, 0.94, 0, 0, 1.2)
 
 [node name="Crate3" parent="Crates" instance=ExtResource("7_crate")]
 transform = Transform3D(0.8, 0, -0.6, 0, 1, 0, 0.6, 0, 0.8, 0.1, 1.06, 0.5)
+
+[node name="Villager0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 140, 0, 0)
+script = ExtResource("9_walker")
+class_id = "farmer"
+center = Vector3(164, 0, 0)
+radius = 12.0
+speed = 1.2
+
+[node name="Villager1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 150, 0, 4)
+script = ExtResource("9_walker")
+class_id = "herder"
+center = Vector3(174, 0, 4)
+radius = 12.0
+speed = 1.3
+
+[node name="Villager2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 160, 0, -2)
+script = ExtResource("9_walker")
+class_id = "mechanic"
+center = Vector3(184, 0, -2)
+radius = 12.0
+speed = 1.4
+
+[node name="Villager3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 135, 0, 8)
+script = ExtResource("9_walker")
+class_id = "herbalist"
+center = Vector3(159, 0, 8)
+radius = 12.0
+speed = 1.5
+
+[node name="Villager4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 155, 0, 10)
+script = ExtResource("9_walker")
+class_id = "hunter"
+center = Vector3(179, 0, 10)
+radius = 12.0
+speed = 1.6
+

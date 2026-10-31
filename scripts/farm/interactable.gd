@@ -23,6 +23,16 @@ func interact(_player: Node3D, _info: Dictionary) -> Dictionary:
 	return {}
 
 
+## Можно ли поднять и перенести (G): верстак, стол, бочки
+@export var movable := false
+
+
+## Хост рассылает новое место переносимого объекта всем
+@rpc("authority", "call_local", "unreliable_ordered")
+func set_place(place: Transform3D) -> void:
+	global_transform = place
+
+
 ## Куда хост кладёт созданные предметы: их рассылает спавнер.
 func _items_root() -> Node:
 	var scene := get_tree().current_scene

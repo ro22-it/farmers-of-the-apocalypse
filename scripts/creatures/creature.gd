@@ -53,7 +53,7 @@ var _anim_time := 0.0
 func _ready() -> void:
 	add_to_group("creatures")
 	RunDirector.mark_seen(display_name)
-	hp = max_hp
+	hp = maxi(roundi(max_hp * RunDirector.difficulty(get_tree(), RunDirector.DIFFICULTY_HP)), 1)
 	_home = global_position
 	_marker = Label3D.new()
 	_marker.text = "!"

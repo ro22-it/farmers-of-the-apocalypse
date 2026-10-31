@@ -1,0 +1,59 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/items/energy_drink.gd" id="1_item"]
+[ext_resource type="SceneReplicationConfig" path="res://scenes/items/sync_pickup.tres" id="9_sync"]
+[ext_resource type="Script" path="res://scripts/net/net_smooth.gd" id="99_smooth"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_bottle"]
+height = 0.3
+radius = 0.07
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_milk"]
+albedo_color = Color(0.2, 0.85, 0.3, 1)
+metallic = 0.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cap"]
+albedo_color = Color(0.1, 0.1, 0.1, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bottle"]
+material = SubResource("StandardMaterial3D_milk")
+top_radius = 0.045
+bottom_radius = 0.07
+height = 0.26
+radial_segments = 8
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_cap"]
+material = SubResource("StandardMaterial3D_cap")
+top_radius = 0.04
+bottom_radius = 0.04
+height = 0.04
+radial_segments = 8
+rings = 1
+
+[node name="EnergyDrink" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 1.0
+script = ExtResource("1_item")
+display_name = "Энергетик"
+sell_price = 0
+use_hint = "Продайте в скупке в деревне"
+hand_position = Vector3(0.3, -0.25, -0.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CylinderShape3D_bottle")
+
+[node name="Bottle" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_bottle")
+
+[node name="Cap" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+mesh = SubResource("CylinderMesh_cap")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_interval = 0.033
+replication_config = ExtResource("9_sync")
+
+[node name="NetSmooth" type="Node" parent="."]
+script = ExtResource("99_smooth")

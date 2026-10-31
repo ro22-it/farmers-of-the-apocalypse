@@ -20,6 +20,9 @@ var shadows := 2
 ## Качество графики: 0 — низкое, 1 — среднее, 2 — высокое.
 ## Дальность леса, тени деревьев, затенение (SSAO), свечение, сглаживание.
 var quality := 1
+## Сложность (решает хост): 0 — лёгкая, 1 — обычная, 2 — сложная, 3 — кошмар
+var difficulty := 1
+
 var fov := 80.0
 var master_volume := 1.0
 var ambience_volume := 0.8
@@ -71,6 +74,7 @@ func save() -> void:
 	config.set_value("video", "render_scale", render_scale)
 	config.set_value("video", "shadows", shadows)
 	config.set_value("video", "quality", quality)
+	config.set_value("game", "difficulty", difficulty)
 	config.set_value("video", "fov", fov)
 	config.set_value("audio", "master", master_volume)
 	config.set_value("audio", "ambience", ambience_volume)
@@ -90,6 +94,7 @@ func _load() -> void:
 	render_scale = config.get_value("video", "render_scale", render_scale)
 	shadows = config.get_value("video", "shadows", shadows)
 	quality = config.get_value("video", "quality", quality)
+	difficulty = config.get_value("game", "difficulty", difficulty)
 	fov = config.get_value("video", "fov", fov)
 	master_volume = config.get_value("audio", "master", master_volume)
 	ambience_volume = config.get_value("audio", "ambience", ambience_volume)

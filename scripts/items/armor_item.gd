@@ -19,5 +19,14 @@ func use(user: Player) -> void:
 	user.wear_armor(self)
 
 
+## Прочность переживает снятие и передачу другому
+func get_state() -> Dictionary:
+	return {"durability": durability}
+
+
+func set_state(state: Dictionary) -> void:
+	durability = state.get("durability", durability)
+
+
 func get_use_hint() -> String:
 	return "ЛКМ — надеть (%s, защита %d%%, прочность %d)" % [SLOT_NAMES[slot], roundi(protection * 100.0), durability]

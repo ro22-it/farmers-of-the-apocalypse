@@ -29,6 +29,7 @@ const BUTTONS := [
 	["Перезар.", "reload", Vector2(750, -70), 38, false],
 	["Слот", "slot_next", Vector2(850, -70), 38, false],
 	["Вид", "camera_toggle", Vector2(950, -70), 38, false],
+	["Инвент.", "equipment", Vector2(1050, -70), 38, false],
 ]
 
 var _canvas: Control

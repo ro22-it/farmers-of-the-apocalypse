@@ -89,6 +89,7 @@ func _open_settings() -> void:
 	_main_panel.hide()
 	_pause_panel.hide()
 	_settings_panel.show()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func _on_settings_closed() -> void:
@@ -96,6 +97,7 @@ func _on_settings_closed() -> void:
 		_pause_panel.show()
 	else:
 		_main_panel.show()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 ## Твари, которых вы встречали, и их слабости; остальные — под вопросом
@@ -218,6 +220,23 @@ func _build_main() -> Control:
 	_tutorial_check.button_pressed = Network.tutorial_enabled
 	_tutorial_check.toggled.connect(func(on: bool): Network.tutorial_enabled = on)
 	box.add_child(_tutorial_check)
+
+	var difficulty_row := HBoxContainer.new()
+	var difficulty_label := _make_label("Сложность", 16, HORIZONTAL_ALIGNMENT_LEFT)
+	difficulty_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	difficulty_row.add_child(difficulty_label)
+	var difficulty := OptionButton.new()
+	difficulty.add_theme_font_size_override("font_size", 16)
+	for name in RunDirector.DIFFICULTY_NAMES:
+		difficulty.add_item(name)
+	var settings := get_node_or_null("/root/Settings")
+	difficulty.select(settings.difficulty if settings else 1)
+	difficulty.item_selected.connect(func(index: int):
+		if settings:
+			settings.difficulty = index
+			settings.save())
+	difficulty_row.add_child(difficulty)
+	box.add_child(difficulty_row)
 
 	_continue_button = _make_button("Продолжить", _on_continue)
 	box.add_child(_continue_button)

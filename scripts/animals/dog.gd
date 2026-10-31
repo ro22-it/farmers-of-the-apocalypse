@@ -24,6 +24,12 @@ var _check := 0.0
 var _start: Transform3D
 var _anim_time := 0.0
 var _bite_time := 0.0
+## Без хозяина бродит по двору: куда, с какой скоростью и сколько ещё ждать
+var _wander_target := HOME
+var _wander_wait := 0.0
+var _wander_speed := 2.0
+var _bark_time := 20.0
+const WANDER_RADIUS := 9.0
 
 @onready var _model: Node3D = $Model
 
@@ -45,12 +51,15 @@ func _physics_process(delta: float) -> void:
 	elif herder:
 		# Держится чуть позади и сбоку
 		target = herder.global_position + herder.global_basis.z * 1.5 + herder.global_basis.x * 1.0
+	else:
+		target = _wander(delta)
 	var to_target := target - global_position
 	to_target.y = 0.0
 	var keep := BITE_DISTANCE * 0.8 if prey else KEEP_DISTANCE
 	var direction := to_target.normalized() if to_target.length() > keep else Vector3.ZERO
-	velocity.x = direction.x * SPEED
-	velocity.z = direction.z * SPEED
+	var speed := SPEED if prey or herder else _wander_speed
+	velocity.x = direction.x * speed
+	velocity.z = direction.z * speed
 	velocity.y = -0.5 if is_on_floor() else velocity.y - _gravity * delta
 	if direction != Vector3.ZERO:
 		rotation.y = lerp_angle(rotation.y, atan2(-direction.x, -direction.z), minf(8.0 * delta, 1.0))
@@ -60,6 +69,25 @@ func _physics_process(delta: float) -> void:
 	if _check <= 0.0:
 		_check = CHECK_INTERVAL
 		_sniff(_smell_radius(herder))
+
+
+## Бродит у дома: то трусцой, то бегом, нюхает, иногда просто так гавкает
+func _wander(delta: float) -> Vector3:
+	_bark_time -= delta
+	if _bark_time <= 0.0:
+		_bark_time = randf_range(25.0, 60.0)
+		SoundBank.everyone(get_tree(), "bark", global_position, -6.0)
+	var flat := _wander_target - global_position
+	flat.y = 0.0
+	if flat.length() < KEEP_DISTANCE:
+		_wander_wait -= delta
+		if _wander_wait <= 0.0:
+			_wander_wait = randf_range(2.0, 6.0)
+			_wander_speed = SPEED if randf() < 0.25 else randf_range(1.5, 2.5)
+			var angle := randf() * TAU
+			_wander_target = HOME + Vector3(cos(angle), 0.0, sin(angle)) * randf_range(2.0, WANDER_RADIUS)
+		return global_position
+	return _wander_target
 
 
 func reset() -> void:

@@ -104,7 +104,7 @@ script = ExtResource("3_hud")
 
 [node name="NameTag" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
-billboard = 1
+billboard = 2
 no_depth_test = true
 font_size = 32
 outline_size = 12

@@ -12,7 +12,7 @@ const SLOT_BORDER := Color(1.0, 0.85, 0.4)
 const STAMINA_COLOR := Color(0.95, 0.85, 0.35)
 const EXHAUSTED_COLOR := Color(0.9, 0.3, 0.25)
 const MESSAGE_TIME := 2.5
-const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — присесть   Пробел — прыжок\nЛКМ — тащить / использовать   ПКМ — бросить   E — взять   G — выбросить\n1–4, колесо — слоты   ПКМ с оружием — прицел   R — перезарядка   Q — способность   K — навыки   Esc — пауза   F1 — скрыть подсказку   F2 — к закату или рассвету"
+const CONTROLS_TEXT := "WASD — ходьба   Shift — бег   Ctrl — присесть   Пробел — прыжок\nЛКМ — тащить / использовать   ПКМ — бросить   E — взять   G — выбросить\n1–4, колесо — слоты   ПКМ с оружием — прицел   R — перезарядка   Q — способность   K — навыки   I — инвентарь   Esc — пауза   F1 — скрыть подсказку   F2 — к закату или рассвету"
 
 var _hint: Label
 var _clock: Label
@@ -129,6 +129,15 @@ func _input(event: InputEvent) -> void:
 	if is_panel_open() and event.is_action_pressed("ui_cancel"):
 		close_panel()
 		get_viewport().set_input_as_handled()
+
+
+var _slots_row: Control
+
+
+## В машине слоты не нужны — прячем
+func set_slots_visible(value: bool) -> void:
+	if _slots_row:
+		_slots_row.visible = value
 
 
 func hide_controls_help() -> void:
@@ -268,7 +277,7 @@ func set_stamina(ratio: float, exhausted: bool) -> void:
 func update_inventory(inventory: Inventory) -> void:
 	for i in Inventory.SIZE:
 		var slot: Dictionary = inventory.slots[i]
-		_slot_labels[i].text = "%d\n%s" % [i + 1, slot.get("name", "—")]
+		_slot_labels[i].text = "%d\n%s" % [i + 1, Inventory.label(slot) if not slot.is_empty() else "—"]
 		var style := _slot_selected_style if i == inventory.selected else _slot_style
 		_slot_panels[i].add_theme_stylebox_override("panel", style)
 
@@ -312,12 +321,13 @@ func _build_slots(root: Control) -> void:
 	_slot_selected_style = _make_slot_style(SLOT_BORDER)
 
 	var row := HBoxContainer.new()
+	_slots_row = row
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 8)
 	root.add_child(row)
 	row.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	row.offset_left = -240
-	row.offset_right = 240
+	row.offset_left = -300
+	row.offset_right = 300
 	row.offset_top = -86
 	row.offset_bottom = -24
 

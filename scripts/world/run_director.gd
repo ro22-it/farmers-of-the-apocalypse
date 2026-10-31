@@ -108,7 +108,9 @@ static func record_run(won: bool, night: int, kill_count: int) -> Dictionary:
 	meta.kills += kill_count
 	# Без окна (автотесты) рекорды игрока не трогаем
 	if DisplayServer.get_name() != "headless":
+		# Читаем файл целиком, чтобы не стереть бестиарий
 		var config := ConfigFile.new()
+		config.load(META_PATH)
 		for key in meta:
 			config.set_value("meta", key, meta[key])
 		config.save(META_PATH)
@@ -122,6 +124,20 @@ static func load_meta() -> Dictionary:
 		for key in meta:
 			meta[key] = config.get_value("meta", key, meta[key])
 	return meta
+
+
+const DIFFICULTY_NAMES := ["Лёгкая", "Обычная", "Сложная", "Кошмар"]
+## Во сколько раз больше тварей, их здоровья и урона по игрокам
+const DIFFICULTY_COUNT := [1.0, 1.5, 2.2, 3.0]
+const DIFFICULTY_HP := [0.8, 1.0, 1.3, 1.7]
+const DIFFICULTY_DAMAGE := [0.7, 1.0, 1.3, 1.7]
+
+
+## Множитель выбранной хостом сложности; без автозагрузки (тесты) — обычная
+static func difficulty(tree: SceneTree, table: Array) -> float:
+	var settings := tree.root.get_node_or_null("Settings")
+	var level: int = settings.difficulty if settings else 1
+	return table[clampi(level, 0, table.size() - 1)]
 
 
 ## Бестиарий: каких тварей этот игрок уже встречал

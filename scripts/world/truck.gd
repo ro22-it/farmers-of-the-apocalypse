@@ -5,8 +5,12 @@ extends VehicleBody3D
 ## Физику считает хост: водитель шлёт ему нажатые клавиши, а всем остальным
 ## положение пикапа приходит через синхронизатор. Перед машины — по +Z.
 
-const MAX_ENGINE_FORCE := 2600.0
-const MAX_BRAKE := 30.0
+## Пикап потяжелел (1300 кг), чтобы груз в кузове его не переворачивал — мотор сильнее
+const MAX_ENGINE_FORCE := 4200.0
+## Трактор — та же машина, только быстрее (speed_factor) и не главная
+@export var speed_factor := 1.0
+@export var main_vehicle := true
+const MAX_BRAKE := 48.0
 const MAX_STEER := 0.65
 ## На полной скорости руль поворачивается меньше, иначе пикап опрокидывается
 const HIGH_SPEED_STEER := 0.2
@@ -48,6 +52,8 @@ var _start_transform: Transform3D
 var _flipped_time := 0.0
 const FLIP_UP_DOT := 0.35
 const AUTO_FLIP_TIME := 3.0
+const LOST_BELOW := -5.0
+const LOST_FARTHER := 400.0
 var _driven := 0.0
 var _last_position := Vector3.ZERO
 ## Кого и когда сбили: чтобы не бить одного игрока каждый кадр
@@ -70,7 +76,10 @@ func _ready() -> void:
 	_engine.position = Vector3(0.0, 1.0, 1.8)
 	_engine.bus = &"Effects"
 	add_child(_engine)
-	add_to_group("truck")
+	add_to_group("vehicles")
+	# Главный пикап — тот, что сохраняется и получает улучшение мотора
+	if main_vehicle:
+		add_to_group("truck")
 	# Фары могут пугать существ (навык механика) — Грядочник проверяет эту группу
 	add_to_group("scare_lights")
 	_start_transform = global_transform
@@ -106,6 +115,7 @@ func _physics_process(delta: float) -> void:
 	var speed := linear_velocity.dot(global_basis.z)
 	var steer_limit := lerpf(MAX_STEER, HIGH_SPEED_STEER, clampf(absf(speed) / MAX_SPEED, 0.0, 1.0))
 	steering = move_toward(steering, _steer_input * steer_limit, STEER_SPEED * delta)
+	boost *= speed_factor
 	var force := _throttle * MAX_ENGINE_FORCE * boost
 	if (_throttle > 0.0 and speed > MAX_SPEED * boost) or (_throttle < 0.0 and speed < -MAX_REVERSE_SPEED):
 		force = 0.0
@@ -224,6 +234,23 @@ func free_seats_count() -> int:
 
 
 ## Только на хосте: вернуть пикап к воротам, всех высадить
+## Страховка от полётов: подпрыгивать можно, улетать — нет.
+## Ограничиваем скорость вверх и вращение, а на ходу прижимаем к земле.
+const MAX_UP_SPEED := 4.5
+const MAX_SPIN := 2.5
+const DOWNFORCE := 90.0
+
+
+func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	var velocity := state.linear_velocity
+	if velocity.y > MAX_UP_SPEED:
+		velocity.y = MAX_UP_SPEED
+	state.linear_velocity = velocity.limit_length(MAX_SPEED * 1.6 * speed_factor)
+	state.angular_velocity = state.angular_velocity.limit_length(MAX_SPIN)
+	var flat_speed := Vector2(velocity.x, velocity.z).length()
+	state.apply_central_force(-state.transform.basis.y * flat_speed * DOWNFORCE)
+
+
 ## Лежит на боку или на крыше
 func is_flipped() -> bool:
 	return global_basis.y.y < FLIP_UP_DOT
@@ -244,6 +271,10 @@ func flip_upright() -> void:
 
 ## Перевёрнутый и почти стоящий пикап сам встаёт на колёса через пару секунд
 func _check_flipped(delta: float) -> void:
+	# Провалился под землю или улетел за край мира — возвращается на стоянку
+	if global_position.y < LOST_BELOW or Vector2(global_position.x, global_position.z).length() > LOST_FARTHER:
+		reset()
+		return
 	if is_flipped() and linear_velocity.length() < 1.5:
 		_flipped_time += delta
 		if _flipped_time >= AUTO_FLIP_TIME:

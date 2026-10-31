@@ -17,6 +17,10 @@ const HEAVY_MASS := 40.0
 const MAX_SAG := 0.8
 
 @export var display_name := "Предмет"
+## Можно ли положить в слот по E (тыквы — да, ящики и тачка — нет)
+@export var pocketable := false
+## Пугало: стоя ровно, отпугивает Грядочников и Рой в этом радиусе (0 — нет)
+@export var scare_radius := 0.0
 ## Сколько монет дают в скупке. 0 — не покупают.
 @export var sell_price := 0
 ## Если предмет отстал от точки удержания дальше этого, хватка срывается
@@ -32,6 +36,8 @@ var _target_basis := Basis()
 
 
 func _ready() -> void:
+	if scare_radius > 0.0:
+		add_to_group("scare_lights")
 	if not multiplayer.is_server():
 		freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
 		freeze = true
@@ -102,3 +108,10 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var angle := 2.0 * acos(clampf(difference.w, -1.0, 1.0))
 	var axis := Vector3(difference.x, difference.y, difference.z)
 	state.angular_velocity = Vector3.ZERO if axis.length() < 0.0001 else (axis.normalized() * angle * ROTATE_STRENGTH).limit_length(MAX_ROTATE_SPEED)
+
+
+## Для Грядочника: пугало стоит ровно и точка рядом
+func scares(point: Vector3) -> bool:
+	if scare_radius <= 0.0 or global_basis.y.y < 0.8:
+		return false
+	return Vector2(point.x - global_position.x, point.z - global_position.z).length() <= scare_radius

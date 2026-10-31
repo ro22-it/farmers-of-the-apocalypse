@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/tree.tscn" id="1_tree"]
 [ext_resource type="PackedScene" path="res://scenes/world/house.tscn" id="2_house"]
 [ext_resource type="PackedScene" path="res://assets/vehicles/tractor.glb" id="3_tractor"]
+[ext_resource type="PackedScene" path="res://scenes/world/table.tscn" id="4_table"]
 
 [sub_resource type="StandardMaterial3D" id="mat_grass"]
 albedo_color = Color(0.36, 0.52, 0.27, 1)
@@ -97,17 +98,8 @@ material = SubResource("mat_dirt")
 [node name="House" parent="." instance=ExtResource("2_house")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -12)
 
-[node name="Table" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.85, -2.5)
-use_collision = true
-size = Vector3(2.2, 0.1, 0.9)
-material = SubResource("mat_door")
-
-[node name="TableLegs" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.4, -2.5)
-use_collision = true
-size = Vector3(2, 0.8, 0.7)
-material = SubResource("mat_door")
+[node name="Table" parent="." instance=ExtResource("4_table")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, -2.5)
 
 [node name="Barn" type="CSGCombiner3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -12)
@@ -143,7 +135,7 @@ size = Vector3(6.1, 0.25, 8.6)
 material = SubResource("mat_roof")
 
 [node name="Gable" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.4, -8.05)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 6.4, -7.96)
 size = Vector3(8.6, 1.4, 0.1)
 material = SubResource("mat_trim")
 
@@ -710,13 +702,3 @@ shape = SubResource("edge_z")
 [node name="South" type="CollisionShape3D" parent="WorldEdge"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 14, 99)
 shape = SubResource("edge_z")
-
-[node name="Tractor" type="StaticBody3D" parent="."]
-transform = Transform3D(-0.9397, 0, -0.342, 0, 1, 0, 0.342, 0, -0.9397, 19.5, 0, -11)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Tractor"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0.1)
-shape = SubResource("tractor_shape")
-
-[node name="Model" parent="Tractor" instance=ExtResource("3_tractor")]
-transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, 0, 0)

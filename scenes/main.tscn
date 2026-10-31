@@ -22,6 +22,8 @@
 [ext_resource type="Script" path="res://scripts/world/upgrade_toggle.gd" id="25_toggle"]
 [ext_resource type="PackedScene" path="res://scenes/world/upgrade_board.tscn" id="26_board"]
 [ext_resource type="Script" path="res://scripts/world/tower_light.gd" id="27_tower_light"]
+[ext_resource type="Script" path="res://scripts/world/walker_npc.gd" id="34_walker"]
+[ext_resource type="PackedScene" path="res://scenes/world/tractor.tscn" id="33_tractor"]
 [ext_resource type="PackedScene" path="res://scenes/world/workbench.tscn" id="32_workbench"]
 [ext_resource type="PackedScene" path="res://scenes/items/slingshot.tscn" id="28_slingshot"]
 [ext_resource type="Script" path="res://scripts/world/forest_fill.gd" id="29_forest"]
@@ -632,6 +634,102 @@ omni_range = 14.0
 
 [node name="Workbench" parent="." instance=ExtResource("32_workbench")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -9.5)
+
+[node name="Tractor" parent="." instance=ExtResource("33_tractor")]
+transform = Transform3D(-0.94, 0, -0.34, 0, 1, 0, 0.34, 0, -0.94, 19.5, 0.3, -11)
+
+[node name="UpgradeLamps" type="Node3D" parent="."]
+script = ExtResource("25_toggle")
+upgrade_id = "lamps"
+
+[node name="Pole0" type="CSGBox3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 1.2, 4.3)
+use_collision = true
+size = Vector3(0.12, 2.4, 0.12)
+material = SubResource("tower_wood")
+
+[node name="Lantern0" type="OmniLight3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 2.5, 4.3)
+script = ExtResource("27_tower_light")
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 1.6
+omni_range = 8.0
+
+[node name="Pole1" type="CSGBox3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 4.3)
+use_collision = true
+size = Vector3(0.12, 2.4, 0.12)
+material = SubResource("tower_wood")
+
+[node name="Lantern1" type="OmniLight3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 4.3)
+script = ExtResource("27_tower_light")
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 1.6
+omni_range = 8.0
+
+[node name="Pole2" type="CSGBox3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 1.2, 4.3)
+use_collision = true
+size = Vector3(0.12, 2.4, 0.12)
+material = SubResource("tower_wood")
+
+[node name="Lantern2" type="OmniLight3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 2.5, 4.3)
+script = ExtResource("27_tower_light")
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 1.6
+omni_range = 8.0
+
+[node name="Pole3" type="CSGBox3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 1.2, 12)
+use_collision = true
+size = Vector3(0.12, 2.4, 0.12)
+material = SubResource("tower_wood")
+
+[node name="Lantern3" type="OmniLight3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 2.5, 12)
+script = ExtResource("27_tower_light")
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 1.6
+omni_range = 8.0
+
+[node name="Pole4" type="CSGBox3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 12)
+use_collision = true
+size = Vector3(0.12, 2.4, 0.12)
+material = SubResource("tower_wood")
+
+[node name="Lantern4" type="OmniLight3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 12)
+script = ExtResource("27_tower_light")
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 1.6
+omni_range = 8.0
+
+[node name="Pole5" type="CSGBox3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 1.2, 12)
+use_collision = true
+size = Vector3(0.12, 2.4, 0.12)
+material = SubResource("tower_wood")
+
+[node name="Lantern5" type="OmniLight3D" parent="UpgradeLamps"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 2.5, 12)
+script = ExtResource("27_tower_light")
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 1.6
+omni_range = 8.0
+
+[node name="UpgradeWorker" type="Node3D" parent="."]
+script = ExtResource("25_toggle")
+upgrade_id = "worker"
+
+[node name="Worker" type="Node3D" parent="UpgradeWorker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 8)
+script = ExtResource("34_walker")
+class_id = "herder"
+center = Vector3(0, 0, 8)
+waters_plots = true
 
 [node name="Items" type="Node3D" parent="."]
 

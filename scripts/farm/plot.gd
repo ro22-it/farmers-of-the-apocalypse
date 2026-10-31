@@ -8,7 +8,8 @@ extends Interactable
 enum State { UNTILLED, TILLED, PLANTED }
 
 ## За сколько секунд полностью политая земля высыхает
-const DRY_TIME := 150.0
+## Сохнет медленнее, чем раньше (было 150): полива хватает на большую часть дня
+const DRY_TIME := 300.0
 ## Где стоят растения на участке 2×2 м (тыква — одна в центре)
 const PLANT_SPOTS: Array[Vector3] = [
 	Vector3(-0.45, 0.0, -0.5), Vector3(0.45, 0.0, -0.5),
@@ -67,7 +68,7 @@ func _ready() -> void:
 	add_to_group("plots")
 	_ripe_label = Label3D.new()
 	_ripe_label.text = "Созрело"
-	_ripe_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_ripe_label.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	_ripe_label.font_size = 48
 	_ripe_label.outline_size = 12
 	_ripe_label.modulate = Color(0.6, 1.0, 0.4)

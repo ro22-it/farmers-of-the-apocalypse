@@ -88,18 +88,20 @@ func _on_phase_changed(is_night: bool, day: int) -> void:
 	if is_night:
 		# В полнолуние Грядочников вдвое больше, а стая на двоих крупнее
 		var full_moon := _day_night.weather == "full_moon"
-		for i in (day + 1) * (2 if full_moon else 1):
+		var more := RunDirector.difficulty(get_tree(), RunDirector.DIFFICULTY_COUNT)
+		for i in roundi((day + 1) * (2 if full_moon else 1) * more):
 			_queue.append([randf_range(5.0, SPAWN_WINDOW), GRYADOCHNIK, 1])
 		if day >= TARAN_FIRST_NIGHT:
-			for i in 1 + (day - TARAN_FIRST_NIGHT) / 2:
+			for i in roundi((1 + (day - TARAN_FIRST_NIGHT) / 2) * more):
 				_queue.append([randf_range(30.0, SPAWN_WINDOW), TARAN, 1])
 		if day >= ROJ_FIRST_NIGHT:
-			_queue.append([randf_range(40.0, SPAWN_WINDOW), ROJ, mini(3 + (day - ROJ_FIRST_NIGHT) / 2 + (2 if full_moon else 0), ROJ_MAX)])
+			_queue.append([randf_range(40.0, SPAWN_WINDOW), ROJ, mini(roundi((3 + (day - ROJ_FIRST_NIGHT) / 2 + (2 if full_moon else 0)) * more), ROJ_MAX * 2)])
 		if day >= PUGALSHIK_FIRST_NIGHT:
-			for i in (2 if day >= PUGALSHIK_SECOND_NIGHT else 1):
+			for i in roundi((2 if day >= PUGALSHIK_SECOND_NIGHT else 1) * more):
 				_queue.append([randf_range(60.0, SPAWN_WINDOW + 60.0), PUGALSHIK, 1])
 		if day >= KUKURUZNIK_FIRST_NIGHT:
-			_queue.append([randf_range(20.0, SPAWN_WINDOW), KUKURUZNIK, 1])
+			for i in roundi(more):
+				_queue.append([randf_range(20.0, SPAWN_WINDOW), KUKURUZNIK, 1])
 		if day >= FOREST_LORD_FIRST_NIGHT and (day - FOREST_LORD_FIRST_NIGHT) % FOREST_LORD_EVERY == 0:
 			_queue.append([90.0, FOREST_LORD, 1])
 		_queue.sort_custom(func(a, b): return a[0] < b[0])

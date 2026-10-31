@@ -56,7 +56,7 @@ mesh = SubResource("BoxMesh_paper")
 
 [node name="Label" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.35, 0)
-billboard = 1
+billboard = 2
 font_size = 40
 outline_size = 10
 text = "Улучшения фермы"

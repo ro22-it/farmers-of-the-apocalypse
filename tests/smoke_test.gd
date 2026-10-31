@@ -47,6 +47,7 @@ func _run() -> void:
 	root.get_node("Network").player_class = ""
 	# Обучение в тесте всегда включено, что бы ни стояло в настройках игрока
 	root.get_node("Network").tutorial_enabled = true
+	root.get_node("Settings").difficulty = 1
 	main._start_host()
 	await frames(120)
 	player = main.get_node("Players/1")
@@ -203,7 +204,7 @@ func _run() -> void:
 	check(day_night.is_night(), "наступила ночь")
 	check(main.get_node("Moon").light_energy > 0.2 and not main.get_node("Sun").visible, "ночью светит луна, солнца нет")
 	var director: NightDirector = main.get_node("NightDirector")
-	check(director._queue.size() == 2, "в первую ночь выйдут 2 Грядочника")
+	check(director._queue.size() == 3, "в первую ночь выйдут 3 Грядочника (обычная сложность)")
 	# Случайные существа тесту мешают — выпускаем своих
 	director._queue.clear()
 
@@ -634,7 +635,7 @@ func _run() -> void:
 	await frames(2)
 	player._try_pickup()
 	await frames(5)
-	check(player.ammo == 10, "коробка патронов добавила 6 в запас")
+	check(player.ammo == 19, "коробка патронов добавила 15 в запас")
 
 	# Винтовка на 20 м
 	player.inventory.take_selected()
@@ -982,10 +983,23 @@ func _run() -> void:
 	check(nail_ref.get_ref() == null, "гвоздемёт стреляет без патронов и валит Грядочника")
 	player.inventory.take_selected()
 
+	# --- Стопки: морковь складывается в один слот, G выбрасывает по одной ---
+	player.inventory.take_selected()
+	for i in 3:
+		player.inventory.add("res://scenes/items/carrot.tscn", "Морковь")
+	check(player.inventory.get_selected().get("count", 1) == 3, "три моркови в одном слоте")
+	var one := player.inventory.take_one()
+	check(one.count == 1 and player.inventory.get_selected().count == 2, "из стопки берётся по одной")
+	player.inventory.take_selected()
+	check(Inventory.SIZE == 5, "в инвентаре 5 слотов")
+
 	# --- Перевёрнутый пикап встаёт сам ---
 	var flip_truck: Truck = main.get_node("Truck")
 	flip_truck.global_transform = Transform3D(Basis(Vector3.FORWARD, PI), flip_truck.global_position + Vector3.UP * 1.5)
 	check(await wait_for(func(): return not flip_truck.is_flipped(), 400), "перевёрнутый пикап сам встал на колёса")
+	flip_truck.global_position = Vector3(30.0, -20.0, 0.0)
+	await frames(3)
+	check(flip_truck.global_position.y > -1.0, "провалившийся пикап вернулся на стоянку")
 
 	# --- Сенсорное управление: джойстик ведёт, палец справа поворачивает ---
 	var touch := TouchControls.new()
