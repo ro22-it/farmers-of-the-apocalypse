@@ -98,6 +98,25 @@ func _on_settings_closed() -> void:
 		_main_panel.show()
 
 
+## Твари, которых вы встречали, и их слабости; остальные — под вопросом
+func _open_bestiary() -> void:
+	var seen := RunDirector.seen_creatures()
+	var lines := []
+	for scene: PackedScene in [NightDirector.GRYADOCHNIK, NightDirector.TARAN, NightDirector.ROJ, NightDirector.PUGALSHIK, NightDirector.KUKURUZNIK, NightDirector.FOREST_LORD]:
+		var creature: Node = scene.instantiate()
+		var known: bool = creature.display_name in seen
+		lines.append("• %s — %s" % [creature.display_name, creature.weakness] if known else "• ??? — ещё не встречали")
+		creature.free()
+	var dialog := AcceptDialog.new()
+	dialog.title = "Бестиарий (%d из 6)" % seen.size()
+	dialog.dialog_text = "\n\n".join(lines)
+	dialog.ok_button_text = "Закрыть"
+	dialog.confirmed.connect(dialog.queue_free)
+	dialog.canceled.connect(dialog.queue_free)
+	add_child(dialog)
+	dialog.popup_centered(Vector2i(640, 0))
+
+
 func is_paused() -> bool:
 	return _pause_panel.visible
 
@@ -216,6 +235,7 @@ func _build_main() -> Control:
 	_status.add_theme_color_override("font_color", Color(1.0, 0.85, 0.6))
 	box.add_child(_status)
 
+	box.add_child(_make_button("Бестиарий", _open_bestiary, false))
 	box.add_child(_make_button("Настройки", _open_settings))
 	box.add_child(_make_button("Выход", func(): get_tree().quit()))
 	var help := _make_label(HELP_TEXT, 13)

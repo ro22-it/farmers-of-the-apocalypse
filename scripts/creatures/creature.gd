@@ -52,6 +52,7 @@ var _anim_time := 0.0
 
 func _ready() -> void:
 	add_to_group("creatures")
+	RunDirector.mark_seen(display_name)
 	hp = max_hp
 	_home = global_position
 	_marker = Label3D.new()

@@ -124,6 +124,26 @@ static func load_meta() -> Dictionary:
 	return meta
 
 
+## Бестиарий: каких тварей этот игрок уже встречал
+static func mark_seen(creature_name: String) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	var config := ConfigFile.new()
+	config.load(META_PATH)
+	var seen: PackedStringArray = config.get_value("bestiary", "seen", PackedStringArray())
+	if creature_name in seen:
+		return
+	seen.append(creature_name)
+	config.set_value("bestiary", "seen", seen)
+	config.save(META_PATH)
+
+
+static func seen_creatures() -> PackedStringArray:
+	var config := ConfigFile.new()
+	config.load(META_PATH)
+	return config.get_value("bestiary", "seen", PackedStringArray())
+
+
 ## Классы, которые открываются забегами: класс -> до какой ночи дожить
 const CLASS_UNLOCKS := {"herder": 4, "herbalist": 8}
 
