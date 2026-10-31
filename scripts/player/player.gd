@@ -437,7 +437,9 @@ func show_message(text: String) -> void:
 ## Смена дня и ночи (вызывает DayNight у своего игрока)
 func on_phase_changed(is_night: bool, day: int) -> void:
 	if is_night:
-		hud.show_message("Ночь %d. Из леса кто-то выходит…" % day)
+		var day_night := get_tree().get_first_node_in_group("day_night") as DayNight
+		var weather := Weather.announce_text(day_night.weather) if day_night else ""
+		hud.show_message("Ночь %d. %s" % [day, weather if weather != "" else "Из леса кто-то выходит…"])
 	else:
 		hud.show_message("Рассвет. День %d" % day)
 

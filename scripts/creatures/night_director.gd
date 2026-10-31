@@ -86,13 +86,15 @@ func _on_phase_changed(is_night: bool, day: int) -> void:
 		return
 	_queue.clear()
 	if is_night:
-		for i in day + 1:
+		# В полнолуние Грядочников вдвое больше, а стая на двоих крупнее
+		var full_moon := _day_night.weather == "full_moon"
+		for i in (day + 1) * (2 if full_moon else 1):
 			_queue.append([randf_range(5.0, SPAWN_WINDOW), GRYADOCHNIK, 1])
 		if day >= TARAN_FIRST_NIGHT:
 			for i in 1 + (day - TARAN_FIRST_NIGHT) / 2:
 				_queue.append([randf_range(30.0, SPAWN_WINDOW), TARAN, 1])
 		if day >= ROJ_FIRST_NIGHT:
-			_queue.append([randf_range(40.0, SPAWN_WINDOW), ROJ, mini(3 + (day - ROJ_FIRST_NIGHT) / 2, ROJ_MAX)])
+			_queue.append([randf_range(40.0, SPAWN_WINDOW), ROJ, mini(3 + (day - ROJ_FIRST_NIGHT) / 2 + (2 if full_moon else 0), ROJ_MAX)])
 		if day >= PUGALSHIK_FIRST_NIGHT:
 			for i in (2 if day >= PUGALSHIK_SECOND_NIGHT else 1):
 				_queue.append([randf_range(60.0, SPAWN_WINDOW + 60.0), PUGALSHIK, 1])

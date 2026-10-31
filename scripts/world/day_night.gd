@@ -32,6 +32,8 @@ const MOON_ENERGY := 0.22
 @export var environment_path: NodePath
 
 var day := 1
+## Погода текущей ночи: clear, fog, rain, full_moon. Выбирает хост в сумерки.
+var weather := "clear"
 var cycle_time := START_TIME
 ## Идёт ли время. В меню не идёт, чтобы фон не превращался в ночь
 var running := false
@@ -45,6 +47,7 @@ var _was_night := false
 
 
 func _ready() -> void:
+	add_child(Weather.new(self))
 	add_to_group("day_night")
 	add_to_group("graphics_quality")
 	_sun.add_to_group("shadow_lights")
@@ -65,6 +68,8 @@ func _process(delta: float) -> void:
 			day += 1
 	if is_night() != _was_night:
 		_was_night = is_night()
+		if multiplayer.is_server():
+			weather = Weather.pick(day) if _was_night else "clear"
 		phase_changed.emit(_was_night, day)
 		get_tree().call_group("local_player", "on_phase_changed", _was_night, day)
 	_apply_lighting()
@@ -74,6 +79,7 @@ func reset() -> void:
 	day = 1
 	cycle_time = START_TIME
 	_was_night = false
+	weather = "clear"
 
 
 ## Отладка: за несколько секунд до ближайшего заката или рассвета
@@ -133,5 +139,9 @@ func _apply_lighting() -> void:
 	_sky.sky_horizon_color = SKY_HORIZON[0].lerp(SKY_HORIZON[1], night)
 	_sky.ground_horizon_color = _sky.sky_horizon_color
 	_environment.fog_light_color = FOG[0].lerp(FOG[1], night)
-	_environment.fog_density = lerpf(FOG_DENSITY[0], FOG_DENSITY[1], night)
+	_environment.fog_density = lerpf(FOG_DENSITY[0], FOG_DENSITY[1], night) * lerpf(1.0, Weather.FOG_FACTOR.get(weather, 1.0), night)
+	_moon.light_energy *= Weather.MOON_FACTOR.get(weather, 1.0)
+	# Ночной туман серый, а не чёрный — видно, как он стоит стеной
+	if weather == "fog":
+		_environment.fog_light_color = _environment.fog_light_color.lerp(Weather.FOG_COLOR, night * 0.85)
 	_environment.ambient_light_energy = lerpf(AMBIENT[0], AMBIENT[1], night)

@@ -51,6 +51,8 @@ const FILES := {
 	"amb_night": ["amb_night.ogg"],
 	"engine": ["engine_low.ogg"],
 	"dawn_birds": ["dawn_birds.ogg"],
+	"rain": ["rain.ogg"],
+	"thunder": ["thunder.wav"],
 }
 ## Составные звуки: несколько слоёв одновременно
 const LAYERS := {

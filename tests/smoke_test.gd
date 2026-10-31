@@ -931,6 +931,20 @@ func _run() -> void:
 	check(not is_instance_valid(lord) or lord.is_queued_for_deletion(), "Хозяин леса повержен")
 	check(economy.money == lord_money + ForestLord.REWARD, "за Хозяина леса ферме %d монет" % ForestLord.REWARD)
 
+	# --- Погода: полнолуние по расписанию, ливень поливает грядки ---
+	check(Weather.pick(7) == "full_moon" and Weather.pick(1) == "clear", "полнолуние на 7-ю ночь, первая ночь ясная")
+	day_night.cycle_time = DayNight.DAY_LENGTH + 10.0
+	await frames(5)
+	day_night.weather = "rain"
+	var rain_plot: Plot = main.get_node("Plots/Plot1")
+	if rain_plot.state == Plot.State.UNTILLED:
+		rain_plot.state = Plot.State.TILLED
+	rain_plot.moisture = 0.0
+	check(await wait_for(func(): return rain_plot.moisture > 0.5, 300), "ливень полил грядку")
+	day_night.weather = "clear"
+	day_night.cycle_time = 100.0
+	await frames(5)
+
 	# --- Цель забега: поражение и победа ---
 	var run: RunDirector = main.get_node("RunDirector")
 	run.reset()
